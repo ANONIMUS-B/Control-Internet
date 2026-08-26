@@ -1,0 +1,10 @@
+packages:
+  - '.'
+
+allowBuilds:
+  lzma-native: true
+  puppeteer: false
+  unrs-resolver: false
+
+publicHoistPattern:
+  - '@inertiajs/core'
