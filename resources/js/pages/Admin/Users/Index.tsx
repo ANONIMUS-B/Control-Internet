@@ -24,6 +24,9 @@ interface User {
         modular_code: string;
     }>;
     created_at: string;
+    last_name?: string;
+    second_last_name?: string;
+    first_name?: string;
 }
 
 interface Institution {
@@ -148,7 +151,9 @@ export default function UserManagement({ users, institutions, filters, roles }: 
 
     const openAssignModal = (user: User) => {
         setShowAssignModal(user);
-        setSelectedInstitutions(user.institutions.map(i => i.id));
+        // ✅ Asegurar que selectedInstitutions se actualice con las instituciones actuales del usuario
+        const currentInstitutionIds = user.institutions ? user.institutions.map(i => i.id) : [];
+        setSelectedInstitutions(currentInstitutionIds);
     };
 
     const saveAssignments = () => {
@@ -372,7 +377,7 @@ export default function UserManagement({ users, institutions, filters, roles }: 
                                                 </td>
                                                 <td className="p-3">
                                                     <div className="flex flex-wrap gap-1">
-                                                        {user.institutions.length > 0 ? (
+                                                        {user.institutions && user.institutions.length > 0 ? (
                                                             user.institutions.slice(0, 2).map((inst) => (
                                                                 <span key={inst.id} className="px-2 py-0.5 bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 rounded-full text-[11px] border border-blue-200 dark:border-blue-500/20">
                                                                     {inst.modular_code}
@@ -381,7 +386,7 @@ export default function UserManagement({ users, institutions, filters, roles }: 
                                                         ) : (
                                                             <span className="text-[11px] text-gray-400 dark:text-neutral-500">Sin asignar</span>
                                                         )}
-                                                        {user.institutions.length > 2 && (
+                                                        {user.institutions && user.institutions.length > 2 && (
                                                             <span className="px-2 py-0.5 bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-neutral-400 rounded-full text-[11px] border border-gray-200 dark:border-white/10">
                                                                 +{user.institutions.length - 2}
                                                             </span>
@@ -539,20 +544,18 @@ function UserModal({
         if (!fullName) return { lastName: '', secondLastName: '', firstName: '' };
         
         const parts = fullName.trim().split(' ');
-        if (parts.length === 1) {
-            return { lastName: parts[0], secondLastName: '', firstName: '' };
-        } else if (parts.length === 2) {
-            return { lastName: parts[0], secondLastName: '', firstName: parts[1] };
-        } else {
-            return { 
-                lastName: parts[0], 
-                secondLastName: parts[1], 
-                firstName: parts.slice(2).join(' ') 
-            };
-        }
+        if (parts.length === 0) return { lastName: '', secondLastName: '', firstName: '' };
+        if (parts.length === 1) return { lastName: parts[0], secondLastName: '', firstName: '' };
+        if (parts.length === 2) return { lastName: parts[0], secondLastName: '', firstName: parts[1] };
+        
+        return { 
+            lastName: parts[0] || '', 
+            secondLastName: parts[1] || '', 
+            firstName: parts.slice(2).join(' ') || '' 
+        };
     };
 
-    const getUserNameParts = () => {
+    const getDefaultNameParts = () => {
         if (!user) return { lastName: '', secondLastName: '', firstName: '' };
         
         if (user.last_name !== undefined && user.first_name !== undefined) {
@@ -566,7 +569,7 @@ function UserModal({
         return parseFullName(user.name || '');
     };
 
-    const nameParts = getUserNameParts();
+    const nameParts = getDefaultNameParts();
 
     const { data, setData, post, put, processing, errors } = useForm({
         name: user?.name || '',
@@ -578,7 +581,7 @@ function UserModal({
         role: user?.role || 'director',
         password: '',
         password_confirmation: '',
-        institution_ids: user?.institutions.map(i => i.id) || [],
+        institution_ids: user?.institutions ? user.institutions.map(i => i.id) : [],
     });
 
     const [showPassword, setShowPassword] = useState(false);
@@ -599,10 +602,14 @@ function UserModal({
         setData(newData);
     };
 
-    const filteredInstitutions = institutions.filter(inst =>
-        inst.name.toLowerCase().includes(searchInstitutions.toLowerCase()) ||
-        inst.modular_code.toLowerCase().includes(searchInstitutions.toLowerCase())
-    );
+    // ✅ Filtrar instituciones con validación segura
+    const filteredInstitutions = institutions.filter(inst => {
+        if (!inst) return false;
+        const name = inst.name || '';
+        const modularCode = inst.modular_code || '';
+        const searchTerm = searchInstitutions.toLowerCase();
+        return name.toLowerCase().includes(searchTerm) || modularCode.toLowerCase().includes(searchTerm);
+    });
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -626,6 +633,10 @@ function UserModal({
         }
     };
 
+    const inputClass = "w-full rounded-xl border-2 border-gray-200 dark:border-white/10 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all px-3 py-2 text-[11px] bg-white dark:bg-slate-900 text-gray-900 dark:text-white outline-none placeholder:text-gray-400 dark:placeholder:text-neutral-500";
+    const labelClass = "text-[11px] font-semibold text-gray-700 dark:text-neutral-300";
+    const errorClass = "text-rose-500 text-[11px] mt-1";
+
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
             <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-2xl p-6 max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-200 dark:border-white/10">
@@ -641,95 +652,95 @@ function UserModal({
                 <form onSubmit={submit} className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                            <label className="text-[11px] font-semibold text-gray-700 dark:text-neutral-300">
+                            <label className={labelClass}>
                                 Apellido Paterno <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="text"
                                 value={data.last_name}
                                 onChange={(e) => updateName('last_name', e.target.value)}
-                                className="w-full rounded-xl border-2 border-gray-200 dark:border-white/10 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all px-3 py-2 mt-1 text-[11px] bg-white dark:bg-slate-900 text-gray-900 dark:text-white outline-none"
+                                className={inputClass}
                                 placeholder="Ej: Pérez"
                                 required
                             />
-                            {errors.last_name && <p className="text-rose-500 text-[11px] mt-1">{errors.last_name}</p>}
+                            {errors.last_name && <p className={errorClass}>{errors.last_name}</p>}
                         </div>
 
                         <div>
-                            <label className="text-[11px] font-semibold text-gray-700 dark:text-neutral-300">
+                            <label className={labelClass}>
                                 Apellido Materno
                             </label>
                             <input
                                 type="text"
                                 value={data.second_last_name}
                                 onChange={(e) => updateName('second_last_name', e.target.value)}
-                                className="w-full rounded-xl border-2 border-gray-200 dark:border-white/10 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all px-3 py-2 mt-1 text-[11px] bg-white dark:bg-slate-900 text-gray-900 dark:text-white outline-none"
+                                className={inputClass}
                                 placeholder="Ej: García"
                             />
-                            {errors.second_last_name && <p className="text-rose-500 text-[11px] mt-1">{errors.second_last_name}</p>}
+                            {errors.second_last_name && <p className={errorClass}>{errors.second_last_name}</p>}
                         </div>
 
                         <div>
-                            <label className="text-[11px] font-semibold text-gray-700 dark:text-neutral-300">
+                            <label className={labelClass}>
                                 Nombres <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="text"
                                 value={data.first_name}
                                 onChange={(e) => updateName('first_name', e.target.value)}
-                                className="w-full rounded-xl border-2 border-gray-200 dark:border-white/10 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all px-3 py-2 mt-1 text-[11px] bg-white dark:bg-slate-900 text-gray-900 dark:text-white outline-none"
+                                className={inputClass}
                                 placeholder="Ej: Juan Carlos"
                                 required
                             />
-                            {errors.first_name && <p className="text-rose-500 text-[11px] mt-1">{errors.first_name}</p>}
+                            {errors.first_name && <p className={errorClass}>{errors.first_name}</p>}
                         </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label className="text-[11px] font-semibold text-gray-700 dark:text-neutral-300">Email *</label>
+                            <label className={labelClass}>Email *</label>
                             <input
                                 type="email"
                                 value={data.email}
                                 onChange={(e) => setData('email', e.target.value)}
-                                className="w-full rounded-xl border-2 border-gray-200 dark:border-white/10 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all px-3 py-2 mt-1 text-[11px] bg-white dark:bg-slate-900 text-gray-900 dark:text-white outline-none"
+                                className={inputClass}
                                 required
                             />
-                            {errors.email && <p className="text-rose-500 text-[11px] mt-1">{errors.email}</p>}
+                            {errors.email && <p className={errorClass}>{errors.email}</p>}
                         </div>
 
                         <div>
-                            <label className="text-[11px] font-semibold text-gray-700 dark:text-neutral-300">DNI</label>
+                            <label className={labelClass}>DNI</label>
                             <input
                                 type="text"
                                 value={data.dni}
                                 onChange={(e) => setData('dni', e.target.value)}
-                                className="w-full rounded-xl border-2 border-gray-200 dark:border-white/10 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all px-3 py-2 mt-1 text-[11px] bg-white dark:bg-slate-900 text-gray-900 dark:text-white outline-none"
+                                className={inputClass}
                                 maxLength={8}
                                 placeholder="12345678"
                             />
-                            {errors.dni && <p className="text-rose-500 text-[11px] mt-1">{errors.dni}</p>}
+                            {errors.dni && <p className={errorClass}>{errors.dni}</p>}
                         </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label className="text-[11px] font-semibold text-gray-700 dark:text-neutral-300">Rol *</label>
+                            <label className={labelClass}>Rol *</label>
                             <select
                                 value={data.role}
                                 onChange={(e) => setData('role', e.target.value)}
-                                className="w-full rounded-xl border-2 border-gray-200 dark:border-white/10 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all px-3 py-2 mt-1 text-[11px] bg-white dark:bg-slate-900 text-gray-900 dark:text-white outline-none"
+                                className={inputClass}
                                 required
                             >
                                 {Object.entries(roles).map(([key, value]) => (
                                     <option key={key} value={key}>{value}</option>
                                 ))}
                             </select>
-                            {errors.role && <p className="text-rose-500 text-[11px] mt-1">{errors.role}</p>}
+                            {errors.role && <p className={errorClass}>{errors.role}</p>}
                         </div>
 
                         <div>
-                            <label className="text-[11px] font-semibold text-gray-700 dark:text-neutral-300">
+                            <label className={labelClass}>
                                 {type === 'create' ? 'Contraseña *' : 'Nueva Contraseña (opcional)'}
                             </label>
                             <div className="relative">
@@ -737,7 +748,7 @@ function UserModal({
                                     type={showPassword ? 'text' : 'password'}
                                     value={data.password}
                                     onChange={(e) => setData('password', e.target.value)}
-                                    className="w-full rounded-xl border-2 border-gray-200 dark:border-white/10 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all px-3 py-2 mt-1 text-[11px] bg-white dark:bg-slate-900 text-gray-900 dark:text-white outline-none"
+                                    className={inputClass}
                                     required={type === 'create'}
                                     minLength={8}
                                     placeholder={type === 'create' ? 'Mínimo 8 caracteres' : 'Dejar vacío para mantener'}
@@ -750,12 +761,12 @@ function UserModal({
                                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                 </button>
                             </div>
-                            {errors.password && <p className="text-rose-500 text-[11px] mt-1">{errors.password}</p>}
+                            {errors.password && <p className={errorClass}>{errors.password}</p>}
                         </div>
                     </div>
 
                     <div>
-                        <label className="text-[11px] font-semibold text-gray-700 dark:text-neutral-300">
+                        <label className={labelClass}>
                             Instituciones Asignadas
                         </label>
                         
@@ -766,7 +777,7 @@ function UserModal({
                                 placeholder="Buscar institución por nombre o código..."
                                 value={searchInstitutions}
                                 onChange={(e) => setSearchInstitutions(e.target.value)}
-                                className="w-full rounded-xl border-2 border-gray-200 dark:border-white/10 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all pl-9 pr-4 py-2 text-[11px] bg-white dark:bg-slate-900 text-gray-900 dark:text-white outline-none placeholder:text-gray-400 dark:placeholder:text-neutral-500"
+                                className={`${inputClass} pl-9`}
                             />
                             {searchInstitutions && (
                                 <button
@@ -780,26 +791,32 @@ function UserModal({
 
                         <div className="max-h-40 overflow-y-auto border-2 border-gray-200 dark:border-white/10 rounded-xl p-2 mt-2">
                             {filteredInstitutions.length > 0 ? (
-                                filteredInstitutions.map((inst) => (
-                                    <label key={inst.id} className="flex items-center gap-2 p-2 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-lg cursor-pointer transition-colors">
-                                        <input
-                                            type="checkbox"
-                                            checked={data.institution_ids.includes(inst.id)}
-                                            onChange={(e) => {
-                                                const ids = e.target.checked
-                                                    ? [...data.institution_ids, inst.id]
-                                                    : data.institution_ids.filter(id => id !== inst.id);
-                                                setData('institution_ids', ids);
-                                            }}
-                                            className="rounded border-gray-300 dark:border-white/20 text-blue-600 focus:ring-blue-500"
-                                        />
-                                        <span className="text-[11px] flex-1 text-gray-900 dark:text-white">{inst.name}</span>
-                                        <span className="text-[11px] text-gray-400 dark:text-neutral-500">({inst.modular_code})</span>
-                                        {data.institution_ids.includes(inst.id) && (
-                                            <CheckCircle className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                                        )}
-                                    </label>
-                                ))
+                                filteredInstitutions.map((inst) => {
+                                    if (!inst) return null;
+                                    const instName = inst.name || 'Sin nombre';
+                                    const instCode = inst.modular_code || 'N/A';
+                                    
+                                    return (
+                                        <label key={inst.id} className="flex items-center gap-2 p-2 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-lg cursor-pointer transition-colors">
+                                            <input
+                                                type="checkbox"
+                                                checked={data.institution_ids.includes(inst.id)}
+                                                onChange={(e) => {
+                                                    const ids = e.target.checked
+                                                        ? [...data.institution_ids, inst.id]
+                                                        : data.institution_ids.filter(id => id !== inst.id);
+                                                    setData('institution_ids', ids);
+                                                }}
+                                                className="rounded border-gray-300 dark:border-white/20 text-blue-600 focus:ring-blue-500"
+                                            />
+                                            <span className="text-[11px] flex-1 text-gray-900 dark:text-white">{instName}</span>
+                                            <span className="text-[11px] text-gray-400 dark:text-neutral-500">({instCode})</span>
+                                            {data.institution_ids.includes(inst.id) && (
+                                                <CheckCircle className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                                            )}
+                                        </label>
+                                    );
+                                })
                             ) : (
                                 <div className="p-4 text-center text-[11px] text-gray-500 dark:text-neutral-400">
                                     No se encontraron instituciones
@@ -836,7 +853,7 @@ function UserModal({
 }
 
 // ============================================
-// MODAL DE ASIGNACIÓN
+// MODAL DE ASIGNACIÓN - CORREGIDO
 // ============================================
 
 function AssignModal({ 
@@ -856,12 +873,28 @@ function AssignModal({
 }) {
     const [search, setSearch] = useState('');
 
-    const filtered = institutions.filter(i =>
-        i.name.toLowerCase().includes(search.toLowerCase()) ||
-        i.modular_code.toLowerCase().includes(search.toLowerCase())
-    );
+    // ✅ Filtrar instituciones con validación segura
+    const filtered = institutions.filter(i => {
+        if (!i) return false;
+        const name = i.name || '';
+        const modularCode = i.modular_code || '';
+        const searchTerm = search.toLowerCase();
+        return name.toLowerCase().includes(searchTerm) || modularCode.includes(searchTerm);
+    });
 
-    const selectedCount = selectedIds.length;
+    const selectedCount = selectedIds ? selectedIds.length : 0;
+
+    // ✅ Función segura para toggle
+    const handleToggle = (id: number) => {
+        if (!selectedIds) {
+            onSelect([id]);
+            return;
+        }
+        const newIds = selectedIds.includes(id)
+            ? selectedIds.filter(i => i !== id)
+            : [...selectedIds, id];
+        onSelect(newIds);
+    };
 
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
@@ -869,7 +902,7 @@ function AssignModal({
                 <div className="flex justify-between items-center mb-4 flex-shrink-0">
                     <div>
                         <h2 className="text-[11px] font-bold text-gray-900 dark:text-white">Asignar Instituciones</h2>
-                        <p className="text-[11px] text-gray-500 dark:text-neutral-400">{user.name}</p>
+                        <p className="text-[11px] text-gray-500 dark:text-neutral-400">{user ? user.name : 'Usuario'}</p>
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-white/5 rounded-xl transition-colors">
                         <X className="w-4 h-4 text-gray-500 dark:text-neutral-400" />
@@ -897,28 +930,27 @@ function AssignModal({
 
                 <div className="flex-1 overflow-y-auto border-2 border-gray-200 dark:border-white/10 rounded-xl divide-y divide-gray-200 dark:divide-white/5">
                     {filtered.length > 0 ? (
-                        filtered.map((inst) => (
-                            <label key={inst.id} className="flex items-center gap-3 p-3 hover:bg-blue-50 dark:hover:bg-blue-500/10 cursor-pointer transition-colors">
-                                <input
-                                    type="checkbox"
-                                    checked={selectedIds.includes(inst.id)}
-                                    onChange={() => {
-                                        const newIds = selectedIds.includes(inst.id)
-                                            ? selectedIds.filter(id => id !== inst.id)
-                                            : [...selectedIds, inst.id];
-                                        onSelect(newIds);
-                                    }}
-                                    className="w-4 h-4 text-blue-600 rounded border-gray-300 dark:border-white/20 focus:ring-blue-500"
-                                />
-                                <div className="flex-1">
-                                    <p className="text-[11px] font-medium text-gray-900 dark:text-white">{inst.name}</p>
-                                    <p className="text-[11px] text-gray-500 dark:text-neutral-400">Código: {inst.modular_code}</p>
-                                </div>
-                                {selectedIds.includes(inst.id) && (
-                                    <CheckCircle className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                                )}
-                            </label>
-                        ))
+                        filtered.map((inst) => {
+                            if (!inst) return null;
+                            const isChecked = selectedIds ? selectedIds.includes(inst.id) : false;
+                            return (
+                                <label key={inst.id} className="flex items-center gap-3 p-3 hover:bg-blue-50 dark:hover:bg-blue-500/10 cursor-pointer transition-colors">
+                                    <input
+                                        type="checkbox"
+                                        checked={isChecked}
+                                        onChange={() => handleToggle(inst.id)}
+                                        className="w-4 h-4 text-blue-600 rounded border-gray-300 dark:border-white/20 focus:ring-blue-500"
+                                    />
+                                    <div className="flex-1">
+                                        <p className="text-[11px] font-medium text-gray-900 dark:text-white">{inst.name || 'Sin nombre'}</p>
+                                        <p className="text-[11px] text-gray-500 dark:text-neutral-400">Código: {inst.modular_code || 'N/A'}</p>
+                                    </div>
+                                    {isChecked && (
+                                        <CheckCircle className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                                    )}
+                                </label>
+                            );
+                        })
                     ) : (
                         <div className="p-8 text-center text-gray-500 dark:text-neutral-400">
                             <Building2 className="w-8 h-8 mx-auto mb-2 text-gray-300 dark:text-neutral-600" />

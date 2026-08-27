@@ -13,6 +13,7 @@ import {
     Settings2,
     ChevronDown,
     ChevronRight,
+    Wifi,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
@@ -50,11 +51,10 @@ export function AppSidebar() {
     const [openSections, setOpenSections] = useState<Record<string, boolean>>({
         'Gestión': true,
         'Instituciones': true,
-        
     });
 
     const toggleSection = (title: string) => {
-        if (isCollapsed) return; // No permitir toggle en modo colapsado
+        if (isCollapsed) return;
         setOpenSections(prev => ({
             ...prev,
             [title]: !prev[title]
@@ -63,6 +63,7 @@ export function AppSidebar() {
 
     // ✅ Definir los items según el rol con estructura de menú
     const getMenuItems = (role: string): MenuItem[] => {
+        // ✅ Items base para todos los usuarios (incluyendo director)
         const baseItems: MenuItem[] = [
             {
                 title: 'Dashboard',
@@ -81,6 +82,18 @@ export function AppSidebar() {
             },
         ];
 
+        // ✅ DIRECTOR - Puede ver sus equipos de red
+        if (role === 'director') {
+            return [
+                ...baseItems,
+                {
+                    title: 'Equipos de Red',
+                    href: '/equipos-red',
+                    icon: Wifi,
+                },
+            ];
+        }
+
         if (role === 'super_admin') {
             return [
                 ...baseItems,
@@ -89,6 +102,11 @@ export function AppSidebar() {
                     href: '/updi/dashboard',
                     icon: ShieldCheck,
                 },
+                {
+                    title: 'Equipos de Red',
+                    href: '/equipos-red',
+                    icon: Wifi,
+                },  
                 {
                     title: 'Estadísticas Generales',
                     href: '/admin/estadisticas',
@@ -138,7 +156,6 @@ export function AppSidebar() {
                         },
                     ],
                 },
-                
             ];
         }
 
@@ -149,6 +166,11 @@ export function AppSidebar() {
                     title: 'Panel UPDI',
                     href: '/updi/dashboard',
                     icon: ShieldCheck,
+                },
+                {
+                    title: 'Equipos de Red',
+                    href: '/equipos-red',
+                    icon: Wifi,
                 },
                 {
                     title: 'Gestión',

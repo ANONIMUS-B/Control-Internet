@@ -10,12 +10,12 @@ return new class extends Migration
     {
         Schema::create('educational_institutions', function (Blueprint $table) {
             $table->id();
-            $table->string('modular_code', 10)->unique();
-            $table->string('name', 150);
-            $table->string('district', 100);
+            $table->string('modular_code', 10)->nullable()->unique(); // ✅ Ahora permite NULL
+            $table->string('name', 150)->nullable(); // ✅ Ahora permite NULL
+            $table->string('district', 100)->nullable(); // ✅ Ahora permite NULL
             $table->string('populated_center', 100)->nullable();
             
-            // Relación con proveedores. 'set null' protege a la I.E. si un proveedor es eliminado.
+            // Relación con proveedores
             $table->foreignId('current_provider_id')
                   ->nullable()
                   ->constrained('providers')

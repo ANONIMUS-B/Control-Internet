@@ -108,15 +108,23 @@ export default function Assign({ users, institutions, filters, roles }: AssignPr
         );
     };
 
-    const filteredInstitutions = institutions.filter(i =>
-        i.name.toLowerCase().includes(searchInstitution.toLowerCase()) ||
-        i.modular_code.includes(searchInstitution)
-    );
+    // ✅ Filtrar instituciones con validación segura para name
+    const filteredInstitutions = institutions.filter(i => {
+        // Si no hay usuario seleccionado, mostrar todas las instituciones
+        if (!selectedUser) return true;
+        
+        const searchTerm = searchInstitution.toLowerCase();
+        const institutionName = i.name || ''; // ✅ Si name es null/undefined, usar cadena vacía
+        const modularCode = i.modular_code || ''; // ✅ Si modular_code es null/undefined, usar cadena vacía
+        
+        return institutionName.toLowerCase().includes(searchTerm) ||
+               modularCode.includes(searchTerm);
+    });
 
     const stats = {
         total: users?.total || 0,
-        withSignature: users?.data?.filter(u => u.signature_active).length || 0,
-        withoutSignature: users?.data?.filter(u => !u.signature_active).length || 0,
+        withSignature: users?.data?.filter(u => u && u.signature_active).length || 0,
+        withoutSignature: users?.data?.filter(u => u && !u.signature_active).length || 0,
     };
 
     const roleLabels: Record<string, string> = {
@@ -276,8 +284,7 @@ export default function Assign({ users, institutions, filters, roles }: AssignPr
                                         users.data.map((user) => (
                                             <tr 
                                                 key={user.id} 
-                                                className="border-t border-gray-200 dark:border-white/5 hover:bg-gray-50 dark:hover:bg-white/10 transition-colors cursor-pointer"
-                                                onClick={() => setSelectedUser(user)}
+                                                className="border-t border-gray-200 dark:border-white/5 hover:bg-gray-50 dark:hover:bg-white/10 transition-colors"
                                             >
                                                 <td className="p-3">
                                                     <div className="font-medium text-gray-900 dark:text-white">{user.name}</div>
@@ -293,26 +300,43 @@ export default function Assign({ users, institutions, filters, roles }: AssignPr
                                                 </td>
                                                 <td className="p-3">
                                                     <div className="flex flex-wrap gap-1">
-                                                        {user.institutions.length > 0 ? (
-                                                            user.institutions.slice(0, 2).map((inst) => (
-                                                                <span key={inst.id} className="px-2 py-0.5 bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 rounded-full text-[11px] border border-blue-200 dark:border-blue-500/20">
-                                                                    {inst.modular_code}
+                                                        {user.institutions && user.institutions.length > 0 ? (
+                                                            user.institutions.map((inst) => (
+                                                                <span 
+                                                                    key={inst.id} 
+                                                                    className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 rounded-full text-[10px] border border-blue-200 dark:border-blue-500/20 max-w-[200px]"
+                                                                    title={inst.name || ''}
+                                                                >
+                                                                    <Building2 className="w-3 h-3 flex-shrink-0" />
+                                                                    <span className="truncate">{inst.name || 'Sin nombre'}</span>
+                                                                    <span className="text-[9px] text-blue-400 dark:text-blue-500 flex-shrink-0">({inst.modular_code || 'N/A'})</span>
                                                                 </span>
                                                             ))
                                                         ) : (
                                                             <span className="text-[11px] text-gray-400 dark:text-neutral-500">Sin asignar</span>
                                                         )}
-                                                        {user.institutions.length > 2 && (
-                                                            <span className="px-2 py-0.5 bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-neutral-400 rounded-full text-[11px] border border-gray-200 dark:border-white/10">
-                                                                +{user.institutions.length - 2}
-                                                            </span>
-                                                        )}
                                                     </div>
+                                                    {user.institutions && user.institutions.length > 0 && (
+                                                        <div className="mt-1 text-[10px] text-gray-400 dark:text-neutral-500">
+                                                            {user.institutions.length} institución(es) asignada(s)
+                                                        </div>
+                                                    )}
                                                 </td>
                                                 <td className="p-3">
-                                                    <span className={`px-2 py-1 rounded-full text-[11px] font-medium border ${user.signature_active ? 'bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/25' : 'bg-amber-100 dark:bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/25'}`}>
-                                                        {user.signature_active ? '✅ Activa' : '❌ Sin firma'}
-                                                    </span>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className={`px-2 py-1 rounded-full text-[11px] font-medium border ${user.signature_active ? 'bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/25' : 'bg-amber-100 dark:bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/25'}`}>
+                                                            {user.signature_active ? '✅ Activa' : '❌ Sin firma'}
+                                                        </span>
+                                                        <button
+                                                            onClick={() => {
+                                                                setSelectedUser(user);
+                                                                setSearchInstitution('');
+                                                            }}
+                                                            className="px-2 py-0.5 bg-blue-100 dark:bg-blue-500/20 hover:bg-blue-200 dark:hover:bg-blue-500/30 text-blue-700 dark:text-blue-400 rounded-lg text-[10px] font-medium transition-colors border border-blue-200 dark:border-blue-500/20"
+                                                        >
+                                                            Asignar
+                                                        </button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))
@@ -371,41 +395,86 @@ export default function Assign({ users, institutions, filters, roles }: AssignPr
                         </div>
 
                         <div className="p-4 md:p-6">
+                            {/* ===== IEs actualmente asignadas ===== */}
+                            {selectedUser && (
+                                <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-500/10 rounded-xl border border-blue-200 dark:border-blue-500/20">
+                                    <p className="text-[10px] font-medium text-blue-700 dark:text-blue-300 mb-2">
+                                        IEs actualmente asignadas:
+                                    </p>
+                                    <div className="flex flex-wrap gap-1">
+                                        {selectedUser.institutions && selectedUser.institutions.length > 0 ? (
+                                            selectedUser.institutions.map((inst) => (
+                                                <span 
+                                                    key={inst.id} 
+                                                    className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 rounded-full text-[10px] border border-blue-200 dark:border-blue-500/20"
+                                                    title={inst.name || ''}
+                                                >
+                                                    <Building2 className="w-3 h-3" />
+                                                    <span className="truncate max-w-[120px]">{inst.name || 'Sin nombre'}</span>
+                                                    <span className="text-[9px] text-blue-400 dark:text-blue-500">({inst.modular_code || 'N/A'})</span>
+                                                </span>
+                                            ))
+                                        ) : (
+                                            <span className="text-[11px] text-gray-400 dark:text-neutral-500">No tiene instituciones asignadas</span>
+                                        )}
+                                    </div>
+                                    {selectedUser.institutions && selectedUser.institutions.length > 0 && (
+                                        <div className="mt-2 text-[10px] text-blue-600 dark:text-blue-400">
+                                            Total: {selectedUser.institutions.length} institución(es)
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* ===== Buscador ===== */}
                             <div className="relative mb-4">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-neutral-500 w-4 h-4" />
                                 <input 
                                     placeholder="Buscar IE por nombre o código..." 
                                     className="w-full rounded-xl border-2 border-gray-200 dark:border-white/10 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all py-2 pl-9 pr-3 text-[11px] bg-white dark:bg-slate-900 text-gray-900 dark:text-white outline-none placeholder:text-gray-400 dark:placeholder:text-neutral-500"
+                                    value={searchInstitution}
                                     onChange={(e) => setSearchInstitution(e.target.value)}
                                 />
                             </div>
 
+                            {/* ===== Lista de instituciones ===== */}
                             <div className="max-h-80 overflow-y-auto border-2 border-gray-200 dark:border-white/10 rounded-xl divide-y divide-gray-200 dark:divide-white/5">
                                 {filteredInstitutions.length > 0 ? (
-                                    filteredInstitutions.map((ie) => (
-                                        <label 
-                                            key={ie.id} 
-                                            className="flex items-center gap-3 p-3 hover:bg-blue-50 dark:hover:bg-blue-500/10 cursor-pointer transition-colors"
-                                        >
-                                            <input 
-                                                type="checkbox"
-                                                checked={selectedUser.institutions.some((u) => u.id === ie.id)}
-                                                onChange={() => toggleInstitution(selectedUser, ie.id)}
-                                                className="w-4 h-4 text-blue-600 rounded border-gray-300 dark:border-white/20 focus:ring-blue-500"
-                                            />
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-[11px] font-medium text-gray-900 dark:text-white truncate">
-                                                    {ie.name}
-                                                </p>
-                                                <p className="text-[11px] text-gray-500 dark:text-neutral-400">
-                                                    Código: {ie.modular_code}
-                                                </p>
-                                            </div>
-                                            {selectedUser.institutions.some((u) => u.id === ie.id) && (
-                                                <CheckCircle className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
-                                            )}
-                                        </label>
-                                    ))
+                                    filteredInstitutions.map((ie) => {
+                                        // ✅ Verificar que selectedUser existe antes de acceder a institutions
+                                        const isAssigned = selectedUser && selectedUser.institutions && 
+                                            selectedUser.institutions.some((u) => u.id === ie.id);
+                                        
+                                        return (
+                                            <label 
+                                                key={ie.id} 
+                                                className={`flex items-center gap-3 p-3 hover:bg-blue-50 dark:hover:bg-blue-500/10 cursor-pointer transition-colors ${isAssigned ? 'bg-blue-50/50 dark:bg-blue-500/5' : ''}`}
+                                            >
+                                                <input 
+                                                    type="checkbox"
+                                                    checked={isAssigned || false}
+                                                    onChange={() => toggleInstitution(selectedUser, ie.id)}
+                                                    className="w-4 h-4 text-blue-600 rounded border-gray-300 dark:border-white/20 focus:ring-blue-500"
+                                                />
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-[11px] font-medium text-gray-900 dark:text-white truncate">
+                                                        {ie.name || 'Sin nombre'}
+                                                        {isAssigned && (
+                                                            <span className="ml-2 text-[10px] text-blue-600 dark:text-blue-400 font-normal">
+                                                                (Asignada)
+                                                            </span>
+                                                        )}
+                                                    </p>
+                                                    <p className="text-[11px] text-gray-500 dark:text-neutral-400">
+                                                        Código: {ie.modular_code || 'N/A'}
+                                                    </p>
+                                                </div>
+                                                {isAssigned && (
+                                                    <CheckCircle className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                                                )}
+                                            </label>
+                                        );
+                                    })
                                 ) : (
                                     <div className="p-6 text-center text-gray-500 dark:text-neutral-400">
                                         <Building2 className="w-8 h-8 mx-auto mb-2 text-gray-300 dark:text-neutral-600" />
@@ -414,8 +483,12 @@ export default function Assign({ users, institutions, filters, roles }: AssignPr
                                 )}
                             </div>
 
-                            <div className="mt-4 text-[11px] text-gray-500 dark:text-neutral-400">
-                                {selectedUser.institutions.length} instituciones asignadas
+                            {/* ===== Resumen ===== */}
+                            <div className="mt-4 flex items-center justify-between text-[11px] text-gray-500 dark:text-neutral-400">
+                                <span>{selectedUser.institutions ? selectedUser.institutions.length : 0} instituciones asignadas</span>
+                                <span className="text-gray-400 dark:text-neutral-500">
+                                    {filteredInstitutions.length} instituciones disponibles
+                                </span>
                             </div>
                         </div>
 

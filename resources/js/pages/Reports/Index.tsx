@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { dashboard } from '@/routes';
 import { 
     Plus, FileText, CheckCircle2, Clock, FileDown, 
@@ -14,7 +14,9 @@ import {
     Zap,
     Shield,
     Eye,
-    MoreHorizontal
+    MoreHorizontal,
+    CheckCircle,
+    EyeOff
 } from 'lucide-react';
 import { Pagination } from '@/components/Pagination';
 
@@ -70,6 +72,14 @@ export default function Index({
     statuses,
     currentYear 
 }: IndexProps) {
+    // ✅ Obtener el usuario desde usePage
+    const { props } = usePage();
+    const user = props.auth?.user;
+    const userRole = user?.role || 'director';
+    
+    // ✅ Pueden aprobar/observar: super_admin, admin, specialist
+    const canModerate = ['super_admin', 'admin', 'specialist'].includes(userRole);
+    
     const [selectedMonth, setSelectedMonth] = useState<string>(filters.month || '');
     const [selectedYear, setSelectedYear] = useState<string>(filters.year || String(currentYear));
     const [selectedStatus, setSelectedStatus] = useState<string>(filters.status || '');
@@ -77,6 +87,8 @@ export default function Index({
     const [perPage, setPerPage] = useState<number>(filters.per_page || 10);
     const [showFilters, setShowFilters] = useState(false);
     const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+    const [comment, setComment] = useState('');
+    const [reportToObserve, setReportToObserve] = useState<number | null>(null);
 
     const applyFilters = () => {
         router.get('/reportes', {
@@ -103,6 +115,33 @@ export default function Index({
         }, {
             preserveState: true,
             preserveScroll: true,
+        });
+    };
+
+    // ✅ Funciones para aprobar y observar
+    const handleApprove = (id: number) => {
+        if (!confirm('¿Estás seguro de aprobar este reporte?')) return;
+        
+        router.post(`/reportes/${id}/aprobar`, {}, {
+            preserveScroll: true,
+            onSuccess: () => {
+                router.reload();
+            }
+        });
+    };
+
+    const handleObserve = () => {
+        if (!reportToObserve || !comment.trim()) return;
+
+        router.post(`/reportes/${reportToObserve}/observar`, { 
+            admin_comments: comment 
+        }, { 
+            preserveScroll: true,
+            onSuccess: () => {
+                setReportToObserve(null);
+                setComment('');
+                router.reload();
+            }
         });
     };
 
@@ -227,7 +266,6 @@ export default function Index({
         <>
             <Head title="Gestión de Conformidades" />
             
-            {/* ✅ Fondo completamente neutro - SIN NINGÚN COLOR DE FONDO */}
             <div className="p-4 md:p-6" style={{ fontSize: '11px' }}>
                 <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
                     
@@ -584,7 +622,35 @@ export default function Index({
                                                         </span>
                                                     </td>
                                                     <td className="px-4 md:px-6 py-3 md:py-4 text-right">
-                                                        <div className="flex items-center justify-end gap-1.5">
+                                                        <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                                                            {/* ✅ Botones de aprobar/observar para moderadores */}
+                                                            {canModerate && report.status === 'pending' && (
+                                                                <>
+                                                                    <button
+                                                                        onClick={() => handleApprove(report.id)}
+                                                                        className="p-2 rounded-xl bg-emerald-100 dark:bg-emerald-500/10 hover:bg-emerald-200 dark:hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 transition-all border border-emerald-200 dark:border-emerald-500/20 hover:scale-110 active:scale-95"
+                                                                        title="Aprobar"
+                                                                    >
+                                                                        <CheckCircle2 className="w-4 h-4" />
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => setReportToObserve(report.id)}
+                                                                        className="p-2 rounded-xl bg-amber-100 dark:bg-amber-500/10 hover:bg-amber-200 dark:hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 transition-all border border-amber-200 dark:border-amber-500/20 hover:scale-110 active:scale-95"
+                                                                        title="Observar"
+                                                                    >
+                                                                        <AlertCircle className="w-4 h-4" />
+                                                                    </button>
+                                                                </>
+                                                            )}
+                                                            {canModerate && report.status === 'observed' && (
+                                                                <button
+                                                                    onClick={() => handleApprove(report.id)}
+                                                                    className="p-2 rounded-xl bg-emerald-100 dark:bg-emerald-500/10 hover:bg-emerald-200 dark:hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 transition-all border border-emerald-200 dark:border-emerald-500/20 hover:scale-110 active:scale-95"
+                                                                    title="Aprobar después de corrección"
+                                                                >
+                                                                    <CheckCircle2 className="w-4 h-4" />
+                                                                </button>
+                                                            )}
                                                             {report.status === 'observed' && (
                                                                 <Link 
                                                                     href={`/reportes/${report.id}/editar`} 
@@ -602,12 +668,6 @@ export default function Index({
                                                             >
                                                                 <FileDown className="w-4 h-4" />
                                                             </a>
-                                                            <button 
-                                                                className="p-2 rounded-xl bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-500 dark:text-neutral-400 transition-all border border-gray-200 dark:border-white/10 hover:scale-110 active:scale-95"
-                                                                title="Más acciones"
-                                                            >
-                                                                <MoreHorizontal className="w-4 h-4" />
-                                                            </button>
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -670,6 +730,45 @@ export default function Index({
                     )}
                 </div>
             </div>
+
+            {/* ===== MODAL DE OBSERVACIÓN ===== */}
+            {reportToObserve && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                    <div className="bg-white dark:bg-slate-800 w-full max-w-lg rounded-2xl p-6 shadow-2xl border border-gray-200 dark:border-white/10">
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-[11px] font-bold text-gray-900 dark:text-white">Registrar Observación</h2>
+                            <button 
+                                onClick={() => setReportToObserve(null)}
+                                className="p-2 hover:bg-gray-100 dark:hover:bg-white/5 rounded-xl transition-colors"
+                            >
+                                <X className="w-4 h-4 text-gray-500 dark:text-neutral-400" />
+                            </button>
+                        </div>
+                        <textarea
+                            autoFocus
+                            value={comment}
+                            onChange={(e) => setComment(e.target.value)}
+                            className="w-full h-32 rounded-xl border-2 border-gray-200 dark:border-white/10 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all p-4 text-[11px] bg-white dark:bg-slate-900 text-gray-900 dark:text-white outline-none resize-none placeholder:text-gray-400 dark:placeholder:text-neutral-500"
+                            placeholder="Motivo de la observación..."
+                        />
+                        <div className="flex justify-end gap-3 mt-4">
+                            <button
+                                onClick={() => setReportToObserve(null)}
+                                className="px-4 py-2.5 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-700 dark:text-neutral-300 rounded-xl text-[11px] font-medium transition-all border border-gray-300 dark:border-white/10 hover:border-gray-400 dark:hover:border-white/20"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handleObserve}
+                                disabled={!comment.trim()}
+                                className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white rounded-xl text-[11px] font-medium transition-all shadow-lg shadow-amber-500/20 hover:shadow-amber-500/40 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
+                            >
+                                Enviar Observación
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 }

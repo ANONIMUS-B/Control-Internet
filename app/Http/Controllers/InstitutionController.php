@@ -87,14 +87,14 @@ class InstitutionController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'modular_code' => 'required|string|max:10|unique:educational_institutions,modular_code',
+            'modular_code' => 'nullable|string|max:10|unique:educational_institutions,modular_code',
             'local_code' => 'nullable|string|max:20',
-            'name' => 'required|string|max:150',
-            'level' => 'required|string|max:50',
-            'type_management' => 'required|string|max:100',
+            'name' => 'nullable|string|max:150',
+            'level' => 'nullable|string|max:50',
+            'type_management' => 'nullable|string|max:100',
             'department' => 'nullable|string|max:100',
             'province' => 'nullable|string|max:100',
-            'district' => 'required|string|max:100',
+            'district' => 'nullable|string|max:100',
             'ugel' => 'nullable|string|max:100',
             'populated_center' => 'nullable|string|max:100',
             'address' => 'nullable|string|max:255',
@@ -135,14 +135,14 @@ class InstitutionController extends Controller
     public function update(Request $request, EducationalInstitution $institution)
     {
         $validated = $request->validate([
-            'modular_code' => 'required|string|max:10|unique:educational_institutions,modular_code,' . $institution->id,
+            'modular_code' => 'nullable|string|max:10|unique:educational_institutions,modular_code,' . $institution->id,
             'local_code' => 'nullable|string|max:20',
-            'name' => 'required|string|max:150',
-            'level' => 'required|string|max:50',
-            'type_management' => 'required|string|max:100',
+            'name' => 'nullable|string|max:150',
+            'level' => 'nullable|string|max:50',
+            'type_management' => 'nullable|string|max:100',
             'department' => 'nullable|string|max:100',
             'province' => 'nullable|string|max:100',
-            'district' => 'required|string|max:100',
+            'district' => 'nullable|string|max:100',
             'ugel' => 'nullable|string|max:100',
             'populated_center' => 'nullable|string|max:100',
             'address' => 'nullable|string|max:255',
@@ -282,7 +282,7 @@ class InstitutionController extends Controller
 
     /**
      * Descargar plantilla de importación en Excel
-     * ✅ SOLO SUPER_ADMIN
+     * ✅ TODOS LOS CAMPOS SON OPCIONALES
      */
     public function downloadTemplate(Request $request)
     {
@@ -310,7 +310,7 @@ class InstitutionController extends Controller
             'address'
         ];
 
-        // ✅ Estilo para encabezados
+        // ✅ Estilo para encabezados (Morado - sin obligatoriedad)
         $headerStyle = [
             'font' => [
                 'bold' => true,
@@ -319,7 +319,7 @@ class InstitutionController extends Controller
             ],
             'fill' => [
                 'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                'startColor' => ['rgb' => '1a56db'],
+                'startColor' => ['rgb' => '4F46E5'], // Morado
             ],
             'alignment' => [
                 'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
@@ -343,19 +343,19 @@ class InstitutionController extends Controller
         // ✅ Aplicar estilo a encabezados
         $sheet->getStyle('A1:K1')->applyFromArray($headerStyle);
 
-        // ✅ Datos de ejemplo (fila 2)
+        // ✅ Datos de ejemplo (fila 2) - TODOS OPCIONALES
         $row = 2;
-        $sheet->setCellValueByColumnAndRow(1, $row, '1234567');
-        $sheet->setCellValueByColumnAndRow(2, $row, 'LOC001');
-        $sheet->setCellValueByColumnAndRow(3, $row, 'I.E. N° 30001 "San Martín"');
-        $sheet->setCellValueByColumnAndRow(4, $row, 'Secundaria');
-        $sheet->setCellValueByColumnAndRow(5, $row, 'Pública');
-        $sheet->setCellValueByColumnAndRow(6, $row, 'Huánuco');
-        $sheet->setCellValueByColumnAndRow(7, $row, 'Ambo');
-        $sheet->setCellValueByColumnAndRow(8, $row, 'Ambo');
-        $sheet->setCellValueByColumnAndRow(9, $row, 'UGEL Ambo');
-        $sheet->setCellValueByColumnAndRow(10, $row, 'San Martín');
-        $sheet->setCellValueByColumnAndRow(11, $row, 'Jr. San Martín N° 123');
+        $sheet->setCellValueByColumnAndRow(1, $row, '1234567');          // modular_code (opcional)
+        $sheet->setCellValueByColumnAndRow(2, $row, 'LOC001');           // local_code (opcional)
+        $sheet->setCellValueByColumnAndRow(3, $row, 'I.E. N° 30001');    // name (opcional)
+        $sheet->setCellValueByColumnAndRow(4, $row, 'Secundaria');       // level (opcional)
+        $sheet->setCellValueByColumnAndRow(5, $row, 'Pública');          // type_management (opcional)
+        $sheet->setCellValueByColumnAndRow(6, $row, 'Huánuco');          // department (opcional)
+        $sheet->setCellValueByColumnAndRow(7, $row, 'Ambo');             // province (opcional)
+        $sheet->setCellValueByColumnAndRow(8, $row, 'Ambo');             // district (opcional)
+        $sheet->setCellValueByColumnAndRow(9, $row, 'UGEL Ambo');        // ugel (opcional)
+        $sheet->setCellValueByColumnAndRow(10, $row, 'San Martín');      // populated_center (opcional)
+        $sheet->setCellValueByColumnAndRow(11, $row, 'Jr. San Martín');  // address (opcional)
 
         // ✅ Estilo para los datos de ejemplo
         $exampleStyle = [
@@ -375,25 +375,19 @@ class InstitutionController extends Controller
         ];
         $sheet->getStyle('A2:K2')->applyFromArray($exampleStyle);
 
-        // ✅ Color amarillo para columnas obligatorias
-        $requiredColumns = ['A', 'C', 'H']; // modular_code, name, district
-        
-        foreach ($requiredColumns as $colLetter) {
-            $sheet->getStyle($colLetter . '2')->getFill()
-                ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
-                ->getStartColor()->setRGB('FFF3CD');
-        }
-
-        // ✅ Instrucciones
+        // ✅ INSTRUCCIONES ACTUALIZADAS - TODOS LOS CAMPOS OPCIONALES
         $sheet->setCellValue('A4', 'INSTRUCCIONES:');
-        $sheet->setCellValue('A5', '1. Las columnas en AMARILLO son OBLIGATORIAS (*)');
-        $sheet->setCellValue('A6', '2. Elimina la fila de ejemplo antes de cargar tus datos');
-        $sheet->setCellValue('A7', '3. No modifiques los nombres de las columnas');
-        $sheet->setCellValue('A8', '4. Guarda el archivo en formato .xlsx');
+        $sheet->setCellValue('A5', '1. TODOS los campos son OPCIONALES');
+        $sheet->setCellValue('A6', '2. Puedes importar solo los datos que tengas disponibles');
+        $sheet->setCellValue('A7', '3. Si el código modular coincide, la institución se actualizará');
+        $sheet->setCellValue('A8', '4. Si el código local coincide, la institución se actualizará');
+        $sheet->setCellValue('A9', '5. No modifiques los nombres de las columnas');
+        $sheet->setCellValue('A10', '6. Guarda el archivo en formato .xlsx');
+        $sheet->setCellValue('A11', '7. Elimina la fila de ejemplo antes de cargar tus datos');
         
         $sheet->getStyle('A4')->getFont()->setBold(true)->setSize(11);
-        $sheet->getStyle('A4:A8')->getFont()->setSize(10);
-        $sheet->getStyle('A4:A8')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+        $sheet->getStyle('A4:A11')->getFont()->setSize(10);
+        $sheet->getStyle('A4:A11')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
 
         // ✅ Descargar archivo
         $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);

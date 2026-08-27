@@ -253,7 +253,7 @@ export default function Institutions({
                             <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
                                 <div>
                                     <label className={labelClass}>
-                                        Código Modular <span className="text-rose-500">*</span>
+                                        Código Modular
                                     </label>
                                     <input
                                         className={inputClass}
@@ -278,7 +278,7 @@ export default function Institutions({
 
                                 <div>
                                     <label className={labelClass}>
-                                        Nivel <span className="text-rose-500">*</span>
+                                        Nivel
                                     </label>
                                     <select
                                         className={inputClass}
@@ -297,7 +297,7 @@ export default function Institutions({
 
                                 <div>
                                     <label className={labelClass}>
-                                        Tipo de Gestión <span className="text-rose-500">*</span>
+                                        Tipo de Gestión
                                     </label>
                                     <select
                                         className={inputClass}
@@ -312,7 +312,7 @@ export default function Institutions({
 
                                 <div className="md:col-span-2 lg:col-span-2">
                                     <label className={labelClass}>
-                                        Nombre de IE <span className="text-rose-500">*</span>
+                                        Nombre de IE
                                     </label>
                                     <input
                                         className={inputClass}
@@ -342,7 +342,7 @@ export default function Institutions({
 
                                 <div>
                                     <label className={labelClass}>
-                                        Distrito <span className="text-rose-500">*</span>
+                                        Distrito
                                     </label>
                                     <input
                                         className={inputClass}
@@ -496,6 +496,7 @@ export default function Institutions({
                                 <thead className="bg-gray-50 dark:bg-white/5">
                                     <tr>
                                         <th className="px-4 py-3 font-semibold text-gray-500 dark:text-neutral-400 uppercase tracking-wider text-[11px]">Cód. Modular</th>
+                                        <th className="px-4 py-3 font-semibold text-gray-500 dark:text-neutral-400 uppercase tracking-wider text-[11px]">Cód. Local</th>
                                         <th className="px-4 py-3 font-semibold text-gray-500 dark:text-neutral-400 uppercase tracking-wider text-[11px]">Nombre de la IE</th>
                                         <th className="px-4 py-3 font-semibold text-gray-500 dark:text-neutral-400 uppercase tracking-wider text-[11px]">Nivel</th>
                                         <th className="px-4 py-3 font-semibold text-gray-500 dark:text-neutral-400 uppercase tracking-wider text-[11px]">Gestión</th>
@@ -509,7 +510,10 @@ export default function Institutions({
                                         institutions.data.map((institution) => (
                                             <tr key={institution.id} className="hover:bg-gray-50 dark:hover:bg-white/10 transition-colors">
                                                 <td className="px-4 py-3 font-mono text-[11px] font-medium text-gray-900 dark:text-white">
-                                                    {institution.modular_code}
+                                                    {institution.modular_code || '-'}
+                                                </td>
+                                                <td className="px-4 py-3 font-mono text-[11px] font-medium text-gray-900 dark:text-white">
+                                                    {institution.local_code || '-'}
                                                 </td>
                                                 <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">
                                                     {institution.name}
@@ -568,7 +572,7 @@ export default function Institutions({
                                         ))
                                     ) : (
                                         <tr>
-                                            <td colSpan={7} className="py-16 text-center">
+                                            <td colSpan={8} className="py-16 text-center">
                                                 <div className="flex flex-col items-center gap-4">
                                                     <div className="p-6 bg-gray-100 dark:bg-white/5 rounded-full border border-gray-200 dark:border-white/10">
                                                         <Building2 className="w-16 h-16 text-gray-400 dark:text-neutral-600" />

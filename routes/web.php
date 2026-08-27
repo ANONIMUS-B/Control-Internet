@@ -20,6 +20,7 @@ use App\Http\Controllers\SpeedtestController;
 use App\Http\Controllers\SpeedtestOoklaController;
 use App\Http\Controllers\SpeedtestRealController;
 use App\Http\Controllers\UserManagementController;
+use App\Http\Controllers\NetworkEquipmentController;
 
 Route::inertia('/', 'welcome')->name('home');
 
@@ -77,6 +78,13 @@ Route::middleware(['auth', 'verified', 'maintenance'])->group(function () {
     Route::patch('/institutions/{institution}/toggle', [InstitutionController::class, 'toggle'])->name('institutions.toggle');
 
     // ==========================================
+    // IMPORTAR INSTITUCIONES MASIVO
+    // ==========================================
+    Route::get('/institutions/importar', [InstitutionController::class, 'importIndex'])->name('institutions.import');
+    Route::post('/institutions/importar', [InstitutionController::class, 'import'])->name('institutions.import.store');
+    Route::get('/institutions/plantilla', [InstitutionController::class, 'downloadTemplate'])->name('institutions.import.template');
+
+    // ==========================================
     // GESTIÓN DE USUARIOS Y ASIGNACIÓN DE DIRECTORES
     // ==========================================
     Route::get('/usuarios/asignar', [UserController::class, 'index'])->name('users.assign');
@@ -119,7 +127,7 @@ Route::middleware(['auth', 'verified', 'maintenance'])->group(function () {
         Route::get('/usuarios/plantilla', [UserManagementController::class, 'downloadTemplate'])->name('admin.users.import.template');
         
         // ==========================================
-        // ✅ CONFIGURACIÓN DE PERÍODOS POR MES (NUEVO SISTEMA)
+        // ✅ CONFIGURACIÓN DE PERÍODOS POR MES
         // ==========================================
         Route::get('/report-periods', [ReportPeriodController::class, 'index'])
             ->name('admin.report-periods.index')
@@ -147,6 +155,43 @@ Route::middleware(['auth', 'verified', 'maintenance'])->group(function () {
     });
 
     // ==========================================
+    // ✅ EQUIPOS DE RED (NUEVO MÓDULO)
+    // ==========================================
+    Route::get('/equipos-red', [NetworkEquipmentController::class, 'index'])
+        ->name('network-equipments.index')
+        ->middleware(['user.active']);
+    
+    Route::get('/equipos-red/exportar', [NetworkEquipmentController::class, 'export'])
+        ->name('network-equipments.export')
+        ->middleware(['user.active']);
+    
+    // Rutas de importación (solo super_admin)
+    Route::get('/equipos-red/importar', [NetworkEquipmentController::class, 'importIndex'])
+        ->name('network-equipments.import')
+        ->middleware(['user.active']);
+    
+    Route::post('/equipos-red/importar', [NetworkEquipmentController::class, 'import'])
+        ->name('network-equipments.import.store')
+        ->middleware(['user.active']);
+    
+    Route::get('/equipos-red/plantilla', [NetworkEquipmentController::class, 'downloadTemplate'])
+        ->name('network-equipments.import.template')
+        ->middleware(['user.active']);
+    
+    // ✅ RUTAS CRUD PARA EQUIPOS DE RED
+    Route::get('/equipos-red/{equipment}', [NetworkEquipmentController::class, 'show'])
+        ->name('network-equipments.show')
+        ->middleware(['user.active']);
+    
+    Route::put('/equipos-red/{equipment}', [NetworkEquipmentController::class, 'update'])
+        ->name('network-equipments.update')
+        ->middleware(['user.active']);
+    
+    Route::delete('/equipos-red/{equipment}', [NetworkEquipmentController::class, 'destroy'])
+        ->name('network-equipments.destroy')
+        ->middleware(['user.active']);
+
+    // ==========================================
     // NOTIFICACIONES
     // ==========================================
     Route::get('/notificaciones', [NotificationController::class, 'index'])->name('notifications.index');
@@ -161,13 +206,6 @@ Route::middleware(['auth', 'verified', 'maintenance'])->group(function () {
     Route::get('/reportes/exportar-excel', [ExportController::class, 'index'])->name('reports.export-excel');
     Route::post('/reportes/exportar-excel', [ExportController::class, 'export'])->name('reports.export-excel.download');
     Route::get('/reportes/exportar-todos', [ExportController::class, 'exportAll'])->name('reports.export-all');
-
-    // ==========================================
-    // IMPORTAR INSTITUCIONES MASIVO
-    // ==========================================
-    Route::get('/institutions/importar', [InstitutionController::class, 'importIndex'])->name('institutions.import');
-    Route::post('/institutions/importar', [InstitutionController::class, 'import'])->name('institutions.import.store');
-    Route::get('/institutions/plantilla', [InstitutionController::class, 'downloadTemplate'])->name('institutions.import.template');
 });
 
 require __DIR__.'/settings.php';

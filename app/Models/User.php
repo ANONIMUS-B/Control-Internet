@@ -84,6 +84,8 @@ class User extends Authenticatable implements PasskeyUser
         ];
     }
 
+    
+
     /**
      * Relación: Un usuario (director) pertenece a muchas instituciones educativas.
      */
@@ -332,4 +334,6 @@ class User extends Authenticatable implements PasskeyUser
     {
         return $query->where('is_active', false);
     }
+
+    
 }
