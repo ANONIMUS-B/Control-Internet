@@ -6,7 +6,7 @@
     <style>
         @page {
             size: A4;
-            margin: 1.5cm 2.5cm 2.5cm 2.5cm;
+            margin: 1.5cm 2cm 2cm 2.5cm;
         }
 
         body {
@@ -19,16 +19,17 @@
         }
 
         /* ==========================
-           ENCABEZADO E IMAGEN
+           ENCABEZADO E IMAGEN - MÁS ARRIBA
         ========================== */
         .header-logo-container {
             text-align: center;
-            margin-bottom: 8px;
+            margin-bottom: 3px;
+            margin-top: -8px;
         }
 
         .header-logo-img {
             width: 100%;
-            max-height: 75px;
+            max-height: 65px;
             object-fit: contain;
         }
 
@@ -36,7 +37,8 @@
             text-align: center;
             font-size: 10pt;
             font-style: italic;
-            margin-bottom: 25px;
+            margin-bottom: 12px;
+            margin-top: -3px;
         }
 
         /* ==========================
@@ -45,7 +47,7 @@
         .informe-numero {
             font-weight: bold;
             font-size: 11pt;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
             text-transform: uppercase;
         }
 
@@ -55,22 +57,22 @@
         .info-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
 
         .info-table td {
             vertical-align: top;
-            padding-bottom: 10px;
+            padding-bottom: 6px;
         }
 
         .info-table .col-label {
-            width: 110px;
+            width: 100px;
             font-weight: bold;
             text-transform: uppercase;
         }
 
         .info-table .col-colon {
-            width: 20px;
+            width: 18px;
             font-weight: bold;
             text-align: center;
         }
@@ -85,7 +87,7 @@
         .linea-separadora {
             border: 0;
             border-top: 1.5px solid #000;
-            margin: 10px 0 20px 0;
+            margin: 6px 0 14px 0;
         }
 
         /* ==========================
@@ -96,7 +98,7 @@
         }
 
         .cuerpo p {
-            margin-bottom: 14px;
+            margin-bottom: 10px;
             line-height: 1.4;
             text-indent: 30px;
         }
@@ -106,17 +108,18 @@
         }
 
         /* ==========================
-           FIRMA
+           FIRMA - EN UNA SOLA HOJA
         ========================== */
         .firma-container {
-            margin-top: 50px;
+            margin-top: 32px;
             text-align: center;
             page-break-inside: avoid;
+            page-break-after: avoid;
         }
 
         .firma-img {
-            max-width: 220px;
-            max-height: 100px;
+            max-width: 200px;
+            max-height: 85px;
             display: block;
             margin: auto;
         }
@@ -127,14 +130,21 @@
             border-top: 1px solid #000;
             display: inline-block;
             padding-top: 4px;
-            margin-top: 15px;
-            min-width: 260px;
+            margin-top: 12px;
+            min-width: 240px;
+            font-size: 11pt;
         }
 
         .firma-cargo {
             font-size: 10pt;
             display: block;
             text-transform: uppercase;
+            margin-top: 2px;
+        }
+
+        .firma-dni {
+            font-size: 9.5pt;
+            margin-top: 2px;
         }
 
         /* ==========================
@@ -145,7 +155,7 @@
             font-size: 12pt;
             font-weight: bold;
             text-decoration: underline;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
             text-transform: uppercase;
         }
 
@@ -155,7 +165,7 @@
 
         .evidencia-item {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
 
         .evidencia-img {
@@ -167,16 +177,38 @@
         }
 
         .evidencia-caption {
-            margin-top: 8px;
+            margin-top: 6px;
             font-size: 10pt;
             font-style: italic;
+        }
+
+        /* ==========================
+           PIE DE PÁGINA
+        ========================== */
+        .footer {
+            position: running(footer);
+            text-align: center;
+            font-size: 8pt;
+            color: #666;
+            margin-top: 20px;
+            border-top: 1px solid #ddd;
+            padding-top: 8px;
+        }
+
+        /* ==========================
+           AJUSTE DE MÁRGENES PARA LA FIRMA
+        ========================== */
+        @page {
+            @bottom-center {
+                content: "";
+            }
         }
     </style>
 </head>
 
 <body>
 
-    <!-- CABECERA CON IMAGEN DE LOGOS -->
+    <!-- CABECERA CON IMAGEN DE LOGOS - MÁS ARRIBA -->
     @if(!empty($headerLogoBase64))
         <div class="header-logo-container">
             <img src="{{ $headerLogoBase64 }}" class="header-logo-img" alt="Encabezado Logos">
@@ -190,7 +222,7 @@
 
     <!-- NUMERO DE INFORME -->
     <div class="informe-numero">
-        INFORME N° {{ $report->office_number ?? '000' }}-{{ $report->year }}-D.I.E. N° {{ $report->institution->modular_code ?? '000' }}
+        INFORME N° {{ $report->office_number ?? '000' }}-{{ $report->year }}-D.I.E. N° {{ $report->institution->local_code ?? '000' }}
     </div>
 
     <!-- DATOS DEL ENCABEZADO TIPO INFORME -->
@@ -267,7 +299,7 @@
         </p>
     </div>
 
-    <!-- FIRMA -->
+    <!-- FIRMA - EN UNA SOLA HOJA -->
     <div class="firma-container">
         @if(!empty($signatureBase64))
             <img src="{{ $signatureBase64 }}" class="firma-img" alt="Firma">
@@ -280,7 +312,7 @@
         <div class="firma-cargo">
             DIRECTOR(A) DE LA I.E. {{ $report->institution->name ?? '' }}
         </div>
-        <div style="font-size: 9.5pt;">
+        <div class="firma-dni">
             DNI: {{ $report->user->dni ?? '........' }}
         </div>
     </div>

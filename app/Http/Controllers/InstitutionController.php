@@ -8,6 +8,11 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Log;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
 
 class InstitutionController extends Controller
 {
@@ -18,7 +23,7 @@ class InstitutionController extends Controller
     {
         $query = EducationalInstitution::query();
 
-        // ✅ Búsqueda por nombre, código modular o distrito
+        // Búsqueda por nombre, código modular, distrito o código local
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -29,54 +34,51 @@ class InstitutionController extends Controller
             });
         }
 
-        // ✅ Filtrar por nivel
+        // Filtros
         if ($request->filled('level')) {
             $query->where('level', $request->level);
         }
 
-        // ✅ Filtrar por tipo de gestión
         if ($request->filled('type_management')) {
             $query->where('type_management', $request->type_management);
         }
 
-        // ✅ Filtrar por distrito
         if ($request->filled('district')) {
             $query->where('district', $request->district);
         }
 
-        // ✅ Filtrar por estado (activo/inactivo)
         if ($request->filled('is_active')) {
             $query->where('is_active', $request->is_active === 'true' ? 1 : 0);
         }
 
-        // ✅ Ordenar
+        // Ordenamiento
         $sortField = $request->input('sort', 'name');
         $sortDirection = $request->input('direction', 'asc');
         $query->orderBy($sortField, $sortDirection);
 
-        // ✅ PAGINACIÓN (15 por defecto)
+        // Paginación
         $perPage = (int) $request->input('per_page', 15);
         $institutions = $query->paginate($perPage)->withQueryString();
 
-        // ✅ Datos para filtros (selects)
-        $districts = EducationalInstitution::distinct()->pluck('district')->sort()->values();
-        $levels = EducationalInstitution::distinct()->pluck('level')->sort()->values();
-        $typeManagements = EducationalInstitution::distinct()->pluck('type_management')->sort()->values();
+        // Datos para listas desplegables
+        $districts = EducationalInstitution::distinct()->pluck('district')->filter()->sort()->values();
+        $levels = EducationalInstitution::distinct()->pluck('level')->filter()->sort()->values();
+        $typeManagements = EducationalInstitution::distinct()->pluck('type_management')->filter()->sort()->values();
 
-        return inertia('Admin/Institutions/Index', [
+        return Inertia::render('Admin/Institutions/Index', [
             'institutions' => $institutions,
             'filters' => [
-                'search' => $request->input('search'),
-                'level' => $request->input('level'),
+                'search'          => $request->input('search'),
+                'level'           => $request->input('level'),
                 'type_management' => $request->input('type_management'),
-                'district' => $request->input('district'),
-                'is_active' => $request->input('is_active'),
-                'sort' => $sortField,
-                'direction' => $sortDirection,
-                'per_page' => $perPage,
+                'district'        => $request->input('district'),
+                'is_active'       => $request->input('is_active'),
+                'sort'            => $sortField,
+                'direction'       => $sortDirection,
+                'per_page'        => $perPage,
             ],
-            'districts' => $districts,
-            'levels' => $levels,
+            'districts'       => $districts,
+            'levels'          => $levels,
             'typeManagements' => $typeManagements,
         ]);
     }
@@ -87,42 +89,43 @@ class InstitutionController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'modular_code' => 'nullable|string|max:10|unique:educational_institutions,modular_code',
-            'local_code' => 'nullable|string|max:20',
-            'name' => 'nullable|string|max:150',
-            'level' => 'nullable|string|max:50',
-            'type_management' => 'nullable|string|max:100',
-            'department' => 'nullable|string|max:100',
-            'province' => 'nullable|string|max:100',
-            'district' => 'nullable|string|max:100',
-            'ugel' => 'nullable|string|max:100',
+            'modular_code'     => 'nullable|string|max:10',
+            'local_code'       => 'nullable|string|max:20',
+            'name'             => 'nullable|string|max:150',
+            'level'            => 'nullable|string|max:50',
+            'type_management'  => 'nullable|string|max:100',
+            'department'       => 'nullable|string|max:100',
+            'province'         => 'nullable|string|max:100',
+            'district'         => 'nullable|string|max:100',
+            'ugel'             => 'nullable|string|max:100',
             'populated_center' => 'nullable|string|max:100',
-            'address' => 'nullable|string|max:255',
+            'address'          => 'nullable|string|max:255',
         ]);
 
-        // Asignar valores por defecto
         $validated['department'] = $validated['department'] ?? 'Huánuco';
-        $validated['province'] = $validated['province'] ?? 'Ambo';
-        $validated['ugel'] = $validated['ugel'] ?? 'UGEL Ambo';
-        $validated['is_active'] = true;
+        $validated['province']   = $validated['province'] ?? 'Ambo';
+        $validated['ugel']       = $validated['ugel'] ?? 'UGEL Ambo';
+        $validated['is_active']  = true;
 
         EducationalInstitution::create($validated);
         
         return back()->with('success', 'IE registrada correctamente.');
     }
 
+    /**
+     * Display the specified resource.
+     */
     public function show(EducationalInstitution $institution)
     {
-        // Cargar relaciones
         $institution->load(['currentProvider', 'monthlyReports' => function ($query) {
             $query->orderBy('created_at', 'desc')->limit(5);
         }]);
 
-        return inertia('Admin/Institutions/Show', [
+        return Inertia::render('Admin/Institutions/Show', [
             'institution' => $institution,
             'stats' => [
-                'totalReports' => $institution->monthlyReports()->count(),
-                'pendingReports' => $institution->monthlyReports()->where('status', 'pending')->count(),
+                'totalReports'    => $institution->monthlyReports()->count(),
+                'pendingReports'  => $institution->monthlyReports()->where('status', 'pending')->count(),
                 'approvedReports' => $institution->monthlyReports()->where('status', 'approved')->count(),
                 'observedReports' => $institution->monthlyReports()->where('status', 'observed')->count(),
             ]
@@ -135,17 +138,17 @@ class InstitutionController extends Controller
     public function update(Request $request, EducationalInstitution $institution)
     {
         $validated = $request->validate([
-            'modular_code' => 'nullable|string|max:10|unique:educational_institutions,modular_code,' . $institution->id,
-            'local_code' => 'nullable|string|max:20',
-            'name' => 'nullable|string|max:150',
-            'level' => 'nullable|string|max:50',
-            'type_management' => 'nullable|string|max:100',
-            'department' => 'nullable|string|max:100',
-            'province' => 'nullable|string|max:100',
-            'district' => 'nullable|string|max:100',
-            'ugel' => 'nullable|string|max:100',
+            'modular_code'     => 'nullable|string|max:10',
+            'local_code'       => 'nullable|string|max:20',
+            'name'             => 'nullable|string|max:150',
+            'level'            => 'nullable|string|max:50',
+            'type_management'  => 'nullable|string|max:100',
+            'department'       => 'nullable|string|max:100',
+            'province'         => 'nullable|string|max:100',
+            'district'         => 'nullable|string|max:100',
+            'ugel'             => 'nullable|string|max:100',
             'populated_center' => 'nullable|string|max:100',
-            'address' => 'nullable|string|max:255',
+            'address'          => 'nullable|string|max:255',
         ]);
 
         $institution->update($validated);
@@ -158,7 +161,6 @@ class InstitutionController extends Controller
      */
     public function destroy(EducationalInstitution $institution)
     {
-        // ✅ Verificar si la institución tiene reportes asociados
         if ($institution->monthlyReports()->count() > 0) {
             return back()->with('error', 'No se puede eliminar la institución porque tiene reportes asociados.');
         }
@@ -187,7 +189,6 @@ class InstitutionController extends Controller
      */
     public function export(Request $request)
     {
-        // Esto se implementará cuando agreguemos la exportación
         return back()->with('info', 'Exportación en desarrollo.');
     }
 
@@ -202,17 +203,11 @@ class InstitutionController extends Controller
         return back()->with('success', "Institución {$status} correctamente.");
     }
 
-    // ==========================================
-    // ✅ NUEVOS MÉTODOS PARA IMPORTACIÓN MASIVA
-    // ==========================================
-
     /**
-     * Mostrar vista de importación masiva
-     * ✅ SOLO SUPER_ADMIN
+     * Mostrar vista de importación masiva.
      */
     public function importIndex(Request $request)
     {
-        // ✅ PROTECCIÓN - Solo super_admin
         $user = $request->user();
         if ($user->role !== 'super_admin') {
             return redirect()->route('institutions.index')->with('error', 'No tienes permiso para acceder a esta sección. Solo el Super Administrador puede importar instituciones.');
@@ -224,12 +219,10 @@ class InstitutionController extends Controller
     }
 
     /**
-     * Procesar la importación masiva
-     * ✅ SOLO SUPER_ADMIN
+     * Procesar la importación masiva sin omitir duplicados.
      */
     public function import(Request $request)
     {
-        // ✅ PROTECCIÓN - Solo super_admin
         $user = $request->user();
         if ($user->role !== 'super_admin') {
             return redirect()->route('institutions.index')->with('error', 'No tienes permiso para realizar esta acción. Solo el Super Administrador puede importar instituciones.');
@@ -242,7 +235,7 @@ class InstitutionController extends Controller
         try {
             $file = $request->file('file');
             
-            Log::info('=== INICIO IMPORTACIÓN ===');
+            Log::info('=== INICIO IMPORTACIÓN INSTITUCIONES ===');
             Log::info('Nombre del archivo: ' . $file->getClientOriginalName());
             Log::info('Tamaño: ' . $file->getSize() . ' bytes');
             Log::info('Tipo MIME: ' . $file->getMimeType());
@@ -254,25 +247,34 @@ class InstitutionController extends Controller
             $skipped = $import->getSkippedCount();
             $errors = $import->getErrors();
 
-            Log::info('Importados: ' . $imported);
-            Log::info('Omitidos: ' . $skipped);
+            Log::info('Instituciones CREADAS: ' . $imported);
+            Log::info('Filas OMITIDAS: ' . $skipped);
             Log::info('Errores: ' . json_encode($errors));
 
             if ($imported > 0) {
                 $message = "✅ Se importaron {$imported} instituciones correctamente.";
                 if ($skipped > 0) {
-                    $message .= " {$skipped} filas fueron omitidas.";
+                    $message .= " {$skipped} filas fueron omitidas (sin nombre o datos mínimos).";
                 }
                 if (!empty($errors)) {
-                    $message .= " Detalles: " . implode('; ', $errors);
+                    $message .= " Detalles: " . implode('; ', array_slice($errors, 0, 3));
+                    if (count($errors) > 3) {
+                        $message .= " y " . (count($errors) - 3) . " más.";
+                    }
                 }
                 return redirect()->route('institutions.index')->with('success', $message);
             } else {
-                return redirect()->route('institutions.import')->with('error', '❌ No se importó ninguna institución. Verifica que el archivo tenga datos válidos.');
+                $errorMsg = "❌ No se importó ninguna institución.";
+                if (!empty($errors)) {
+                    $errorMsg .= " Errores: " . implode('; ', array_slice($errors, 0, 3));
+                } else {
+                    $errorMsg .= " Verifica que el archivo tenga datos válidos.";
+                }
+                return redirect()->route('institutions.import')->with('error', $errorMsg);
             }
 
         } catch (\Exception $e) {
-            Log::error('ERROR IMPORT: ' . $e->getMessage());
+            Log::error('ERROR IMPORT INSTITUCIONES: ' . $e->getMessage());
             Log::error('LINEA: ' . $e->getLine());
             Log::error('ARCHIVO: ' . $e->getFile());
             
@@ -281,21 +283,18 @@ class InstitutionController extends Controller
     }
 
     /**
-     * Descargar plantilla de importación en Excel
-     * ✅ TODOS LOS CAMPOS SON OPCIONALES
+     * Descargar plantilla de importación en Excel.
      */
     public function downloadTemplate(Request $request)
     {
-        // ✅ PROTECCIÓN - Solo super_admin
         $user = $request->user();
         if ($user->role !== 'super_admin') {
             return redirect()->route('institutions.index')->with('error', 'No tienes permiso para descargar esta plantilla. Solo el Super Administrador puede hacerlo.');
         }
 
-        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
 
-        // ✅ Encabezados en INGLÉS (para que coincida con el import)
         $headers = [
             'modular_code',
             'local_code',
@@ -310,87 +309,81 @@ class InstitutionController extends Controller
             'address'
         ];
 
-        // ✅ Estilo para encabezados (Morado - sin obligatoriedad)
         $headerStyle = [
             'font' => [
-                'bold' => true,
+                'bold'  => true,
                 'color' => ['rgb' => 'FFFFFF'],
-                'size' => 11,
+                'size'  => 11,
             ],
             'fill' => [
-                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                'startColor' => ['rgb' => '4F46E5'], // Morado
+                'fillType'   => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '4F46E5'],
             ],
             'alignment' => [
-                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
             ],
             'borders' => [
                 'allBorders' => [
-                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
-                    'color' => ['rgb' => '000000'],
+                    'borderStyle' => Border::BORDER_THIN,
+                    'color'       => ['rgb' => '000000'],
                 ],
             ],
         ];
 
-        // ✅ Columnas y encabezados
         $col = 1;
-        foreach ($headers as $key => $label) {
+        foreach ($headers as $label) {
             $sheet->setCellValueByColumnAndRow($col, 1, $label);
             $sheet->getColumnDimensionByColumn($col)->setWidth(25);
             $col++;
         }
 
-        // ✅ Aplicar estilo a encabezados
         $sheet->getStyle('A1:K1')->applyFromArray($headerStyle);
 
-        // ✅ Datos de ejemplo (fila 2) - TODOS OPCIONALES
+        // Fila de ejemplo
         $row = 2;
-        $sheet->setCellValueByColumnAndRow(1, $row, '1234567');          // modular_code (opcional)
-        $sheet->setCellValueByColumnAndRow(2, $row, 'LOC001');           // local_code (opcional)
-        $sheet->setCellValueByColumnAndRow(3, $row, 'I.E. N° 30001');    // name (opcional)
-        $sheet->setCellValueByColumnAndRow(4, $row, 'Secundaria');       // level (opcional)
-        $sheet->setCellValueByColumnAndRow(5, $row, 'Pública');          // type_management (opcional)
-        $sheet->setCellValueByColumnAndRow(6, $row, 'Huánuco');          // department (opcional)
-        $sheet->setCellValueByColumnAndRow(7, $row, 'Ambo');             // province (opcional)
-        $sheet->setCellValueByColumnAndRow(8, $row, 'Ambo');             // district (opcional)
-        $sheet->setCellValueByColumnAndRow(9, $row, 'UGEL Ambo');        // ugel (opcional)
-        $sheet->setCellValueByColumnAndRow(10, $row, 'San Martín');      // populated_center (opcional)
-        $sheet->setCellValueByColumnAndRow(11, $row, 'Jr. San Martín');  // address (opcional)
+        $sheet->setCellValueByColumnAndRow(1, $row, '1234567');
+        $sheet->setCellValueByColumnAndRow(2, $row, 'LOC001');
+        $sheet->setCellValueByColumnAndRow(3, $row, 'I.E. N° 30001');
+        $sheet->setCellValueByColumnAndRow(4, $row, 'Secundaria');
+        $sheet->setCellValueByColumnAndRow(5, $row, 'Pública');
+        $sheet->setCellValueByColumnAndRow(6, $row, 'Huánuco');
+        $sheet->setCellValueByColumnAndRow(7, $row, 'Ambo');
+        $sheet->setCellValueByColumnAndRow(8, $row, 'Ambo');
+        $sheet->setCellValueByColumnAndRow(9, $row, 'UGEL Ambo');
+        $sheet->setCellValueByColumnAndRow(10, $row, 'San Martín');
+        $sheet->setCellValueByColumnAndRow(11, $row, 'Jr. San Martín');
 
-        // ✅ Estilo para los datos de ejemplo
         $exampleStyle = [
             'font' => [
                 'color' => ['rgb' => '666666'],
-                'size' => 10,
+                'size'  => 10,
             ],
             'alignment' => [
-                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'horizontal' => Alignment::HORIZONTAL_LEFT,
             ],
             'borders' => [
                 'allBorders' => [
-                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
-                    'color' => ['rgb' => 'CCCCCC'],
+                    'borderStyle' => Border::BORDER_THIN,
+                    'color'       => ['rgb' => 'CCCCCC'],
                 ],
             ],
         ];
         $sheet->getStyle('A2:K2')->applyFromArray($exampleStyle);
 
-        // ✅ INSTRUCCIONES ACTUALIZADAS - TODOS LOS CAMPOS OPCIONALES
+        // Instrucciones
         $sheet->setCellValue('A4', 'INSTRUCCIONES:');
-        $sheet->setCellValue('A5', '1. TODOS los campos son OPCIONALES');
-        $sheet->setCellValue('A6', '2. Puedes importar solo los datos que tengas disponibles');
-        $sheet->setCellValue('A7', '3. Si el código modular coincide, la institución se actualizará');
-        $sheet->setCellValue('A8', '4. Si el código local coincide, la institución se actualizará');
-        $sheet->setCellValue('A9', '5. No modifiques los nombres de las columnas');
-        $sheet->setCellValue('A10', '6. Guarda el archivo en formato .xlsx');
-        $sheet->setCellValue('A11', '7. Elimina la fila de ejemplo antes de cargar tus datos');
+        $sheet->setCellValue('A5', '1. TODOS los campos son OPCIONALES excepto el nombre.');
+        $sheet->setCellValue('A6', '2. Se registrarán todas las filas tal como vienen en el archivo.');
+        $sheet->setCellValue('A7', '3. Las filas con códigos o nombres repetidos se crearán como nuevos registros.');
+        $sheet->setCellValue('A8', '4. No modifiques los nombres de los encabezados (fila 1).');
+        $sheet->setCellValue('A9', '5. Guarda el archivo en formato .xlsx');
+        $sheet->setCellValue('A10', '6. Elimina la fila de ejemplo (fila 2) antes de cargar tus datos.');
         
         $sheet->getStyle('A4')->getFont()->setBold(true)->setSize(11);
-        $sheet->getStyle('A4:A11')->getFont()->setSize(10);
-        $sheet->getStyle('A4:A11')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+        $sheet->getStyle('A4:A10')->getFont()->setSize(10);
+        $sheet->getStyle('A4:A10')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
 
-        // ✅ Descargar archivo
-        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $writer = new Xlsx($spreadsheet);
         
         return response()->stream(
             function () use ($writer) {
@@ -398,7 +391,7 @@ class InstitutionController extends Controller
             },
             200,
             [
-                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'Content-Type'        => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                 'Content-Disposition' => 'attachment; filename="plantilla_instituciones.xlsx"',
             ]
         );

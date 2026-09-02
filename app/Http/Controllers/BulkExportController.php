@@ -83,6 +83,8 @@ class BulkExportController extends Controller
         ]);
 
         $reportIds = $request->report_ids;
+        
+        // ✅ Obtener reportes con todas las relaciones
         $reports = MonthlyReport::with(['institution', 'user', 'evidences'])
             ->whereIn('id', $reportIds)
             ->get();
@@ -116,9 +118,11 @@ class BulkExportController extends Controller
         $headerLogoBase64 = $this->getHeaderLogoBase64();
 
         $pdfFiles = [];
+        $errors = [];
 
-        foreach ($reports as $report) {
+        foreach ($reports as $index => $report) {
             try {
+                // ✅ Recargar relaciones para asegurar datos frescos
                 $report->load(['institution', 'user', 'evidences']);
                 $report->month_name = $months[$report->month] ?? $report->month;
 
@@ -146,7 +150,7 @@ class BulkExportController extends Controller
                     }
                 }
 
-                // ✅ GENERAR PDF CON LA VARIABLE headerLogoBase64
+                // ✅ GENERAR PDF
                 $pdf = Pdf::loadView('pdf.reporte_conformidad', [
                     'report' => $report,
                     'evidenciasBase64' => $evidenciasBase64,
@@ -160,22 +164,31 @@ class BulkExportController extends Controller
                     'defaultFont' => 'Times New Roman',
                     'isHtml5ParserEnabled' => true,
                     'isRemoteEnabled' => true,
-                    'chroot' => storage_path('app/public'),
+                    'chroot' => [
+                        storage_path('app/public'),
+                        public_path(),
+                    ],
                 ]);
 
-                $filename = 'REPORTE_' . $report->institution->modular_code . '_' . $report->month . '_' . $report->year . '.pdf';
+                // ✅ Guardar PDF con nombre único
+                $filename = 'REPORTE_' . ($report->institution->modular_code ?? '000') . '_' . $report->month . '_' . $report->year . '_' . $report->id . '.pdf';
                 $pdfPath = $uniqueDir . '/' . $filename;
                 file_put_contents($pdfPath, $pdf->output());
                 $pdfFiles[] = $pdfPath;
                 
+                Log::info('PDF generado: ' . $filename);
+                
             } catch (\Exception $e) {
-                Log::error('Error generando PDF para reporte ' . $report->id . ': ' . $e->getMessage());
+                $errorMsg = 'Error en reporte ID ' . $report->id . ': ' . $e->getMessage();
+                $errors[] = $errorMsg;
+                Log::error($errorMsg);
                 continue;
             }
         }
 
+        // ✅ Verificar si se generaron archivos
         if (empty($pdfFiles)) {
-            return back()->with('error', 'No se pudieron generar los PDFs.');
+            return back()->with('error', 'No se pudieron generar los PDFs. ' . implode('; ', $errors));
         }
 
         // ✅ CREAR ZIP

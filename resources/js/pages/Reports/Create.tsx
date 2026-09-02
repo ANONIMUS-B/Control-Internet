@@ -10,7 +10,7 @@ import {
     ChevronLeft, ChevronRight as ChevronRightIcon,
     Clock, CalendarDays, Info, Sparkles,
     Shield, Image as ImageIcon,
-    Award, Users
+    Award, Users, Wifi, ExternalLink
 } from 'lucide-react';
 
 interface Institution {
@@ -56,6 +56,7 @@ export default function Create({
     const [selectedYear] = useState<number>(year);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
 
     const currentMonth = new Date().getMonth() + 1;
     const currentYearDate = new Date().getFullYear();
@@ -78,6 +79,12 @@ export default function Create({
     );
     const [uploadProgress, setUploadProgress] = useState(0);
     const [isUploading, setIsUploading] = useState(false);
+    const [isPasteActive, setIsPasteActive] = useState(false);
+
+    // ✅ ABRIR TEST DE VELOCIDAD EN NUEVA PESTAÑA
+    const openSpeedTest = () => {
+        window.open('https://infistel.pe/test-velocidad', '_blank');
+    };
 
     useEffect(() => {
         if (availablePeriods && availablePeriods.length > 0) {
@@ -91,6 +98,59 @@ export default function Create({
             setData('year', reportPeriod.year);
         }
     }, [availablePeriods, reportPeriod]);
+
+    // ✅ FUNCIÓN PARA PROCESAR EL PEGADO DE IMÁGENES
+    const processPastedImage = (file: File) => {
+        if (file.size > 10 * 1024 * 1024) {
+            setErrorMessage('La imagen no debe pesar más de 10MB.');
+            return false;
+        }
+
+        setData('evidences', [...data.evidences, file]);
+        
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            if (event.target?.result) {
+                setPreviews([...previews, event.target.result as string]);
+            }
+        };
+        reader.readAsDataURL(file);
+        setErrorMessage(null);
+        return true;
+    };
+
+    // ✅ MANEJADOR GLOBAL DE PEGADO (Ctrl+V)
+    const handleGlobalPaste = (e: ClipboardEvent) => {
+        const items = e.clipboardData?.items;
+        if (!items) return;
+
+        let hasImage = false;
+        
+        for (const item of items) {
+            if (item.type.startsWith('image/')) {
+                const file = item.getAsFile();
+                if (file) {
+                    processPastedImage(file);
+                    hasImage = true;
+                    setIsPasteActive(true);
+                    setTimeout(() => setIsPasteActive(false), 2000);
+                }
+                break;
+            }
+        }
+
+        if (hasImage) {
+            e.preventDefault();
+        }
+    };
+
+    // ✅ REGISTRAR Y DESREGISTRAR EL EVENTO GLOBAL
+    useEffect(() => {
+        document.addEventListener('paste', handleGlobalPaste);
+        return () => {
+            document.removeEventListener('paste', handleGlobalPaste);
+        };
+    }, [data.evidences, previews]);
 
     const isPeriodValid = (period: ReportPeriod) => {
         if (!period || !period.is_active) return false;
@@ -206,35 +266,6 @@ export default function Create({
     useEffect(() => {
         return () => previews.forEach(url => URL.revokeObjectURL(url));
     }, [previews]);
-
-    const handlePaste = async (e: React.ClipboardEvent) => {
-        const items = e.clipboardData?.items;
-        if (!items) return;
-
-        for (const item of items) {
-            if (item.type.startsWith('image/')) {
-                const file = item.getAsFile();
-                if (file) {
-                    if (file.size > 10 * 1024 * 1024) {
-                        setErrorMessage('La imagen no debe pesar más de 10MB.');
-                        return;
-                    }
-
-                    setData('evidences', [...data.evidences, file]);
-                    
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                        if (event.target?.result) {
-                            setPreviews([...previews, event.target.result as string]);
-                        }
-                    };
-                    reader.readAsDataURL(file);
-                    setErrorMessage(null);
-                }
-                break;
-            }
-        }
-    };
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
@@ -384,10 +415,17 @@ export default function Create({
         <>
             <Head title="Nuevo Reporte" />
             
-            <div className="p-4 md:p-6" style={{ fontSize: '11px' }}>
+            <div 
+                ref={containerRef}
+                className="p-4 md:p-6" 
+                style={{ fontSize: '11px' }}
+                onPaste={(e) => {
+                    e.preventDefault();
+                }}
+            >
                 <div className="max-w-5xl mx-auto w-full space-y-4">
                     
-                    {/* ===== HEADER CON EFECTO GLASS ===== */}
+                    {/* ===== HEADER ===== */}
                     <div className="relative overflow-hidden bg-white dark:bg-slate-800/50 rounded-2xl border border-gray-200 dark:border-white/10 p-4 md:p-6 shadow-sm dark:shadow-2xl">
                         <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                             <div className="flex items-center gap-3">
@@ -402,9 +440,24 @@ export default function Create({
                                     </div>
                                 </div>
                             </div>
-                            <Link href="/reportes" className="flex items-center gap-1.5 px-3 py-2 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-700 dark:text-neutral-300 rounded-xl text-[11px] font-medium transition-all border border-gray-300 dark:border-white/10 hover:border-gray-400 dark:hover:border-white/20">
-                                <ArrowLeft className="w-3.5 h-3.5" /> Volver
-                            </Link>
+                            <div className="flex items-center gap-2">
+                                {/* ✅ BOTÓN TEST DE VELOCIDAD */}
+                                <button
+                                    onClick={openSpeedTest}
+                                    className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white rounded-xl text-[11px] font-medium transition-all shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40 hover:scale-105 active:scale-95"
+                                    title="Realizar test de velocidad"
+                                >
+                                    <Wifi className="w-4 h-4" />
+                                    <span className="hidden sm:inline">Test de Velocidad</span>
+                                    <ExternalLink className="w-3 h-3" />
+                                </button>
+                                <Link 
+                                    href="/reportes" 
+                                    className="flex items-center gap-1.5 px-3 py-2 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-700 dark:text-neutral-300 rounded-xl text-[11px] font-medium transition-all border border-gray-300 dark:border-white/10 hover:border-gray-400 dark:hover:border-white/20"
+                                >
+                                    <ArrowLeft className="w-3.5 h-3.5" /> Volver
+                                </Link>
+                            </div>
                         </div>
                     </div>
 
@@ -419,6 +472,18 @@ export default function Create({
                                         {p.month_name} {p.year}
                                     </span>
                                 ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* ===== ALERTA DE PEGADO (feedback visual) ===== */}
+                    {isPasteActive && (
+                        <div className="p-3 bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800 rounded-2xl animate-in slide-in-from-top duration-200">
+                            <div className="flex items-center gap-2">
+                                <ClipboardPaste className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                                <span className="text-[11px] text-purple-700 dark:text-purple-300 font-medium">
+                                    ✅ Imagen pegada correctamente
+                                </span>
                             </div>
                         </div>
                     )}
@@ -544,22 +609,19 @@ export default function Create({
 
                             {/* ===== EVIDENCIAS ===== */}
                             <div>
-                                <label className="block text-[11px] font-semibold text-gray-700 dark:text-neutral-300 mb-1.5 flex items-center gap-1.5">
-                                    <ImageIcon className="w-3.5 h-3.5 text-blue-500" /> Evidencias <span className="text-gray-400 dark:text-neutral-500 font-normal">(10 max)</span>
-                                </label>
-                                
-                                <button
-                                    type="button"
-                                    onClick={() => document.getElementById('paste-area')?.focus()}
-                                    className="text-[11px] text-purple-600 dark:text-purple-400 mb-1.5 hover:underline flex items-center gap-1"
-                                >
-                                    <ClipboardPaste className="w-3.5 h-3.5" /> Pegar (Ctrl+V)
-                                </button>
+                                <div className="flex items-center justify-between mb-1.5">
+                                    <label className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-700 dark:text-neutral-300">
+                                        <ImageIcon className="w-3.5 h-3.5 text-blue-500" /> 
+                                        Evidencias 
+                                        <span className="text-gray-400 dark:text-neutral-500 font-normal">(10 max)</span>
+                                    </label>
+                                    <span className="text-[10px] text-purple-600 dark:text-purple-400 flex items-center gap-1">
+                                        <ClipboardPaste className="w-3 h-3" />
+                                        Ctrl+V para pegar
+                                    </span>
+                                </div>
 
                                 <div
-                                    id="paste-area"
-                                    tabIndex={0}
-                                    onPaste={handlePaste}
                                     className={`relative rounded-xl border-2 border-dashed transition-all min-h-[100px] ${
                                         dragActive ? 'border-blue-500 bg-blue-50/30 dark:bg-blue-500/10' : 
                                         previews.length > 0 ? 'border-emerald-300 dark:border-emerald-700 bg-emerald-50/20 dark:bg-emerald-500/5' : 
@@ -582,13 +644,26 @@ export default function Create({
                                     <div className="p-4 text-center">
                                         <div className="flex flex-col items-center gap-1.5">
                                             {previews.length > 0 ? (
-                                                <Camera className="w-6 h-6 text-emerald-500" />
+                                                <>
+                                                    <Camera className="w-6 h-6 text-emerald-500" />
+                                                    <p className="text-[11px] font-medium text-gray-700 dark:text-neutral-300">
+                                                        {previews.length} imágenes seleccionadas
+                                                    </p>
+                                                    <p className="text-[10px] text-gray-400 dark:text-neutral-500">
+                                                        Haz clic o arrastra para agregar más
+                                                    </p>
+                                                </>
                                             ) : (
-                                                <Upload className="w-6 h-6 text-blue-500" />
+                                                <>
+                                                    <Upload className="w-6 h-6 text-blue-500" />
+                                                    <p className="text-[11px] text-gray-500 dark:text-neutral-400">
+                                                        Arrastra o haz clic para subir
+                                                    </p>
+                                                    <p className="text-[10px] text-purple-500 dark:text-purple-400">
+                                                        💡 También puedes pegar imágenes con Ctrl+V
+                                                    </p>
+                                                </>
                                             )}
-                                            <p className="text-[11px] text-gray-500 dark:text-neutral-400">
-                                                {previews.length > 0 ? `${previews.length} imágenes` : 'Arrastra o haz clic'}
-                                            </p>
                                         </div>
                                     </div>
                                 </div>
@@ -597,11 +672,11 @@ export default function Create({
                                     <div className="mt-2 grid grid-cols-4 gap-2">
                                         {previews.map((url, index) => (
                                             <div key={index} className="relative group">
-                                                <img src={url} className="w-full h-16 object-cover rounded-xl" />
+                                                <img src={url} className="w-full h-16 object-cover rounded-xl border border-gray-200 dark:border-white/10" />
                                                 <button
                                                     type="button"
                                                     onClick={() => removeFile(index)}
-                                                    className="absolute -top-1 -right-1 bg-rose-500 text-white rounded-full p-0.5 hover:bg-rose-600 transition-all"
+                                                    className="absolute -top-1 -right-1 bg-rose-500 text-white rounded-full p-0.5 hover:bg-rose-600 transition-all shadow-lg"
                                                 >
                                                     <X className="w-3 h-3" />
                                                 </button>
@@ -625,6 +700,17 @@ export default function Create({
 
                             {/* ===== BOTONES ===== */}
                             <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-200 dark:border-white/10">
+                                {/* ✅ BOTÓN TEST DE VELOCIDAD EN EL FORMULARIO */}
+                                <button
+                                    type="button"
+                                    onClick={openSpeedTest}
+                                    className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white rounded-xl text-[11px] font-medium transition-all shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40 hover:scale-105 active:scale-95"
+                                >
+                                    <Wifi className="w-4 h-4" />
+                                    Test de Velocidad
+                                    <ExternalLink className="w-3 h-3" />
+                                </button>
+                                
                                 <button
                                     type="submit"
                                     disabled={processing || isUploading || selectedMonth === 0 || availableMonthsList.length === 0}

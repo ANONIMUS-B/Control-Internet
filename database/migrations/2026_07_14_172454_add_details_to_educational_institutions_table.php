@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('educational_institutions', function (Blueprint $table) {
            // Agregar columnas faltantes
-            $table->string('local_code', 20)->nullable();
+        $table->string('local_code', 20)->nullable();
         $table->string('level', 50)->nullable(); // nullable para que no rompa los antiguos
         $table->string('type_management', 100)->nullable();
         $table->string('department', 100)->default('Huánuco');

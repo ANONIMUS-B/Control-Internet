@@ -4,19 +4,13 @@ namespace App\Imports;
 
 use App\Models\NetworkEquipment;
 use App\Models\EducationalInstitution;
-use Maatwebsite\Excel\Concerns\ToModel;
+use Illuminate\Support\Collection;
+use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
-use Maatwebsite\Excel\Concerns\SkipsOnError;
-use Maatwebsite\Excel\Concerns\SkipsOnFailure;
-use Maatwebsite\Excel\Concerns\Importable;
-use Maatwebsite\Excel\Concerns\WithBatchInserts;
-use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Illuminate\Support\Facades\Log;
 
-class NetworkEquipmentsImport implements ToModel, WithHeadingRow, SkipsOnError, SkipsOnFailure, WithBatchInserts, WithChunkReading
+class NetworkEquipmentsImport implements ToCollection, WithHeadingRow
 {
-    use Importable;
-
     protected $importedCount = 0;
     protected $skippedCount = 0;
     protected $errors = [];
@@ -31,113 +25,90 @@ class NetworkEquipmentsImport implements ToModel, WithHeadingRow, SkipsOnError, 
             return null;
         }
 
-        // ✅ Usar caché para evitar múltiples consultas
-        if (isset($this->institutionCache[$localCode])) {
-            return $this->institutionCache[$localCode];
+        $localCodeStr = trim((string) $localCode);
+
+        if (isset($this->institutionCache[$localCodeStr])) {
+            return $this->institutionCache[$localCodeStr];
         }
 
-        $institution = EducationalInstitution::where('local_code', $localCode)->first();
-
-        $this->institutionCache[$localCode] = $institution;
+        $institution = EducationalInstitution::where('local_code', $localCodeStr)->first();
+        $this->institutionCache[$localCodeStr] = $institution;
 
         return $institution;
     }
 
-    public function model(array $row)
+    public function collection(Collection $collection)
     {
-        // ✅ Validar que tenga al menos descripcion o marca
-        if (empty($row['descripcion']) && empty($row['marca']) && empty($row['modelo'])) {
-            $this->skippedCount++;
-            Log::info('Fila omitida: sin datos de equipo');
-            return null;
+        if ($collection->isEmpty()) {
+            $this->errors[] = 'El archivo Excel no contiene datos.';
+            return;
         }
 
-        // ✅ Buscar institución por código local
-        $institution = null;
-        $localCode = null;
+        foreach ($collection as $index => $row) {
+            try {
+                // Obtener datos de la fila con limpieza
+                $localCode   = $this->getValue($row, ['codigo_local', 'codigo_de_local', 'local_code', 'codigo']);
+                $description = $this->getValue($row, ['descripcion', 'description']);
+                $brand       = $this->getValue($row, ['marca', 'brand']);
+                $model       = $this->getValue($row, ['modelo', 'model']);
+                $mac         = $this->getValue($row, ['mac', 'mac_address', 'direccion_mac']);
+                $status      = $this->getValue($row, ['estado', 'status']) ?? 'OPERATIVO';
 
-        // Buscar en diferentes posibles nombres de columna
-        $localCodeFields = ['codigo_de_local', 'codigo_local', 'local_code', 'codigo'];
-        foreach ($localCodeFields as $field) {
-            if (!empty($row[$field])) {
-                $localCode = $row[$field];
-                break;
+                // Omitir si la fila viene completamente vacía
+                if (empty($localCode) && empty($description) && empty($brand) && empty($mac)) {
+                    $this->skippedCount++;
+                    continue;
+                }
+
+                // Buscar institución para autocompletar nombre y nivel
+                $institution = $this->getInstitutionByLocalCode($localCode);
+                $institutionName = $institution ? $institution->name : ($this->getValue($row, ['ie', 'institucion']) ?? 'IE Local ' . ($localCode ?? 'S/C'));
+                $level = $institution ? $institution->level : $this->getValue($row, ['nivel', 'level']);
+
+                $data = [
+                    'local_code'       => !empty($localCode) ? (string)$localCode : null,
+                    'institution_name' => $institutionName,
+                    'level'            => !empty($level) ? $level : null,
+                    'description'      => !empty($description) ? $description : 'Equipo de Red',
+                    'brand'            => !empty($brand) ? $brand : 'Genérico',
+                    'model'            => !empty($model) ? $model : '-',
+                    'mac_address'      => !empty($mac) ? $mac : null,
+                    'status'           => strtoupper($status),
+                    'is_active'        => true,
+                ];
+
+                // Crear el registro directamente
+                NetworkEquipment::create($data);
+                $this->importedCount++;
+
+            } catch (\Exception $e) {
+                $this->skippedCount++;
+                $errorMsg = "Fila " . ($index + 2) . ": " . $e->getMessage();
+                $this->errors[] = $errorMsg;
+                Log::error('Error importando equipo de red', [
+                    'fila'  => $index + 2,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+    }
+
+    /**
+     * Obtener valor seguro buscando entre posibles alias de columna
+     */
+    protected function getValue($row, $keys)
+    {
+        if (is_string($keys)) {
+            $keys = [$keys];
+        }
+
+        foreach ($keys as $key) {
+            if (isset($row[$key]) && trim((string)$row[$key]) !== '') {
+                return trim((string)$row[$key]);
             }
         }
 
-        if ($localCode) {
-            $institution = $this->getInstitutionByLocalCode($localCode);
-        }
-
-        // ✅ Datos del equipo
-        $data = [
-            'local_code' => $localCode,
-            'institution_name' => $institution ? $institution->name : ($row['ie'] ?? null),
-            'level' => $institution ? $institution->level : ($row['nivel'] ?? null),
-            'description' => $row['descripcion'] ?? null,
-            'brand' => $row['marca'] ?? null,
-            'model' => $row['modelo'] ?? null,
-            'mac_address' => $row['mac'] ?? null,
-            'status' => $row['estado'] ?? 'OPERATIVO',
-            'is_active' => true,
-        ];
-
-        // ✅ Si no hay nombre de institución y no hay código local, omitir
-        if (empty($data['institution_name']) && empty($data['local_code'])) {
-            $this->skippedCount++;
-            Log::info('Fila omitida: sin institución ni código local');
-            return null;
-        }
-
-        // ✅ Buscar si ya existe un equipo con la misma MAC
-        $existing = null;
-        if (!empty($data['mac_address'])) {
-            $existing = NetworkEquipment::where('mac_address', $data['mac_address'])->first();
-        }
-
-        // ✅ Si no encuentra por MAC, buscar por local_code y descripción
-        if (!$existing && $localCode && $data['description']) {
-            $existing = NetworkEquipment::where('local_code', $localCode)
-                ->where('description', $data['description'])
-                ->first();
-        }
-
-        if ($existing) {
-            // ✅ Actualizar equipo existente
-            $existing->update($data);
-            $this->importedCount++;
-            Log::info('Equipo actualizado: ' . ($data['mac_address'] ?? 'sin MAC') . ' - ' . ($data['institution_name'] ?? 'sin IE'));
-            return null;
-        } else {
-            // ✅ Crear nuevo equipo
-            $this->importedCount++;
-            Log::info('Equipo creado: ' . ($data['mac_address'] ?? 'sin MAC') . ' - ' . ($data['institution_name'] ?? 'sin IE'));
-            return new NetworkEquipment($data);
-        }
-    }
-
-    public function onError(\Throwable $e)
-    {
-        $this->errors[] = $e->getMessage();
-        Log::error('Error en importación de equipos: ' . $e->getMessage());
-    }
-
-    public function onFailure(\Maatwebsite\Excel\Validators\Failure ...$failures)
-    {
-        foreach ($failures as $failure) {
-            $this->errors[] = "Fila {$failure->row()}: " . implode(', ', $failure->errors());
-            $this->skippedCount++;
-        }
-    }
-
-    public function batchSize(): int
-    {
-        return 100;
-    }
-
-    public function chunkSize(): int
-    {
-        return 100;
+        return null;
     }
 
     public function getImportedCount(): int

@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('educational_institutions', function (Blueprint $table) {
             $table->id();
-            $table->string('modular_code', 10)->nullable()->unique(); // ✅ Ahora permite NULL
+            $table->string('modular_code', 10)->nullable(); // ✅ Ahora permite NULL
             $table->string('name', 150)->nullable(); // ✅ Ahora permite NULL
             $table->string('district', 100)->nullable(); // ✅ Ahora permite NULL
             $table->string('populated_center', 100)->nullable();

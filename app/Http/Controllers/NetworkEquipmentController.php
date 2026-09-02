@@ -10,6 +10,11 @@ use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
 
 class NetworkEquipmentController extends Controller
 {
@@ -21,15 +26,14 @@ class NetworkEquipmentController extends Controller
         $user = $request->user();
         $query = NetworkEquipment::query();
 
-        // ✅ Si es director, mostrar solo sus instituciones
+        // Si es director, mostrar solo sus instituciones asignadas
         if ($user->role === 'director') {
             $institutionCodes = DB::table('institution_user')
                 ->join('educational_institutions', 'educational_institutions.id', '=', 'institution_user.educational_institution_id')
                 ->where('institution_user.user_id', $user->id)
                 ->pluck('educational_institutions.local_code')
+                ->filter()
                 ->toArray();
-            
-            $institutionCount = count($institutionCodes);
             
             if (empty($institutionCodes)) {
                 return Inertia::render('NetworkEquipments/Index', [
@@ -60,10 +64,7 @@ class NetworkEquipmentController extends Controller
             $query->whereIn('local_code', $institutionCodes);
         }
 
-        // ✅ Guardar copia de la consulta para estadísticas
-        $statsQuery = clone $query;
-
-        // ✅ Filtros
+        // Filtros de búsqueda
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -80,7 +81,10 @@ class NetworkEquipmentController extends Controller
             $query->where('status', $request->status);
         }
 
-        // ✅ Ordenar
+        // Copia de consulta para métricas
+        $statsQuery = clone $query;
+
+        // Ordenamiento
         $sortField = $request->input('sort', 'institution_name');
         $sortDirection = $request->input('direction', 'asc');
         $query->orderBy($sortField, $sortDirection);
@@ -88,23 +92,7 @@ class NetworkEquipmentController extends Controller
         $perPage = (int) $request->input('per_page', 15);
         $equipments = $query->paginate($perPage)->withQueryString();
 
-        // ✅ Estadísticas
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $statsQuery->where(function ($q) use ($search) {
-                $q->where('institution_name', 'LIKE', "%{$search}%")
-                  ->orWhere('local_code', 'LIKE', "%{$search}%")
-                  ->orWhere('brand', 'LIKE', "%{$search}%")
-                  ->orWhere('model', 'LIKE', "%{$search}%")
-                  ->orWhere('mac_address', 'LIKE', "%{$search}%")
-                  ->orWhere('description', 'LIKE', "%{$search}%");
-            });
-        }
-
-        if ($request->filled('status')) {
-            $statsQuery->where('status', $request->status);
-        }
-
+        // Estadísticas
         $stats = [
             'total' => $statsQuery->count(),
             'operative' => (clone $statsQuery)->where('status', 'OPERATIVO')->count(),
@@ -113,7 +101,6 @@ class NetworkEquipmentController extends Controller
                 ->get(),
         ];
 
-        // ✅ Obtener conteo de instituciones para el director
         $institutionCount = 0;
         if ($user->role === 'director') {
             $institutionCount = DB::table('institution_user')
@@ -157,7 +144,7 @@ class NetworkEquipmentController extends Controller
     {
         $user = $request->user();
         if ($user->role !== 'super_admin') {
-            return redirect()->route('network-equipments.index')->with('error', 'No tienes permiso para importar equipos. Solo el Super Administrador puede hacerlo.');
+            return redirect()->route('network-equipments.index')->with('error', 'No tienes permiso para importar equipos.');
         }
 
         $request->validate([
@@ -185,21 +172,25 @@ class NetworkEquipmentController extends Controller
             if ($imported > 0) {
                 $message = "✅ Se importaron {$imported} equipos correctamente.";
                 if ($skipped > 0) {
-                    $message .= " {$skipped} filas fueron omitidas.";
+                    $message .= " ({$skipped} filas fueron omitidas).";
                 }
                 if (!empty($errors)) {
-                    $message .= " Detalles: " . implode('; ', $errors);
+                    $message .= " Detalle errores: " . implode('; ', array_slice($errors, 0, 3));
+                    if (count($errors) > 3) {
+                        $message .= " y " . (count($errors) - 3) . " más.";
+                    }
                 }
                 return redirect()->route('network-equipments.index')->with('success', $message);
             } else {
-                return redirect()->route('network-equipments.import')->with('error', '❌ No se importó ningún equipo. Verifica que el archivo tenga datos válidos y que los códigos locales existan en el sistema.');
+                $msg = '❌ No se importó ningún equipo.';
+                if (!empty($errors)) {
+                    $msg .= ' Error: ' . implode('; ', array_slice($errors, 0, 2));
+                }
+                return redirect()->route('network-equipments.import')->with('error', $msg);
             }
 
         } catch (\Exception $e) {
             Log::error('ERROR IMPORT EQUIPOS: ' . $e->getMessage());
-            Log::error('LINEA: ' . $e->getLine());
-            Log::error('ARCHIVO: ' . $e->getFile());
-            
             return redirect()->route('network-equipments.import')->with('error', '❌ Error al importar: ' . $e->getMessage());
         }
     }
@@ -211,10 +202,10 @@ class NetworkEquipmentController extends Controller
     {
         $user = $request->user();
         if ($user->role !== 'super_admin') {
-            return redirect()->route('network-equipments.index')->with('error', 'No tienes permiso para descargar la plantilla. Solo el Super Administrador puede hacerlo.');
+            return redirect()->route('network-equipments.index')->with('error', 'No tienes permiso para descargar la plantilla.');
         }
 
-        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
 
         $headers = [
@@ -233,11 +224,17 @@ class NetworkEquipmentController extends Controller
                 'size' => 11,
             ],
             'fill' => [
-                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'fillType' => Fill::FILL_SOLID,
                 'startColor' => ['rgb' => '4F46E5'],
             ],
             'alignment' => [
-                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+            ],
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => Border::BORDER_THIN,
+                    'color' => ['rgb' => '000000'],
+                ],
             ],
         ];
 
@@ -250,8 +247,9 @@ class NetworkEquipmentController extends Controller
 
         $sheet->getStyle('A1:F1')->applyFromArray($headerStyle);
 
+        // Fila de ejemplo
         $row = 2;
-        $sheet->setCellValueByColumnAndRow(1, $row, '1');
+        $sheet->setCellValueByColumnAndRow(1, $row, '196380');
         $sheet->setCellValueByColumnAndRow(2, $row, 'ONU/Router GPON doble banda');
         $sheet->setCellValueByColumnAndRow(3, $row, 'TP-Link');
         $sheet->setCellValueByColumnAndRow(4, $row, 'XC220-G3');
@@ -264,35 +262,30 @@ class NetworkEquipmentController extends Controller
                 'size' => 10,
             ],
             'alignment' => [
-                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'horizontal' => Alignment::HORIZONTAL_LEFT,
             ],
             'borders' => [
                 'allBorders' => [
-                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                    'borderStyle' => Border::BORDER_THIN,
                     'color' => ['rgb' => 'CCCCCC'],
                 ],
             ],
         ];
         $sheet->getStyle('A2:F2')->applyFromArray($exampleStyle);
 
-        $sheet->getStyle('A2')->getFill()
-            ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
-            ->getStartColor()->setRGB('FFF3CD');
-
+        // Instrucciones
         $sheet->setCellValue('A4', 'INSTRUCCIONES:');
-        $sheet->setCellValue('A5', '1. El campo "codigo_local" es OBLIGATORIO (resaltado en amarillo)');
-        $sheet->setCellValue('A6', '2. El sistema buscará automáticamente el nombre y nivel de la IE');
-        $sheet->setCellValue('A7', '3. Si el código local no existe en el sistema, el equipo NO se importará');
-        $sheet->setCellValue('A8', '4. Si la MAC coincide, el equipo se actualizará');
-        $sheet->setCellValue('A9', '5. Estados permitidos: OPERATIVO, INOPERATIVO, MANTENIMIENTO');
-        $sheet->setCellValue('A10', '6. Guarda el archivo en formato .xlsx');
-        $sheet->setCellValue('A11', '7. Elimina la fila de ejemplo antes de cargar tus datos');
+        $sheet->setCellValue('A5', '1. El campo "codigo_local" autocompleta el nombre y nivel de la IE.');
+        $sheet->setCellValue('A6', '2. Se importarán todos los registros tal como vienen en el archivo.');
+        $sheet->setCellValue('A7', '3. Estados recomendados: OPERATIVO, INOPERATIVO, MANTENIMIENTO.');
+        $sheet->setCellValue('A8', '4. Guarda el archivo en formato .xlsx');
+        $sheet->setCellValue('A9', '5. Elimina la fila de ejemplo (fila 2) antes de subir tus datos.');
 
         $sheet->getStyle('A4')->getFont()->setBold(true)->setSize(11);
-        $sheet->getStyle('A4:A11')->getFont()->setSize(10);
-        $sheet->getStyle('A4:A11')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+        $sheet->getStyle('A4:A9')->getFont()->setSize(10);
+        $sheet->getStyle('A4:A9')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
 
-        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $writer = new Xlsx($spreadsheet);
         
         return response()->stream(
             function () use ($writer) {
@@ -307,7 +300,7 @@ class NetworkEquipmentController extends Controller
     }
 
     /**
-     * Exportar equipos a Excel (para directores, solo sus instituciones)
+     * Exportar equipos a Excel
      */
     public function export(Request $request)
     {
@@ -319,6 +312,7 @@ class NetworkEquipmentController extends Controller
                 ->join('educational_institutions', 'educational_institutions.id', '=', 'institution_user.educational_institution_id')
                 ->where('institution_user.user_id', $user->id)
                 ->pluck('educational_institutions.local_code')
+                ->filter()
                 ->toArray();
             
             if (empty($institutionCodes)) {
@@ -345,14 +339,15 @@ class NetworkEquipmentController extends Controller
 
         $equipments = $query->orderBy('institution_name')->get();
 
-        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
 
         $headers = ['Código Local', 'Institución', 'Nivel', 'Descripción', 'Marca', 'Modelo', 'MAC', 'Estado'];
 
         $headerStyle = [
             'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 11],
-            'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => '4F46E5']],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '4F46E5']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
         ];
 
         $col = 1;
@@ -377,7 +372,7 @@ class NetworkEquipmentController extends Controller
             $row++;
         }
 
-        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $writer = new Xlsx($spreadsheet);
         
         return response()->stream(
             function () use ($writer) {
@@ -404,6 +399,7 @@ class NetworkEquipmentController extends Controller
                 ->join('educational_institutions', 'educational_institutions.id', '=', 'institution_user.educational_institution_id')
                 ->where('institution_user.user_id', $user->id)
                 ->pluck('educational_institutions.local_code')
+                ->filter()
                 ->toArray();
             
             if (!in_array($localCode, $institutionCodes)) {
@@ -423,13 +419,12 @@ class NetworkEquipmentController extends Controller
     }
 
     /**
-     * Obtener un equipo específico (API - para editar)
+     * Obtener un equipo específico (API)
      */
     public function show(Request $request, NetworkEquipment $equipment)
     {
         $user = $request->user();
         
-        // ✅ Verificar permisos
         if (!in_array($user->role, ['super_admin', 'admin'])) {
             return response()->json([
                 'success' => false,
@@ -444,7 +439,7 @@ class NetworkEquipmentController extends Controller
     }
 
     /**
-     * Actualizar un equipo de red (solo super_admin y admin)
+     * Actualizar un equipo de red
      */
     public function update(Request $request, NetworkEquipment $equipment)
     {
@@ -459,7 +454,7 @@ class NetworkEquipmentController extends Controller
             'level' => 'nullable|string|max:100',
             'description' => 'required|string|max:255',
             'brand' => 'required|string|max:100',
-            'model' => 'required|string|max:100',
+            'model' => 'nullable|string|max:100',
             'mac_address' => 'nullable|string|max:50',
             'status' => 'required|string|max:50|in:OPERATIVO,INOPERATIVO,MANTENIMIENTO',
         ]);
@@ -470,7 +465,7 @@ class NetworkEquipmentController extends Controller
     }
 
     /**
-     * Eliminar un equipo de red (solo super_admin y admin)
+     * Eliminar un equipo de red
      */
     public function destroy(Request $request, NetworkEquipment $equipment)
     {

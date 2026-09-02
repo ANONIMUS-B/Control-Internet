@@ -46,9 +46,13 @@ interface BulkExportProps {
         year?: string;
         status?: string;
     };
+    flash?: {
+        success?: string;
+        error?: string;
+    };
 }
 
-export default function BulkExport({ reports, months, currentYear, filters = {} }: BulkExportProps) {
+export default function BulkExport({ reports, months, currentYear, filters = {}, flash }: BulkExportProps) {
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>(filters.status || 'all');
@@ -56,6 +60,8 @@ export default function BulkExport({ reports, months, currentYear, filters = {} 
     const [yearFilter, setYearFilter] = useState<string>(filters.year || String(currentYear));
     const [isExporting, setIsExporting] = useState(false);
     const [progress, setProgress] = useState(0);
+    const [successMessage, setSuccessMessage] = useState<string | null>(flash?.success || null);
+    const [errorMessage, setErrorMessage] = useState<string | null>(flash?.error || null);
 
     const filteredReports = reports.filter(report => {
         const matchesSearch = report.institution?.name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -118,6 +124,7 @@ export default function BulkExport({ reports, months, currentYear, filters = {} 
         setIsExporting(true);
         setProgress(0);
 
+        // ✅ Simular progreso
         const interval = setInterval(() => {
             setProgress(prev => {
                 if (prev >= 90) {
@@ -128,16 +135,19 @@ export default function BulkExport({ reports, months, currentYear, filters = {} 
             });
         }, 300);
 
+        // ✅ Crear formulario y enviar
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = '/reportes/exportar-lote';
         
+        // Agregar token CSRF
         const csrfInput = document.createElement('input');
         csrfInput.type = 'hidden';
         csrfInput.name = '_token';
         csrfInput.value = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
         form.appendChild(csrfInput);
 
+        // Agregar los IDs seleccionados
         selectedIds.forEach(id => {
             const input = document.createElement('input');
             input.type = 'hidden';
@@ -147,16 +157,19 @@ export default function BulkExport({ reports, months, currentYear, filters = {} 
         });
 
         document.body.appendChild(form);
+        
+        // ✅ Enviar el formulario y manejar la respuesta
         form.submit();
 
+        // ✅ Finalizar la simulación de progreso
         setTimeout(() => {
             clearInterval(interval);
             setProgress(100);
             setTimeout(() => {
                 setIsExporting(false);
                 setProgress(0);
-            }, 1000);
-        }, 2000);
+            }, 2000);
+        }, 3000);
     };
 
     const statusColors: Record<string, string> = {
@@ -184,8 +197,6 @@ export default function BulkExport({ reports, months, currentYear, filters = {} 
         'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
         'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'
     ];
-
-    const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
 
     const selectedCount = selectedIds.length;
     const totalCount = filteredReports.length;
@@ -233,6 +244,27 @@ export default function BulkExport({ reports, months, currentYear, filters = {} 
                             </button>
                         </div>
                     </div>
+
+                    {/* ===== MENSAJES ===== */}
+                    {successMessage && (
+                        <div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-2xl flex items-center gap-3 text-[11px] animate-in">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                            <p className="font-medium text-emerald-700 dark:text-emerald-400">{successMessage}</p>
+                            <button onClick={() => setSuccessMessage(null)} className="ml-auto hover:bg-emerald-100 dark:hover:bg-emerald-800/50 p-1 rounded-lg transition-colors">
+                                <X className="w-3.5 h-3.5 text-emerald-500" />
+                            </button>
+                        </div>
+                    )}
+
+                    {errorMessage && (
+                        <div className="p-3 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded-2xl flex items-center gap-3 text-[11px] animate-in">
+                            <AlertCircle className="w-4 h-4 text-rose-500 flex-shrink-0" />
+                            <p className="font-medium text-rose-700 dark:text-rose-400">{errorMessage}</p>
+                            <button onClick={() => setErrorMessage(null)} className="ml-auto hover:bg-rose-100 dark:hover:bg-rose-800/50 p-1 rounded-lg transition-colors">
+                                <X className="w-3.5 h-3.5 text-rose-500" />
+                            </button>
+                        </div>
+                    )}
 
                     {/* ===== BARRA DE PROGRESO ===== */}
                     {isExporting && (
@@ -347,7 +379,7 @@ export default function BulkExport({ reports, months, currentYear, filters = {} 
                                 <thead className="bg-gray-50 dark:bg-white/5">
                                     <tr>
                                         <th className="px-4 py-3 text-center w-10">
-                                            <input
+                                            <input 
                                                 type="checkbox"
                                                 checked={selectedCount === totalCount && totalCount > 0}
                                                 onChange={selectAll}

@@ -131,4 +131,4 @@ class ReportsExport implements FromQuery, WithHeadings, WithMapping, WithStyles,
             'Q' => ['width' => 40],
         ];
     }
-}
+} 
