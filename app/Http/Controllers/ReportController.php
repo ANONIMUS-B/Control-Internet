@@ -13,6 +13,9 @@ use App\Models\ReportEvidence;
 use Illuminate\Database\QueryException;
 use App\Helpers\ReportHelper;
 use App\Models\ReportPeriod;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
+use App\Models\User;
 
 class ReportController extends Controller
 {
@@ -26,7 +29,7 @@ class ReportController extends Controller
     /**
      * Listado de reportes para directores y admins
      */
-    public function index(Request $request)
+    public function index(Request $request) // ✅ Ya tiene tipo
     {
         $user = $request->user();
         $query = MonthlyReport::with(['institution', 'user'])->latest();
@@ -86,71 +89,67 @@ class ReportController extends Controller
         ]);
     }
 
- public function create(Request $request)
-{
-    $user = $request->user();
-    
-    $institutions = $user->institutions;
-    
-    $reportedMonths = [];
-    foreach ($institutions as $institution) {
-        $reported = MonthlyReport::where('institution_id', $institution->id)
-            ->where('year', date('Y'))
-            ->pluck('month')
-            ->toArray();
-        $reportedMonths[$institution->id] = $reported;
-    }
+    public function create(Request $request) // ✅ Ya tiene tipo
+    {
+        $user = $request->user();
+        
+        $institutions = $user->institutions;
+        
+        $reportedMonths = [];
+        foreach ($institutions as $institution) {
+            $reported = MonthlyReport::where('institution_id', $institution->id)
+                ->where('year', date('Y'))
+                ->pluck('month')
+                ->toArray();
+            $reportedMonths[$institution->id] = $reported;
+        }
 
-    $currentMonth = date('n');
-    $currentYear = date('Y');
-    $today = date('Y-m-d');
-    
-    // ✅ Obtener TODOS los períodos activos que estén vigentes
-    $availablePeriods = ReportPeriod::where('is_active', true)
-        ->where('year', $currentYear)
-        ->where('start_date', '<=', $today)
-        ->where('end_date', '>=', $today)
-        ->orderBy('month', 'asc')
-        ->get();
-
-    // ✅ Si no hay períodos vigentes, obtener los activos
-    if ($availablePeriods->isEmpty()) {
+        $currentMonth = date('n');
+        $currentYear = date('Y');
+        $today = date('Y-m-d');
+        
         $availablePeriods = ReportPeriod::where('is_active', true)
             ->where('year', $currentYear)
+            ->where('start_date', '<=', $today)
+            ->where('end_date', '>=', $today)
             ->orderBy('month', 'asc')
             ->get();
+
+        if ($availablePeriods->isEmpty()) {
+            $availablePeriods = ReportPeriod::where('is_active', true)
+                ->where('year', $currentYear)
+                ->orderBy('month', 'asc')
+                ->get();
+        }
+
+        $months = [
+            1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril',
+            5 => 'Mayo', 6 => 'Junio', 7 => 'Julio', 8 => 'Agosto',
+            9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre'
+        ];
+        
+        foreach ($availablePeriods as $period) {
+            $period->month_name = $months[$period->month] ?? $period->month;
+        }
+
+        $reportPeriod = $availablePeriods->first();
+
+        return Inertia::render('Reports/Create', [
+            'month' => $currentMonth,
+            'year' => $currentYear,
+            'myInstitutions' => $institutions,
+            'reportedMonths' => $reportedMonths,
+            'months' => $months,
+            'currentYear' => $currentYear,
+            'reportPeriod' => $reportPeriod,
+            'availablePeriods' => $availablePeriods,
+        ]);
     }
-
-    // ✅ Agregar el nombre del mes a cada período
-    $months = [
-        1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril',
-        5 => 'Mayo', 6 => 'Junio', 7 => 'Julio', 8 => 'Agosto',
-        9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre'
-    ];
-    
-    foreach ($availablePeriods as $period) {
-        $period->month_name = $months[$period->month] ?? $period->month;
-    }
-
-    // ✅ Obtener el primer período para compatibilidad
-    $reportPeriod = $availablePeriods->first();
-
-    return Inertia::render('Reports/Create', [
-        'month' => $currentMonth,
-        'year' => $currentYear,
-        'myInstitutions' => $institutions,
-        'reportedMonths' => $reportedMonths,
-        'months' => $months,
-        'currentYear' => $currentYear,
-        'reportPeriod' => $reportPeriod,
-        'availablePeriods' => $availablePeriods, // ✅ Pasar la lista completa
-    ]);
-}
 
     /**
      * Guardar un nuevo reporte
      */
-    public function store(Request $request)
+    public function store(Request $request) // ✅ Ya tiene tipo
     {
         $user = $request->user();
         $allowedIds = $user->institutions()->pluck('educational_institutions.id')->toArray();
@@ -177,7 +176,6 @@ class ReportController extends Controller
                 'submitted_at' => now(),
             ]);
 
-            // ✅ Registrar historial de creación
             ReportHelper::logHistory($report, 'created', [
                 'service_state' => $validatedData['service_state'],
                 'office_number' => $validatedData['office_number'],
@@ -185,7 +183,6 @@ class ReportController extends Controller
                 'year' => $validatedData['year'],
             ]);
 
-            // ✅ Notificar a admins
             $institution = EducationalInstitution::find($validatedData['educational_institution_id']);
             ReportHelper::notifyAdmins(
                 'info',
@@ -195,7 +192,6 @@ class ReportController extends Controller
                 "/updi/dashboard"
             );
 
-            // Subir evidencias
             if ($request->hasFile('evidences')) {
                 foreach ($request->file('evidences') as $file) {
                     $path = $file->store('evidences', 'public');
@@ -220,7 +216,7 @@ class ReportController extends Controller
     /**
      * Descargar PDF del reporte
      */
-    public function downloadPdf(MonthlyReport $report)
+    public function downloadPdf(MonthlyReport $report) // ✅ Ya tiene tipo (Model Binding)
     {
         $report->load(['institution', 'user', 'evidences']);
         
@@ -231,7 +227,6 @@ class ReportController extends Controller
         ];
         $report->month_name = $months[$report->month] ?? $report->month;
 
-        // ✅ Cargar imagen de cabecera como Base64
         $headerLogoPath = public_path('images/logos_header.png');
         $headerLogoBase64 = null;
         if (file_exists($headerLogoPath)) {
@@ -270,7 +265,7 @@ class ReportController extends Controller
 
         $pdf = Pdf::loadView('pdf.reporte_conformidad', [
             'report' => $report,
-            'headerLogoBase64' => $headerLogoBase64, // ✅ Enviar base64 a la vista
+            'headerLogoBase64' => $headerLogoBase64,
             'evidenciasBase64' => $evidenciasBase64,
             'signatureBase64' => $signatureBase64,
             'stateLabels' => $stateLabels,
@@ -293,8 +288,9 @@ class ReportController extends Controller
 
     /**
      * Formulario para editar un reporte
+     * ✅ CORREGIDO - Se agregó tipo int y se usa Model Binding
      */
-    public function edit($id)
+    public function edit(int $id): \Inertia\Response
     {
         $report = MonthlyReport::with(['evidences', 'user', 'institution'])
             ->with(['history' => function ($query) {
@@ -302,24 +298,32 @@ class ReportController extends Controller
             }])
             ->findOrFail($id);
         
-        return inertia('Reports/Edit', [
+        $months = [
+            1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril',
+            5 => 'Mayo', 6 => 'Junio', 7 => 'Julio', 8 => 'Agosto',
+            9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre'
+        ];
+        
+        return Inertia::render('Reports/Edit', [
             'report' => $report,
-            'history' => $report->history,
+            'months' => $months,
         ]);
     }
 
     /**
      * Actualizar un reporte
+     * ✅ CORREGIDO - Se agregó tipo int
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, int $id): RedirectResponse
     {
         $report = MonthlyReport::findOrFail($id);
         $oldData = $report->getAttributes();
         
         $request->validate([
-            'service_state' => 'required',
-            'office_number' => 'required',
-            'evidences.*' => 'image|mimes:jpeg,jpg,png',
+            'service_state' => 'required|in:operative,intermittent,no_service',
+            'office_number' => 'required|string|max:255',
+            'notes' => 'nullable|string|max:500',
+            'evidences.*' => 'image|mimes:jpeg,jpg,png|max:10240',
         ]);
 
         $report->update([
@@ -331,7 +335,6 @@ class ReportController extends Controller
             'submitted_at' => now(),
         ]);
 
-        // ✅ Registrar historial de actualización
         $changes = [];
         foreach (['service_state', 'office_number', 'notes'] as $field) {
             if (($oldData[$field] ?? '') != ($request->$field ?? '')) {
@@ -346,7 +349,6 @@ class ReportController extends Controller
             ReportHelper::logHistory($report, 'updated', $changes);
         }
 
-        // ✅ Notificar a admins
         ReportHelper::notifyAdmins(
             'warning',
             '🔄 Reporte actualizado',
@@ -355,7 +357,6 @@ class ReportController extends Controller
             "/updi/dashboard"
         );
 
-        // Subir nuevas evidencias si existen
         if ($request->hasFile('evidences')) {
             foreach ($request->file('evidences') as $file) {
                 $path = $file->store('evidences/' . $report->id, 'public');
@@ -368,8 +369,9 @@ class ReportController extends Controller
 
     /**
      * Eliminar una evidencia
+     * ✅ CORREGIDO - Usa Model Binding
      */
-    public function destroyEvidence(ReportEvidence $evidence)
+    public function destroyEvidence(ReportEvidence $evidence): RedirectResponse
     {
         $user = request()->user();
         
@@ -401,7 +403,7 @@ class ReportController extends Controller
     /**
      * Panel de administración UPDI con paginación
      */
-    public function adminIndex(Request $request)
+    public function adminIndex(Request $request) // ✅ Ya tiene tipo
     {
         $query = MonthlyReport::with(['user', 'institution'])->latest();
 
@@ -457,8 +459,9 @@ class ReportController extends Controller
 
     /**
      * Aprobar un reporte
+     * ✅ CORREGIDO - Se agregó tipo int
      */
-    public function approve($id)
+    public function approve(int $id): RedirectResponse
     {
         $report = MonthlyReport::findOrFail($id);
         $oldStatus = $report->status;
@@ -468,13 +471,11 @@ class ReportController extends Controller
             'admin_comments' => null
         ]);
 
-        // ✅ Registrar historial de aprobación
         ReportHelper::logHistory($report, 'approved', [
             'old_status' => $oldStatus,
             'new_status' => 'approved',
         ]);
 
-        // ✅ Notificar al director
         $director = $report->user;
         $institution = $report->institution;
         
@@ -494,8 +495,9 @@ class ReportController extends Controller
 
     /**
      * Observar un reporte
+     * ✅ CORREGIDO - Se agregó tipo int
      */
-    public function observe(Request $request, $id)
+    public function observe(Request $request, int $id): RedirectResponse
     {
         $request->validate(['admin_comments' => 'required|string|min:5']);
         
@@ -507,7 +509,6 @@ class ReportController extends Controller
             'admin_comments' => $request->admin_comments,
         ]);
 
-        // ✅ Registrar historial de observación
         ReportHelper::logHistory(
             $report,
             'observed',
@@ -519,7 +520,6 @@ class ReportController extends Controller
             $request->admin_comments
         );
 
-        // ✅ Notificar al director con link a edición
         $director = $report->user;
         $institution = $report->institution;
         

@@ -1,5 +1,7 @@
+// Edit.tsx - Versión corregida con accesibilidad
+
 import { Head, useForm, Link, router } from '@inertiajs/react';
-import { FormEvent, useState } from 'react';
+import { FormEvent, useState, useEffect, useRef } from 'react';
 import { dashboard } from '@/routes';
 import { 
     ArrowLeft, 
@@ -16,7 +18,14 @@ import {
     Shield,
     Image as ImageIcon,
     Pencil,
-    History
+    History,
+    Wifi,
+    ExternalLink,
+    ClipboardPaste,
+    ChevronLeft,
+    ChevronRight as ChevronRightIcon,
+    School,
+    Camera
 } from 'lucide-react';
 import ReportHistory from '@/components/ReportHistory';
 
@@ -49,6 +58,7 @@ interface EditReportProps {
         status: string;
         history?: HistoryItem[];
         institution?: {
+            id: number;
             name: string;
             modular_code: string;
         };
@@ -59,14 +69,14 @@ interface EditReportProps {
         success?: string;
         error?: string;
     };
+    months?: Record<number, string>;
 }
 
-export default function Edit({ report, flash }: EditReportProps) {
-    // ✅ Asegurar que office_number nunca sea null
+export default function Edit({ report, flash, months = {} }: EditReportProps) {
     const { data, setData, post, processing } = useForm({
         _method: 'PUT',
         service_state: 'operative',
-        office_number: report.office_number || '', // ✅ Valor por defecto vacío
+        office_number: report.office_number || '',
         notes: report.notes || '',
         evidences: [] as File[],
     });
@@ -76,11 +86,69 @@ export default function Edit({ report, flash }: EditReportProps) {
     const [successMessage, setSuccessMessage] = useState<string | null>(flash?.success || null);
     const [uploadProgress, setUploadProgress] = useState(0);
     const [isUploading, setIsUploading] = useState(false);
+    const [dragActive, setDragActive] = useState(false);
+    const [isPasteActive, setIsPasteActive] = useState(false);
+    const [showSuccess, setShowSuccess] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const months = [
-        'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-    ];
+    const monthsList = months || {
+        1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril',
+        5: 'Mayo', 6: 'Junio', 7: 'Julio', 8: 'Agosto',
+        9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre'
+    };
+
+    // ✅ FUNCIÓN PARA PROCESAR EL PEGADO DE IMÁGENES
+    const processPastedImage = (file: File) => {
+        if (file.size > 10 * 1024 * 1024) {
+            setErrorMessage('La imagen no debe pesar más de 10MB.');
+            return false;
+        }
+
+        setData('evidences', [...data.evidences, file]);
+        
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            if (event.target?.result) {
+                setPreviews([...previews, event.target.result as string]);
+            }
+        };
+        reader.readAsDataURL(file);
+        setErrorMessage(null);
+        return true;
+    };
+
+    // ✅ MANEJADOR GLOBAL DE PEGADO (Ctrl+V)
+    const handleGlobalPaste = (e: ClipboardEvent) => {
+        const items = e.clipboardData?.items;
+        if (!items) return;
+
+        let hasImage = false;
+        
+        for (const item of items) {
+            if (item.type.startsWith('image/')) {
+                const file = item.getAsFile();
+                if (file) {
+                    processPastedImage(file);
+                    hasImage = true;
+                    setIsPasteActive(true);
+                    setTimeout(() => setIsPasteActive(false), 2000);
+                }
+                break;
+            }
+        }
+
+        if (hasImage) {
+            e.preventDefault();
+        }
+    };
+
+    // ✅ REGISTRAR Y DESREGISTRAR EL EVENTO GLOBAL
+    useEffect(() => {
+        document.addEventListener('paste', handleGlobalPaste);
+        return () => {
+            document.removeEventListener('paste', handleGlobalPaste);
+        };
+    }, [data.evidences, previews]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
@@ -111,23 +179,46 @@ export default function Edit({ report, flash }: EditReportProps) {
         });
     };
 
+    const handleDrag = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.type === "dragenter" || e.type === "dragover") {
+            setDragActive(true);
+        } else if (e.type === "dragleave") {
+            setDragActive(false);
+        }
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setDragActive(false);
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+            const filesArray = Array.from(e.dataTransfer.files);
+            setData('evidences', [...data.evidences, ...filesArray]);
+            const newPreviews = filesArray.map(file => URL.createObjectURL(file));
+            setPreviews([...previews, ...newPreviews]);
+        }
+    };
+
+    const removeFile = (index: number) => {
+        const newEvidences = data.evidences.filter((_, i) => i !== index);
+        const newPreviews = previews.filter((_, i) => i !== index);
+        setData('evidences', newEvidences);
+        setPreviews(newPreviews);
+        URL.revokeObjectURL(previews[index]);
+    };
+
+    // ✅ ABRIR TEST DE VELOCIDAD EN NUEVA PESTAÑA
+    const openSpeedTest = () => {
+        window.open('https://infistel.pe/test-velocidad', '_blank');
+    };
+
     const submit = (e: FormEvent) => {
         e.preventDefault();
         
-        if (data.evidences.length === 0) {
-            post(`/reportes/${report.id}`, {
-                onSuccess: (page) => {
-                    const flashData = page.props.flash as { success?: string; error?: string } | undefined;
-                    if (flashData?.success) setSuccessMessage(flashData.success);
-                    else setSuccessMessage('✅ Reporte actualizado');
-                    setTimeout(() => setSuccessMessage(null), 5000);
-                },
-                onError: (errors) => {
-                    const errorMessages = Object.values(errors).join(', ');
-                    setErrorMessage(errorMessages);
-                    setTimeout(() => setErrorMessage(null), 5000);
-                }
-            });
+        if (data.evidences.length === 0 && report.evidences.length === 0) {
+            setErrorMessage('Debes agregar al menos una evidencia.');
             return;
         }
 
@@ -152,9 +243,17 @@ export default function Edit({ report, flash }: EditReportProps) {
                     setIsUploading(false);
                     setUploadProgress(0);
                     const flashData = page.props.flash as { success?: string; error?: string } | undefined;
-                    if (flashData?.success) setSuccessMessage(flashData.success);
-                    else setSuccessMessage('✅ Reporte actualizado');
-                    setTimeout(() => setSuccessMessage(null), 5000);
+                    if (flashData?.success) {
+                        setSuccessMessage(flashData.success);
+                        setShowSuccess(true);
+                    } else {
+                        setSuccessMessage('✅ Reporte actualizado');
+                        setShowSuccess(true);
+                    }
+                    setTimeout(() => {
+                        setSuccessMessage(null);
+                        setShowSuccess(false);
+                    }, 5000);
                 }, 500);
             },
             onError: (errors) => {
@@ -230,7 +329,7 @@ export default function Edit({ report, flash }: EditReportProps) {
                                         <span className="w-1 h-1 bg-gray-300 dark:bg-neutral-600 rounded-full"></span>
                                         <span className="flex items-center gap-1">
                                             <Calendar className="w-3.5 h-3.5" />
-                                            {report.month ? months[report.month - 1] : ''} {report.year}
+                                            {report.month ? monthsList[report.month] : ''} {report.year}
                                         </span>
                                         <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium border ${statusColors[report.status]}`}>
                                             {statusLabels[report.status] || report.status}
@@ -238,11 +337,34 @@ export default function Edit({ report, flash }: EditReportProps) {
                                     </div>
                                 </div>
                             </div>
-                            <Link href="/reportes" className="flex items-center gap-1.5 px-3 py-2 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-700 dark:text-neutral-300 rounded-xl text-[11px] font-medium transition-all border border-gray-300 dark:border-white/10 hover:border-gray-400 dark:hover:border-white/20">
-                                <ArrowLeft className="w-3.5 h-3.5" /> Volver
-                            </Link>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={openSpeedTest}
+                                    className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white rounded-xl text-[11px] font-medium transition-all shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40 hover:scale-105 active:scale-95"
+                                    title="Realizar test de velocidad"
+                                >
+                                    <Wifi className="w-4 h-4" />
+                                    <span className="hidden sm:inline">Test de Velocidad</span>
+                                    <ExternalLink className="w-3 h-3" />
+                                </button>
+                                <Link href="/reportes" className="flex items-center gap-1.5 px-3 py-2 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-700 dark:text-neutral-300 rounded-xl text-[11px] font-medium transition-all border border-gray-300 dark:border-white/10 hover:border-gray-400 dark:hover:border-white/20">
+                                    <ArrowLeft className="w-3.5 h-3.5" /> Volver
+                                </Link>
+                            </div>
                         </div>
                     </div>
+
+                    {/* ===== ALERTA DE PEGADO ===== */}
+                    {isPasteActive && (
+                        <div className="p-3 bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800 rounded-2xl animate-in slide-in-from-top duration-200">
+                            <div className="flex items-center gap-2">
+                                <ClipboardPaste className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                                <span className="text-[11px] text-purple-700 dark:text-purple-300 font-medium">
+                                    ✅ Imagen pegada correctamente
+                                </span>
+                            </div>
+                        </div>
+                    )}
 
                     {/* ===== MENSAJES ===== */}
                     {successMessage && (
@@ -280,6 +402,33 @@ export default function Edit({ report, flash }: EditReportProps) {
                     <div className="bg-white dark:bg-slate-800/50 rounded-2xl border border-gray-200 dark:border-white/10 p-4 md:p-6 shadow-sm dark:shadow-2xl">
                         <form onSubmit={submit} className="space-y-4">
                             
+                            {/* ===== INSTITUCIÓN (solo lectura) ===== */}
+                            <div>
+                                <label htmlFor="institution" className="block text-[11px] font-semibold text-gray-700 dark:text-neutral-300 mb-1.5 flex items-center gap-1.5">
+                                    <School className="w-3.5 h-3.5 text-blue-500" /> IE
+                                </label>
+                                <div 
+                                    id="institution"
+                                    className="w-full rounded-xl border-2 border-gray-200 dark:border-white/10 py-2 px-3 text-[11px] bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-white"
+                                >
+                                    {report.institution?.name || 'Sin IE'} 
+                                    {report.institution?.modular_code && ` (${report.institution.modular_code})`}
+                                </div>
+                            </div>
+
+                            {/* ===== MES (solo lectura) ===== */}
+                            <div>
+                                <label htmlFor="month" className="block text-[11px] font-semibold text-gray-700 dark:text-neutral-300 mb-1.5 flex items-center gap-1.5">
+                                    <Calendar className="w-3.5 h-3.5 text-blue-500" /> Mes
+                                </label>
+                                <div 
+                                    id="month"
+                                    className="w-full rounded-xl border-2 border-gray-200 dark:border-white/10 py-2 px-3 text-[11px] font-medium bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-white"
+                                >
+                                    {report.month ? monthsList[report.month] : ''} {report.year}
+                                </div>
+                            </div>
+
                             {/* ===== ESTADO DEL SERVICIO ===== */}
                             <div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 rounded-xl border border-emerald-200 dark:border-emerald-800">
                                 <div className="flex items-center gap-2">
@@ -295,15 +444,18 @@ export default function Edit({ report, flash }: EditReportProps) {
 
                             {/* ===== N° OFICIO ===== */}
                             <div>
-                                <label className="block text-[11px] font-semibold text-gray-700 dark:text-neutral-300 mb-1.5 flex items-center gap-1.5">
+                                <label htmlFor="office_number" className="block text-[11px] font-semibold text-gray-700 dark:text-neutral-300 mb-1.5 flex items-center gap-1.5">
                                     <FileText className="w-3.5 h-3.5 text-blue-500" /> N° Oficio
                                 </label>
                                 <input 
+                                    id="office_number"
+                                    name="office_number"
                                     type="text" 
-                                    value={data.office_number || ''} // ✅ Corregido: valor nunca null
+                                    value={data.office_number || ''}
                                     onChange={(e) => setData('office_number', e.target.value)} 
                                     className="w-full rounded-xl border-2 border-gray-200 dark:border-white/10 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all py-2 px-3 text-[11px] bg-white dark:bg-slate-900 text-gray-900 dark:text-white outline-none placeholder:text-gray-400 dark:placeholder:text-neutral-500"
                                     placeholder="OFICIO N° 045-2026-DIR-IE"
+                                    autoComplete="off"
                                 />
                             </div>
 
@@ -311,7 +463,7 @@ export default function Edit({ report, flash }: EditReportProps) {
                             {report.evidences.length > 0 && (
                                 <div>
                                     <p className="text-[11px] font-semibold text-gray-500 dark:text-neutral-400 mb-2">
-                                        📷 Evidencias ({report.evidences.length})
+                                        📷 Evidencias actuales ({report.evidences.length})
                                     </p>
                                     <div className="grid grid-cols-4 gap-2">
                                         {report.evidences.map((ev) => (
@@ -319,12 +471,13 @@ export default function Edit({ report, flash }: EditReportProps) {
                                                 <img 
                                                     src={`/storage/${ev.file_path}`} 
                                                     className="h-16 w-full object-cover rounded-xl border border-gray-200 dark:border-white/10" 
-                                                    alt="Evidencia" 
+                                                    alt={`Evidencia ${ev.id}`} 
                                                 />
                                                 <button 
                                                     type="button"
                                                     onClick={() => deleteEvidence(ev.id)}
                                                     className="absolute -top-1 -right-1 bg-rose-500 hover:bg-rose-600 text-white p-0.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                                                    aria-label="Eliminar evidencia"
                                                 >
                                                     <Trash2 className="w-3 h-3" />
                                                 </button>
@@ -336,42 +489,82 @@ export default function Edit({ report, flash }: EditReportProps) {
 
                             {/* ===== NUEVAS EVIDENCIAS ===== */}
                             <div>
-                                <label className="block text-[11px] font-semibold text-gray-700 dark:text-neutral-300 mb-1.5 flex items-center gap-1.5">
-                                    <ImageIcon className="w-3.5 h-3.5 text-blue-500" /> Agregar fotos
-                                </label>
-                                <div className={`relative rounded-xl border-2 border-dashed transition-all ${
-                                    previews.length > 0 ? 'border-emerald-300 dark:border-emerald-700 bg-emerald-50/20 dark:bg-emerald-500/5' : 'border-gray-300 dark:border-white/10 hover:border-blue-400 dark:hover:border-blue-500/40 hover:bg-blue-50/10 dark:hover:bg-blue-500/5'
-                                }`}>
-                                    <input 
-                                        type="file" 
-                                        multiple 
-                                        accept="image/*" 
-                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
-                                        onChange={handleFileChange} 
+                                <div className="flex items-center justify-between mb-1.5">
+                                    <label htmlFor="evidences" className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-700 dark:text-neutral-300">
+                                        <ImageIcon className="w-3.5 h-3.5 text-blue-500" /> 
+                                        Agregar fotos
+                                        <span className="text-gray-400 dark:text-neutral-500 font-normal">(10 max)</span>
+                                    </label>
+                                    <span className="text-[10px] text-purple-600 dark:text-purple-400 flex items-center gap-1">
+                                        <ClipboardPaste className="w-3 h-3" />
+                                        Ctrl+V para pegar
+                                    </span>
+                                </div>
+
+                                <div
+                                    className={`relative rounded-xl border-2 border-dashed transition-all min-h-[100px] ${
+                                        dragActive ? 'border-blue-500 bg-blue-50/30 dark:bg-blue-500/10' : 
+                                        previews.length > 0 ? 'border-emerald-300 dark:border-emerald-700 bg-emerald-50/20 dark:bg-emerald-500/5' : 
+                                        'border-gray-300 dark:border-white/10 hover:border-blue-400 dark:hover:border-blue-500/40 hover:bg-blue-50/10 dark:hover:bg-blue-500/5'
+                                    }`}
+                                    onDragEnter={handleDrag}
+                                    onDragLeave={handleDrag}
+                                    onDragOver={handleDrag}
+                                    onDrop={handleDrop}
+                                >
+                                    <input
+                                        id="evidences"
+                                        name="evidences"
+                                        type="file"
+                                        multiple
+                                        accept="image/*"
+                                        onChange={handleFileChange}
+                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                                        disabled={processing}
+                                        ref={fileInputRef}
+                                        aria-label="Subir evidencias"
                                     />
-                                    <div className="p-3 text-center">
-                                        <div className="flex items-center justify-center gap-2">
-                                            <Upload className={`w-4 h-4 ${previews.length > 0 ? 'text-emerald-500' : 'text-blue-500'}`} />
-                                            <p className="text-[11px] text-gray-500 dark:text-neutral-400">
-                                                {previews.length > 0 ? `${previews.length} imágenes` : 'Arrastra o haz clic'}
-                                            </p>
+                                    <div className="p-4 text-center">
+                                        <div className="flex flex-col items-center gap-1.5">
+                                            {previews.length > 0 ? (
+                                                <>
+                                                    <Camera className="w-6 h-6 text-emerald-500" />
+                                                    <p className="text-[11px] font-medium text-gray-700 dark:text-neutral-300">
+                                                        {previews.length} imágenes seleccionadas
+                                                    </p>
+                                                    <p className="text-[10px] text-gray-400 dark:text-neutral-500">
+                                                        Haz clic o arrastra para agregar más
+                                                    </p>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Upload className="w-6 h-6 text-blue-500" />
+                                                    <p className="text-[11px] text-gray-500 dark:text-neutral-400">
+                                                        Arrastra o haz clic para subir
+                                                    </p>
+                                                    <p className="text-[10px] text-purple-500 dark:text-purple-400">
+                                                        💡 También puedes pegar imágenes con Ctrl+V
+                                                    </p>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
+
                                 {previews.length > 0 && (
                                     <div className="mt-2 grid grid-cols-4 gap-2">
                                         {previews.map((url, index) => (
-                                            <div key={index} className="relative">
-                                                <img src={url} className="h-16 w-full object-cover rounded-xl border border-gray-200 dark:border-white/10" />
+                                            <div key={index} className="relative group">
+                                                <img 
+                                                    src={url} 
+                                                    className="w-full h-16 object-cover rounded-xl border border-gray-200 dark:border-white/10" 
+                                                    alt={`Vista previa ${index + 1}`} 
+                                                />
                                                 <button
                                                     type="button"
-                                                    onClick={() => {
-                                                        const newPreviews = previews.filter((_, i) => i !== index);
-                                                        const newEvidences = data.evidences.filter((_, i) => i !== index);
-                                                        setPreviews(newPreviews);
-                                                        setData('evidences', newEvidences);
-                                                    }}
-                                                    className="absolute -top-1 -right-1 bg-rose-500 hover:bg-rose-600 text-white p-0.5 rounded-full shadow-lg"
+                                                    onClick={() => removeFile(index)}
+                                                    className="absolute -top-1 -right-1 bg-rose-500 text-white rounded-full p-0.5 hover:bg-rose-600 transition-all shadow-lg"
+                                                    aria-label="Eliminar imagen"
                                                 >
                                                     <X className="w-3 h-3" />
                                                 </button>
@@ -391,23 +584,42 @@ export default function Edit({ report, flash }: EditReportProps) {
                                         <span className="font-bold text-blue-600 dark:text-blue-400">{uploadProgress}%</span>
                                     </div>
                                     <div className="w-full h-1.5 bg-gray-200 dark:bg-white/5 rounded-full mt-1 overflow-hidden">
-                                        <div className="bg-gradient-to-r from-blue-500 to-indigo-600 h-full rounded-full transition-all" style={{ width: `${uploadProgress}%` }} />
+                                        <div 
+                                            className="bg-gradient-to-r from-blue-500 to-indigo-600 h-full rounded-full transition-all" 
+                                            style={{ width: `${uploadProgress}%` }}
+                                            role="progressbar"
+                                            aria-valuenow={uploadProgress}
+                                            aria-valuemin={0}
+                                            aria-valuemax={100}
+                                        />
                                     </div>
                                 </div>
                             )}
 
-                            {/* ===== BOTÓN GUARDAR ===== */}
-                            <button 
-                                type="submit" 
-                                disabled={processing || isUploading} 
-                                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-xl text-[11px] font-medium transition-all shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
-                            >
-                                {processing || isUploading ? (
-                                    <><Loader2 className="w-4 h-4 animate-spin" /> Guardando...</>
-                                ) : (
-                                    <><Save className="w-4 h-4" /> Guardar Correcciones</>
-                                )}
-                            </button>
+                            {/* ===== BOTONES ===== */}
+                            <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-200 dark:border-white/10">
+                                <button
+                                    type="button"
+                                    onClick={openSpeedTest}
+                                    className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white rounded-xl text-[11px] font-medium transition-all shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40 hover:scale-105 active:scale-95"
+                                >
+                                    <Wifi className="w-4 h-4" />
+                                    Test de Velocidad
+                                    <ExternalLink className="w-3 h-3" />
+                                </button>
+                                
+                                <button 
+                                    type="submit" 
+                                    disabled={processing || isUploading} 
+                                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-xl text-[11px] font-medium transition-all shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
+                                >
+                                    {processing || isUploading ? (
+                                        <><Loader2 className="w-4 h-4 animate-spin" /> Guardando...</>
+                                    ) : (
+                                        <><Save className="w-4 h-4" /> Guardar Correcciones</>
+                                    )}
+                                </button>
+                            </div>
                         </form>
                     </div>
 
@@ -419,6 +631,22 @@ export default function Edit({ report, flash }: EditReportProps) {
                                 <h3 className="text-[11px] font-semibold text-gray-700 dark:text-neutral-300">Historial</h3>
                             </div>
                             <ReportHistory history={report.history} />
+                        </div>
+                    )}
+
+                    {/* ===== NOTIFICACIÓN DE ÉXITO ===== */}
+                    {showSuccess && (
+                        <div className="fixed bottom-4 right-4 bg-white dark:bg-slate-800 border border-gray-200 dark:border-white/10 p-4 rounded-2xl shadow-2xl flex items-center gap-3 text-[11px] animate-in slide-in-from-right">
+                            <div className="p-2 bg-emerald-100 dark:bg-emerald-500/20 rounded-xl border border-emerald-200 dark:border-emerald-500/20">
+                                <CheckCircle className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                            </div>
+                            <div>
+                                <p className="font-medium text-gray-900 dark:text-white">¡Reporte actualizado!</p>
+                                <p className="text-gray-500 dark:text-neutral-400">Las correcciones han sido guardadas.</p>
+                            </div>
+                            <button onClick={() => setShowSuccess(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors">
+                                <X className="w-4 h-4" />
+                            </button>
                         </div>
                     )}
                 </div>
