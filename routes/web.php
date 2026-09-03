@@ -21,6 +21,7 @@ use App\Http\Controllers\SpeedtestOoklaController;
 use App\Http\Controllers\SpeedtestRealController;
 use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\NetworkEquipmentController;
+use App\Http\Controllers\TutorialController;
 
 Route::inertia('/', 'welcome')->name('home');
 
@@ -206,6 +207,13 @@ Route::middleware(['auth', 'verified', 'maintenance'])->group(function () {
     Route::get('/reportes/exportar-excel', [ExportController::class, 'index'])->name('reports.export-excel');
     Route::post('/reportes/exportar-excel', [ExportController::class, 'export'])->name('reports.export-excel.download');
     Route::get('/reportes/exportar-todos', [ExportController::class, 'exportAll'])->name('reports.export-all');
-});
+
+
+      Route::get('/tutoriales', [TutorialController::class, 'index'])
+        ->name('tutorials.index')
+        ->middleware(['user.active']);
+
+        
+    });
 
 require __DIR__.'/settings.php';

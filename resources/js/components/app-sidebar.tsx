@@ -14,6 +14,7 @@ import {
     ChevronDown,
     ChevronRight,
     Wifi,
+    Youtube,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
@@ -80,6 +81,7 @@ export function AppSidebar() {
                 href: '/firma',
                 icon: FileSignature,
             },
+            
         ];
 
         // ✅ DIRECTOR - Puede ver sus equipos de red
@@ -91,6 +93,11 @@ export function AppSidebar() {
                     href: '/equipos-red',
                     icon: Wifi,
                 },
+                {
+                title: 'Tutoriales',
+                href: '/tutoriales',
+                icon: Youtube,
+            },
             ];
         }
 
@@ -156,6 +163,11 @@ export function AppSidebar() {
                         },
                     ],
                 },
+                {
+                    title: 'Tutoriales',
+                    href: '/tutoriales',
+                    icon: Youtube,
+                },
             ];
         }
 
@@ -201,6 +213,12 @@ export function AppSidebar() {
                         },
                     ],
                 },
+                {
+                    title: 'Tutoriales',
+                    href: '/tutoriales',
+                    icon: Youtube,
+                },
+
             ];
         }
 
