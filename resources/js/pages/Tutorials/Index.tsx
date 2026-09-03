@@ -53,7 +53,7 @@ export default function TutorialsIndex() {
             id: 1,
             title: 'Cómo crear un reporte mensual',
             description: 'Aprende paso a paso cómo crear y enviar un reporte mensual de conformidad del servicio de internet.',
-            url: 'https://drive.google.com/file/d/19IDm-2mfe6iIvxWsBtOCMwiHCzSCkKoy/view?usp=sharing',
+            url: 'https://drive.google.com/file/d/103S8Iku00yQ4xmu8Mhxh5YF9yDm8uwUA/view?usp=sharing',
             duration: '1:39',
             category: 'reportes',
             views: 150,
