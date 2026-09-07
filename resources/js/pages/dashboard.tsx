@@ -22,9 +22,24 @@ import {
     X
 } from 'lucide-react';
 
+// ✅ DEFINIR LA INTERFAZ DE LOS PROPS
+interface PageProps {
+    auth: {
+        user: {
+            id: number;
+            name: string;
+            email: string;
+            role: string; // ✅ Asegurar que role existe
+            [key: string]: any;
+        } | null;
+    };
+    [key: string]: any;
+}
+
 export default function Dashboard() {
     const currentYear = new Date().getFullYear();
-    const { props } = usePage();
+    // ✅ SOLUCIÓN: Usar type assertion para evitar el error
+    const { props } = usePage() as { props: PageProps };
     const user = props.auth?.user;
     const isSuperAdmin = user?.role === 'super_admin';
 
@@ -83,7 +98,7 @@ export default function Dashboard() {
                                 </div>
                                 <div>
                                     <h3 className="text-[11px] font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                                        Modo Mantenimiento
+                                        Modo Mantenimiento 2
                                         <span className={`text-[11px] font-medium px-2.5 py-1 rounded-full border ${maintenanceMode ? 'bg-amber-100 dark:bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/20' : 'bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20'}`}>
                                             {maintenanceMode ? '🔒 ACTIVADO' : '🔓 DESACTIVADO'}
                                         </span>
@@ -119,7 +134,7 @@ export default function Dashboard() {
                                         ) : (
                                             <>
                                                 <Power className="w-4 h-4" />
-                                                Activar Mantenimiento
+                                                Activar Mantenimiento 
                                             </>
                                         )}
                                     </>
