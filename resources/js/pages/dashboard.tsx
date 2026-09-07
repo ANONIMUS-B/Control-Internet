@@ -98,7 +98,7 @@ export default function Dashboard() {
                                 </div>
                                 <div>
                                     <h3 className="text-[11px] font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                                        Modo Mantenimiento 2
+                                        Modo Mantenimiento 23
                                         <span className={`text-[11px] font-medium px-2.5 py-1 rounded-full border ${maintenanceMode ? 'bg-amber-100 dark:bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/20' : 'bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20'}`}>
                                             {maintenanceMode ? '🔒 ACTIVADO' : '🔓 DESACTIVADO'}
                                         </span>
