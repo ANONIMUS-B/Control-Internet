@@ -1,7 +1,9 @@
 <?php
 
-use App\Http\Middleware\CheckReportSubmissionPeriod; // ✅ IMPORTAR EL NUEVO MIDDLEWARE
+use App\Http\Middleware\CheckReportSubmissionPeriod;
 use App\Http\Middleware\CheckUserActive;
+use App\Http\Middleware\ForceSessionRefresh;
+use App\Http\Middleware\CheckAuthSession; // ✅ AGREGAR ESTA LÍNEA
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\MaintenanceMode;
@@ -30,12 +32,15 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'maintenance' => MaintenanceMode::class,
             'user.active' => CheckUserActive::class,
-            'report.period' => CheckReportSubmissionPeriod::class, // ✅ AGREGAR ESTA LÍNEA
+            'report.period' => CheckReportSubmissionPeriod::class,
+            'check.auth' => CheckAuthSession::class, // ✅ AGREGAR ESTA LÍNEA
         ]);
 
-        // ✅ Aplicar solo a rutas web (recomendado)
+        // ✅ AGREGAR LOS MIDDLEWARES AL GRUPO WEB
         $middleware->web(append: [
             CheckUserActive::class,
+            ForceSessionRefresh::class,      // ✅ Ya estaba
+            CheckAuthSession::class,          // ✅ AGREGAR ESTA LÍNEA
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
