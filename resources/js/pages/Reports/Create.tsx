@@ -10,7 +10,8 @@ import {
     ChevronLeft, ChevronRight as ChevronRightIcon,
     Clock, CalendarDays, Info, Sparkles,
     Shield, Image as ImageIcon,
-    Award, Users, Wifi, ExternalLink
+    Award, Users, Wifi, ExternalLink,
+    WifiOff // ✅ Solo WifiOff para Sin Servicio
 } from 'lucide-react';
 
 interface Institution {
@@ -66,7 +67,7 @@ export default function Create({
         month: month,
         year: year,
         educational_institution_id: myInstitutions.length > 0 ? myInstitutions[0].id : null,
-        service_state: 'operative',
+        service_state: 'operative', // ✅ Valor por defecto: Operativo
         office_number: '',
         evidences: [] as File[],
     });
@@ -80,6 +81,32 @@ export default function Create({
     const [uploadProgress, setUploadProgress] = useState(0);
     const [isUploading, setIsUploading] = useState(false);
     const [isPasteActive, setIsPasteActive] = useState(false);
+
+    // ✅ SOLO 2 OPCIONES: OPERATIVO Y SIN SERVICIO
+    const serviceOptions = [
+        { 
+            id: 'operative', 
+            label: 'Operativo', 
+            description: 'El servicio funciona correctamente',
+            icon: Wifi,
+            color: 'emerald',
+            bgColor: 'bg-emerald-50 dark:bg-emerald-500/10',
+            borderColor: 'border-emerald-200 dark:border-emerald-500/20',
+            textColor: 'text-emerald-700 dark:text-emerald-300',
+            iconColor: 'text-emerald-600 dark:text-emerald-400'
+        },
+        { 
+            id: 'no_service', 
+            label: 'Sin Servicio', 
+            description: 'El servicio no está disponible',
+            icon: WifiOff,
+            color: 'rose',
+            bgColor: 'bg-rose-50 dark:bg-rose-500/10',
+            borderColor: 'border-rose-200 dark:border-rose-500/20',
+            textColor: 'text-rose-700 dark:text-rose-300',
+            iconColor: 'text-rose-600 dark:text-rose-400'
+        },
+    ];
 
     // ✅ ABRIR TEST DE VELOCIDAD EN NUEVA PESTAÑA
     const openSpeedTest = () => {
@@ -580,14 +607,54 @@ export default function Create({
                                 )}
                             </div>
 
-                            {/* ===== ESTADO DEL SERVICIO ===== */}
-                            <div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 rounded-xl border border-emerald-200 dark:border-emerald-800">
-                                <div className="flex items-center gap-2">
-                                    <Shield className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                                    <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-300">
-                                        Servicio: <span className="font-bold">OPERATIVO</span>
-                                    </span>
+                            {/* ===== ESTADO DEL SERVICIO - 2 OPCIONES ===== */}
+                            <div>
+                                <label className="block text-[11px] font-semibold text-gray-700 dark:text-neutral-300 mb-2 flex items-center gap-1.5">
+                                    <Shield className="w-3.5 h-3.5 text-blue-500" /> 
+                                    Estado del Servicio <span className="text-rose-500">*</span>
+                                </label>
+                                
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    {serviceOptions.map((option) => {
+                                        const Icon = option.icon;
+                                        const isSelected = data.service_state === option.id;
+                                        
+                                        return (
+                                            <button
+                                                key={option.id}
+                                                type="button"
+                                                onClick={() => setData('service_state', option.id)}
+                                                className={`relative p-4 rounded-xl border-2 transition-all text-left ${
+                                                    isSelected
+                                                        ? `${option.bgColor} ${option.borderColor} ring-2 ring-offset-2 ring-${option.color}-500/50`
+                                                        : 'bg-white dark:bg-slate-900 border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20'
+                                                }`}
+                                            >
+                                                <div className="flex items-start gap-3">
+                                                    <div className={`p-2 rounded-lg ${isSelected ? option.bgColor : 'bg-gray-100 dark:bg-white/5'}`}>
+                                                        <Icon className={`w-5 h-5 ${isSelected ? option.iconColor : 'text-gray-400 dark:text-neutral-500'}`} />
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <p className={`text-[11px] font-semibold ${isSelected ? option.textColor : 'text-gray-700 dark:text-neutral-300'}`}>
+                                                            {option.label}
+                                                        </p>
+                                                        <p className="text-[10px] text-gray-500 dark:text-neutral-400">
+                                                            {option.description}
+                                                        </p>
+                                                    </div>
+                                                    {isSelected && (
+                                                        <div className="flex-shrink-0">
+                                                            <CheckCircle className={`w-4 h-4 ${option.iconColor}`} />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
                                 </div>
+                                {errors.service_state && (
+                                    <p className="text-rose-500 text-[11px] mt-1">{errors.service_state}</p>
+                                )}
                             </div>
 
                             {/* ===== N° OFICIO ===== */}

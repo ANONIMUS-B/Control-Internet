@@ -1,4 +1,4 @@
-// Edit.tsx - Versión corregida con accesibilidad
+// Edit.tsx - Versión definitiva con 2 opciones
 
 import { Head, useForm, Link, router } from '@inertiajs/react';
 import { FormEvent, useState, useEffect, useRef } from 'react';
@@ -25,9 +25,14 @@ import {
     ChevronLeft,
     ChevronRight as ChevronRightIcon,
     School,
-    Camera
+    Camera,
+    Signal,
+    WifiOff
 } from 'lucide-react';
 import ReportHistory from '@/components/ReportHistory';
+
+// ✅ DEFINIR EL TIPO PARA EL ESTADO DEL SERVICIO
+type ServiceState = 'operative' | 'intermittent';
 
 interface Evidence {
     id: number;
@@ -50,7 +55,7 @@ interface HistoryItem {
 interface EditReportProps {
     report: {
         id: number;
-        service_state: 'operative' | 'intermittent' | 'no_service';
+        service_state: ServiceState | 'no_service';
         office_number: string;
         notes: string | null;
         admin_comments: string | null;
@@ -72,10 +77,23 @@ interface EditReportProps {
     months?: Record<number, string>;
 }
 
+// ✅ TIPO PARA LAS OPCIONES DEL SERVICIO
+interface ServiceOption {
+    id: ServiceState;
+    label: string;
+    description: string;
+    icon: any;
+    bgColor: string;
+    borderColor: string;
+    textColor: string;
+    iconColor: string;
+    selectedRing: string;
+}
+
 export default function Edit({ report, flash, months = {} }: EditReportProps) {
     const { data, setData, post, processing } = useForm({
         _method: 'PUT',
-        service_state: 'operative',
+        service_state: report.service_state === 'no_service' ? 'operative' : (report.service_state || 'operative'),
         office_number: report.office_number || '',
         notes: report.notes || '',
         evidences: [] as File[],
@@ -95,6 +113,37 @@ export default function Edit({ report, flash, months = {} }: EditReportProps) {
         1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril',
         5: 'Mayo', 6: 'Junio', 7: 'Julio', 8: 'Agosto',
         9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre'
+    };
+
+    // ✅ SOLO 2 OPCIONES: OPERATIVO E INTERMITENTE (tipadas correctamente)
+    const serviceOptions: ServiceOption[] = [
+        { 
+            id: 'operative', 
+            label: 'Operativo', 
+            description: 'El servicio funciona correctamente',
+            icon: Wifi,
+            bgColor: 'bg-emerald-50 dark:bg-emerald-500/10',
+            borderColor: 'border-emerald-200 dark:border-emerald-500/20',
+            textColor: 'text-emerald-700 dark:text-emerald-300',
+            iconColor: 'text-emerald-600 dark:text-emerald-400',
+            selectedRing: 'ring-emerald-500/50'
+        },
+        { 
+            id: 'intermittent', 
+            label: 'Intermitente', 
+            description: 'El servicio presenta fallas ocasionales',
+            icon: Signal,
+            bgColor: 'bg-amber-50 dark:bg-amber-500/10',
+            borderColor: 'border-amber-200 dark:border-amber-500/20',
+            textColor: 'text-amber-700 dark:text-amber-300',
+            iconColor: 'text-amber-600 dark:text-amber-400',
+            selectedRing: 'ring-amber-500/50'
+        },
+    ];
+
+    // ✅ FUNCIÓN PARA CAMBIAR EL ESTADO DEL SERVICIO (CORREGIDA)
+    const handleServiceStateChange = (state: ServiceState) => {
+        setData('service_state', state);
     };
 
     // ✅ FUNCIÓN PARA PROCESAR EL PEGADO DE IMÁGENES
@@ -429,16 +478,50 @@ export default function Edit({ report, flash, months = {} }: EditReportProps) {
                                 </div>
                             </div>
 
-                            {/* ===== ESTADO DEL SERVICIO ===== */}
-                            <div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 rounded-xl border border-emerald-200 dark:border-emerald-800">
-                                <div className="flex items-center gap-2">
-                                    <Shield className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                                    <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-300">
-                                        Servicio: <span className="font-bold">OPERATIVO</span>
-                                    </span>
-                                    <span className="text-[11px] text-emerald-500 dark:text-emerald-400 ml-auto">
-                                        (Fijo)
-                                    </span>
+                            {/* ===== ESTADO DEL SERVICIO - 2 OPCIONES ===== */}
+                            <div>
+                                <label className="block text-[11px] font-semibold text-gray-700 dark:text-neutral-300 mb-2 flex items-center gap-1.5">
+                                    <Shield className="w-3.5 h-3.5 text-blue-500" /> 
+                                    Estado del Servicio <span className="text-rose-500">*</span>
+                                </label>
+                                
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    {serviceOptions.map((option) => {
+                                        const Icon = option.icon;
+                                        const isSelected = data.service_state === option.id;
+                                        
+                                        return (
+                                            <button
+                                                key={option.id}
+                                                type="button"
+                                                onClick={() => handleServiceStateChange(option.id)}
+                                                className={`relative p-4 rounded-xl border-2 transition-all text-left ${
+                                                    isSelected
+                                                        ? `${option.bgColor} ${option.borderColor} ring-2 ring-offset-2 ${option.selectedRing}`
+                                                        : 'bg-white dark:bg-slate-900 border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20'
+                                                }`}
+                                            >
+                                                <div className="flex items-start gap-3">
+                                                    <div className={`p-2 rounded-lg ${isSelected ? option.bgColor : 'bg-gray-100 dark:bg-white/5'}`}>
+                                                        <Icon className={`w-5 h-5 ${isSelected ? option.iconColor : 'text-gray-400 dark:text-neutral-500'}`} />
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <p className={`text-[11px] font-semibold ${isSelected ? option.textColor : 'text-gray-700 dark:text-neutral-300'}`}>
+                                                            {option.label}
+                                                        </p>
+                                                        <p className="text-[10px] text-gray-500 dark:text-neutral-400">
+                                                            {option.description}
+                                                        </p>
+                                                    </div>
+                                                    {isSelected && (
+                                                        <div className="flex-shrink-0">
+                                                            <CheckCircle className={`w-4 h-4 ${option.iconColor}`} />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                             </div>
 
