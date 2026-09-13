@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
+    <title>Reporte de Conformidad - {{ $report->institution->name ?? 'UGEL' }}</title>
     <style>
         @page {
             size: A4;

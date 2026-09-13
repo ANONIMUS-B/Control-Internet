@@ -31,9 +31,10 @@
         </style>
 
         <!-- ✅ FAVICON CON LOGO CIRCULAR (CON VERSIÓN) -->
-        <link rel="icon" href="{{ asset('Logo-Circular.png?v=2') }}" type="image/png">
-        <link rel="icon" href="{{ asset('Logo-Circular.png?v=2') }}" sizes="any">
-        <link rel="apple-touch-icon" href="{{ asset('Logo-Circular.png?v=2') }}">
+        <link rel="icon" href="{{ asset('favicon.ico?v=3') }}" sizes="any">
+        <link rel="icon" href="{{ asset('favicon.svg?v=3') }}" type="image/svg+xml">
+        <link rel="icon" href="{{ asset('Logo-Circular.png?v=3') }}" type="image/png">
+        <link rel="apple-touch-icon" href="{{ asset('Logo-Circular.png?v=3') }}">
 
         @fonts
 
