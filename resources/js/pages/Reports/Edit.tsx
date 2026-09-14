@@ -258,10 +258,12 @@ export default function Edit({ report, flash, months = {} }: EditReportProps) {
         URL.revokeObjectURL(previews[index]);
     };
 
-    // ✅ ABRIR TEST DE VELOCIDAD EN NUEVA PESTAÑA
+    // ✅ ABRIR TEST DE VELOCIDAD EN NUEVA PESTAÑA (COMENTADO)
+    /*
     const openSpeedTest = () => {
         window.open('https://infistel.pe/test-velocidad', '_blank');
     };
+    */
 
     const submit = (e: FormEvent) => {
         e.preventDefault();
@@ -387,6 +389,7 @@ export default function Edit({ report, flash, months = {} }: EditReportProps) {
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">
+                                {/* ✅ BOTÓN TEST DE VELOCIDAD (COMENTADO)
                                 <button
                                     onClick={openSpeedTest}
                                     className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white rounded-xl text-[11px] font-medium transition-all shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40 hover:scale-105 active:scale-95"
@@ -396,6 +399,7 @@ export default function Edit({ report, flash, months = {} }: EditReportProps) {
                                     <span className="hidden sm:inline">Test de Velocidad</span>
                                     <ExternalLink className="w-3 h-3" />
                                 </button>
+                                */}
                                 <Link href="/reportes" className="flex items-center gap-1.5 px-3 py-2 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-700 dark:text-neutral-300 rounded-xl text-[11px] font-medium transition-all border border-gray-300 dark:border-white/10 hover:border-gray-400 dark:hover:border-white/20">
                                     <ArrowLeft className="w-3.5 h-3.5" /> Volver
                                 </Link>
@@ -681,6 +685,7 @@ export default function Edit({ report, flash, months = {} }: EditReportProps) {
 
                             {/* ===== BOTONES ===== */}
                             <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-200 dark:border-white/10">
+                                {/* ✅ BOTÓN TEST DE VELOCIDAD EN EL FORMULARIO (COMENTADO)
                                 <button
                                     type="button"
                                     onClick={openSpeedTest}
@@ -690,6 +695,7 @@ export default function Edit({ report, flash, months = {} }: EditReportProps) {
                                     Test de Velocidad
                                     <ExternalLink className="w-3 h-3" />
                                 </button>
+                                */}
                                 
                                 <button 
                                     type="submit" 

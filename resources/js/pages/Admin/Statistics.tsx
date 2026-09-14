@@ -128,10 +128,10 @@ export default function Statistics({ stats, filters = {}, months, currentYear }:
     };
 
     const handleExport = () => {
-        router.get('/admin/estadisticas/exportar', {
-            month: selectedMonth,
-            year: selectedYear,
-        });
+        const params = new URLSearchParams();
+        if (selectedMonth) params.append('month', selectedMonth);
+        if (selectedYear) params.append('year', selectedYear);
+        window.location.href = `/admin/estadisticas/exportar?${params.toString()}`;
     };
 
     const pendingStats = useMemo(() => {
@@ -295,6 +295,22 @@ export default function Statistics({ stats, filters = {}, months, currentYear }:
                                 <RefreshCw className="w-4 h-4" />
                                 Actualizar
                             </button>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={handleExport}
+                                    className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-xl text-[11px] font-medium transition-all shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 hover:scale-105 active:scale-95"
+                                >
+                                    <Download className="w-4 h-4" />
+                                    Exportar a Excel
+                                </button>
+                                <button
+                                    onClick={applyFilters}
+                                    className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-xl text-[11px] font-medium transition-all shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 hover:scale-105 active:scale-95"
+                                >
+                                    <RefreshCw className="w-4 h-4" />
+                                    Actualizar
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -332,6 +348,14 @@ export default function Statistics({ stats, filters = {}, months, currentYear }:
                             >
                                 <Filter className="w-4 h-4" />
                                 Filtrar
+                            </button>
+
+                            <button
+                                onClick={handleExport}
+                                className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-xl text-[11px] font-medium transition-all shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 hover:scale-105 active:scale-95"
+                            >
+                                <Download className="w-4 h-4" />
+                                Exportar Excel
                             </button>
 
                             {(selectedMonth || selectedYear !== String(currentYear)) && (

@@ -216,13 +216,6 @@
       "_createLucideIcon-CsrKEwpU.js"
     ]
   },
-  "_external-link-C8hwQKou.js": {
-    "file": "assets/external-link-C8hwQKou.js",
-    "name": "external-link",
-    "imports": [
-      "_createLucideIcon-CsrKEwpU.js"
-    ]
-  },
   "_eye-D6HrEYfc.js": {
     "file": "assets/eye-D6HrEYfc.js",
     "name": "eye",
@@ -670,7 +663,7 @@
     "isEntry": true
   },
   "resources/js/app.tsx": {
-    "file": "assets/app-CnI21ocO.js",
+    "file": "assets/app-NgPCB7Ly.js",
     "name": "app",
     "src": "resources/js/app.tsx",
     "isEntry": true,
@@ -910,7 +903,7 @@
     ]
   },
   "resources/js/pages/Admin/Statistics.tsx": {
-    "file": "assets/Statistics-BbDdKJr7.js",
+    "file": "assets/Statistics-B7lNFaq9.js",
     "name": "Statistics",
     "src": "resources/js/pages/Admin/Statistics.tsx",
     "isDynamicEntry": true,
@@ -925,6 +918,7 @@
       "_circle-alert-nDm1zEZo.js",
       "_circle-check-Bm3V4vug.js",
       "_clock-BUZegpOY.js",
+      "_download-7It0I8YC.js",
       "_file-text-Cn7gkaOP.js",
       "_filter-D5fqUFR0.js",
       "_refresh-cw-CWqL8lfp.js",
@@ -1111,7 +1105,7 @@
     ]
   },
   "resources/js/pages/Reports/Create.tsx": {
-    "file": "assets/Create-ChjqbC8E.js",
+    "file": "assets/Create-BYHezL7G.js",
     "name": "Create",
     "src": "resources/js/pages/Reports/Create.tsx",
     "isDynamicEntry": true,
@@ -1126,7 +1120,6 @@
       "_chevron-right-DHRO6A1H.js",
       "_circle-alert-nDm1zEZo.js",
       "_circle-check-big-CpdOKfpI.js",
-      "_external-link-C8hwQKou.js",
       "_file-text-Cn7gkaOP.js",
       "_loader-circle-XdcviOJC.js",
       "_save-onjp2bbp.js",
@@ -1138,7 +1131,7 @@
     ]
   },
   "resources/js/pages/Reports/Edit.tsx": {
-    "file": "assets/Edit-CcLgdI_c.js",
+    "file": "assets/Edit-CU0oBxWc.js",
     "name": "Edit",
     "src": "resources/js/pages/Reports/Edit.tsx",
     "isDynamicEntry": true,
@@ -1155,7 +1148,6 @@
       "_circle-check-Bm3V4vug.js",
       "_circle-x-BneU8ZCu.js",
       "_clock-BUZegpOY.js",
-      "_external-link-C8hwQKou.js",
       "_file-text-Cn7gkaOP.js",
       "_info-eF826UXe.js",
       "_loader-circle-XdcviOJC.js",
@@ -1218,7 +1210,7 @@
     ]
   },
   "resources/js/pages/Tutorials/Index.tsx": {
-    "file": "assets/Index-wXKA30LI.js",
+    "file": "assets/Index-CkhRbNIX.js",
     "name": "Index",
     "src": "resources/js/pages/Tutorials/Index.tsx",
     "isDynamicEntry": true,
@@ -1227,7 +1219,6 @@
       "_createLucideIcon-CsrKEwpU.js",
       "_calendar-D7lkOBzN.js",
       "_clock-BUZegpOY.js",
-      "_external-link-C8hwQKou.js",
       "_eye-D6HrEYfc.js",
       "_file-text-Cn7gkaOP.js",
       "_info-eF826UXe.js",

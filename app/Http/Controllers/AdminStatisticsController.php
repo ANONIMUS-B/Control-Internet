@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\MonthlyReport;
+use App\Exports\AdminStatisticsExport;
 use App\Models\EducationalInstitution;
+use App\Models\MonthlyReport;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use Maatwebsite\Excel\Facades\Excel;
 
 class AdminStatisticsController extends Controller
 {
@@ -15,7 +17,7 @@ class AdminStatisticsController extends Controller
     {
         // ✅ Verificar permisos (solo super_admin)
         $user = $request->user();
-        if (!in_array($user->role, ['super_admin'])) {
+        if (! in_array($user->role, ['super_admin'])) {
             return redirect()->route('dashboard')->with('error', 'No tienes permiso para acceder a esta sección.');
         }
 
@@ -25,7 +27,7 @@ class AdminStatisticsController extends Controller
 
         // ✅ 1. Estadísticas generales de reportes (con filtros)
         $query = MonthlyReport::query();
-        
+
         if ($selectedMonth) {
             $query->where('month', (int) $selectedMonth);
         }
@@ -66,12 +68,12 @@ class AdminStatisticsController extends Controller
         $months = [
             1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril',
             5 => 'Mayo', 6 => 'Junio', 7 => 'Julio', 8 => 'Agosto',
-            9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre'
+            9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre',
         ];
 
         $reportsByMonthFormatted = $reportsByMonth->map(function ($item) use ($months) {
             return [
-                'month' => $months[$item->month] . ' ' . $item->year,
+                'month' => $months[$item->month].' '.$item->year,
                 'total' => (int) $item->total,
                 'approved' => (int) $item->approved,
                 'observed' => (int) $item->observed,
@@ -84,7 +86,7 @@ class AdminStatisticsController extends Controller
             $reportsByMonthFormatted = collect([]);
             $startMonth = $selectedMonth ? (int) $selectedMonth : 1;
             $startYear = (int) $selectedYear;
-            
+
             for ($i = 0; $i < 12; $i++) {
                 $month = $startMonth + $i;
                 $year = $startYear;
@@ -92,10 +94,12 @@ class AdminStatisticsController extends Controller
                     $month = $month - 12;
                     $year++;
                 }
-                if ($year > date('Y') + 1) break;
-                
+                if ($year > date('Y') + 1) {
+                    break;
+                }
+
                 $reportsByMonthFormatted->push([
-                    'month' => $months[$month] . ' ' . $year,
+                    'month' => $months[$month].' '.$year,
                     'total' => 0,
                     'approved' => 0,
                     'observed' => 0,
@@ -109,7 +113,7 @@ class AdminStatisticsController extends Controller
             'institution_id',
             DB::raw('COUNT(*) as total')
         )
-        ->with('institution:id,name,modular_code,district,level');
+            ->with('institution:id,name,modular_code,district,level');
 
         if ($selectedMonth) {
             $topInstitutionsQuery->where('month', (int) $selectedMonth);
@@ -139,15 +143,15 @@ class AdminStatisticsController extends Controller
             'level',
             DB::raw('COUNT(*) as count')
         )
-        ->where('is_active', true)
-        ->groupBy('level')
-        ->get()
-        ->map(function ($item) {
-            return [
-                'level' => $item->level ?? 'No especificado',
-                'count' => (int) $item->count,
-            ];
-        });
+            ->where('is_active', true)
+            ->groupBy('level')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'level' => $item->level ?? 'No especificado',
+                    'count' => (int) $item->count,
+                ];
+            });
 
         if ($institutionsByLevel->isEmpty()) {
             $institutionsByLevel = collect([
@@ -172,11 +176,11 @@ class AdminStatisticsController extends Controller
         // ✅ 6. Instituciones sin reporte (NUEVO)
         $institutionsWithReports = MonthlyReport::select('institution_id')
             ->where('year', (int) $selectedYear);
-        
+
         if ($selectedMonth) {
             $institutionsWithReports->where('month', (int) $selectedMonth);
         }
-        
+
         $institutionIdsWithReports = $institutionsWithReports->distinct()->pluck('institution_id')->toArray();
 
         $institutionsWithoutReport = EducationalInstitution::where('is_active', true)
@@ -196,11 +200,11 @@ class AdminStatisticsController extends Controller
         $pendingInstitutionsQuery = MonthlyReport::select('institution_id')
             ->where('status', 'pending')
             ->where('year', (int) $selectedYear);
-        
+
         if ($selectedMonth) {
             $pendingInstitutionsQuery->where('month', (int) $selectedMonth);
         }
-        
+
         $pendingInstitutionIds = $pendingInstitutionsQuery->distinct()->pluck('institution_id')->toArray();
 
         $pendingInstitutions = EducationalInstitution::where('is_active', true)
@@ -225,7 +229,7 @@ class AdminStatisticsController extends Controller
         $directorsWithoutSignature = User::where('role', 'director')
             ->where(function ($q) {
                 $q->where('signature_active', false)
-                  ->orWhereNull('signature_path');
+                    ->orWhereNull('signature_path');
             })
             ->count();
 
@@ -255,7 +259,7 @@ class AdminStatisticsController extends Controller
             'educational_institutions.district',
             DB::raw('COUNT(*) as total')
         )
-        ->join('educational_institutions', 'monthly_reports.institution_id', '=', 'educational_institutions.id');
+            ->join('educational_institutions', 'monthly_reports.institution_id', '=', 'educational_institutions.id');
 
         if ($selectedMonth) {
             $reportsByDistrictQuery->where('monthly_reports.month', (int) $selectedMonth);
@@ -285,7 +289,7 @@ class AdminStatisticsController extends Controller
             ->map(function ($item) use ($months) {
                 return [
                     'value' => $item->month,
-                    'label' => $months[$item->month] . ' ' . $item->year,
+                    'label' => $months[$item->month].' '.$item->year,
                 ];
             });
 
@@ -318,11 +322,16 @@ class AdminStatisticsController extends Controller
     {
         // ✅ Verificar permisos
         $user = $request->user();
-        if (!in_array($user->role, ['super_admin'])) {
+        if (! in_array($user->role, ['super_admin'])) {
             return redirect()->route('dashboard')->with('error', 'No tienes permiso para exportar.');
         }
 
-        // TODO: Implementar exportación a Excel con los filtros aplicados
-        return back()->with('info', 'Exportación en desarrollo.');
+        $selectedMonth = $request->input('month') ? (int) $request->input('month') : null;
+        $selectedYear = (int) $request->input('year', date('Y'));
+
+        $monthSuffix = $selectedMonth ? '_mes_'.str_pad((string) $selectedMonth, 2, '0', STR_PAD_LEFT) : '';
+        $filename = 'estadisticas_generales'.$monthSuffix.'_'.$selectedYear.'_'.now()->format('Ymd_His').'.xlsx';
+
+        return Excel::download(new AdminStatisticsExport($selectedMonth, $selectedYear), $filename);
     }
 }
