@@ -8,14 +8,23 @@ import {
     CheckCircle2, 
     XCircle, 
     AlertCircle,
-    Search,
-    Filter,
-    X,
-    Clock,
-    RefreshCw,
-    Settings2,
-    ChevronLeft,
-    ChevronRight
+    Search, 
+    Filter, 
+    X, 
+    Clock, 
+    RefreshCw, 
+    Settings2, 
+    ChevronLeft, 
+    ChevronRight,
+    LayoutGrid,
+    List,
+    Sparkles,
+    Flame,
+    Info,
+    Calendar,
+    ArrowUpRight,
+    SlidersHorizontal,
+    Check
 } from 'lucide-react';
 import { dashboard } from '@/routes';
 
@@ -43,46 +52,139 @@ interface Props {
     };
 }
 
+const MONTH_NAMES = [
+    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+];
+
+const MONTH_GRADIENTS = [
+    'from-rose-500 to-pink-600',       // Ene
+    'from-pink-500 to-rose-600',       // Feb
+    'from-amber-500 to-orange-600',    // Mar
+    'from-orange-500 to-amber-600',    // Abr
+    'from-emerald-500 to-teal-600',    // May
+    'from-teal-500 to-cyan-600',       // Jun
+    'from-cyan-500 to-blue-600',       // Jul
+    'from-blue-500 to-indigo-600',     // Ago
+    'from-indigo-500 to-purple-600',   // Sep
+    'from-purple-500 to-fuchsia-600',  // Oct
+    'from-fuchsia-500 to-pink-600',    // Nov
+    'from-violet-500 to-purple-600',   // Dic
+];
+
 export default function Index({ periods = [], flash }: Props) {
     const [searchTerm, setSearchTerm] = useState('');
-    const [filterActive, setFilterActive] = useState<string>('all');
+    const [filterStatus, setFilterStatus] = useState<string>('all');
+    const [selectedYear, setSelectedYear] = useState<string>('all');
+    const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 8;
+    const itemsPerPage = viewMode === 'grid' ? 9 : 10;
     const [successMessage, setSuccessMessage] = useState<string | null>(flash?.success || null);
     const [errorMessage, setErrorMessage] = useState<string | null>(flash?.error || null);
 
     const periodsArray = Array.isArray(periods) ? periods : [];
 
-    const stats = useMemo(() => {
-        const data = periodsArray;
-        return {
-            total: data.length,
-            active: data.filter(p => p?.is_active === true).length,
-            inactive: data.filter(p => p?.is_active === false).length,
-        };
+    // Fechas actuales para calcular vigencia
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+
+    // Computar estados dinámicos para cada período
+    const enrichedPeriods = useMemo(() => {
+        return periodsArray.map(period => {
+            const startStr = period.start_date ? period.start_date.split('T')[0] : '';
+            const endStr = period.end_date ? period.end_date.split('T')[0] : '';
+            
+            const isCurrent = period.is_active && todayStr >= startStr && todayStr <= endStr;
+            const isUpcoming = period.is_active && todayStr < startStr;
+            const isPast = todayStr > endStr;
+
+            // Calcular días restantes
+            let daysRemaining = 0;
+            if (isCurrent && endStr) {
+                const diffTime = new Date(endStr).getTime() - new Date(todayStr).getTime();
+                daysRemaining = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+            } else if (isUpcoming && startStr) {
+                const diffTime = new Date(startStr).getTime() - new Date(todayStr).getTime();
+                daysRemaining = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+            }
+
+            // Duración total del período
+            let durationDays = 0;
+            if (startStr && endStr) {
+                const diffTime = new Date(endStr).getTime() - new Date(startStr).getTime();
+                durationDays = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1);
+            }
+
+            // Porcentaje transcurrido
+            let progressPercent = 0;
+            if (isCurrent && startStr && endStr) {
+                const total = new Date(endStr).getTime() - new Date(startStr).getTime();
+                const passed = new Date(todayStr).getTime() - new Date(startStr).getTime();
+                progressPercent = total > 0 ? Math.min(100, Math.max(5, Math.round((passed / total) * 100))) : 0;
+            } else if (isPast) {
+                progressPercent = 100;
+            }
+
+            return {
+                ...period,
+                start_date_clean: startStr,
+                end_date_clean: endStr,
+                is_current: isCurrent,
+                is_upcoming: isUpcoming,
+                is_past: isPast,
+                days_remaining: daysRemaining,
+                duration_days: durationDays,
+                progress_percent: progressPercent
+            };
+        });
+    }, [periodsArray, todayStr]);
+
+    // Años únicos presentes en los períodos
+    const availableYears = useMemo(() => {
+        const yearsSet = new Set(periodsArray.map(p => p.year).filter(Boolean));
+        return Array.from(yearsSet).sort((a, b) => b - a);
     }, [periodsArray]);
 
+    // Estadísticas
+    const stats = useMemo(() => {
+        return {
+            total: enrichedPeriods.length,
+            active: enrichedPeriods.filter(p => p.is_current).length,
+            upcoming: enrichedPeriods.filter(p => p.is_upcoming).length,
+            inactiveOrClosed: enrichedPeriods.filter(p => !p.is_active || p.is_past).length,
+        };
+    }, [enrichedPeriods]);
+
+    // Filtrado
     const filteredPeriods = useMemo(() => {
-        return periodsArray.filter(period => {
+        return enrichedPeriods.filter(period => {
             if (!period) return false;
             
-            const monthName = period.month_name || '';
+            const monthName = period.month_name || MONTH_NAMES[period.month - 1] || '';
             const yearStr = period.year?.toString() || '';
-            const dateRange = period.date_range || '';
             const searchLower = searchTerm.toLowerCase();
             
             const matchesSearch = 
                 monthName.toLowerCase().includes(searchLower) ||
                 yearStr.includes(searchLower) ||
-                dateRange.includes(searchLower);
-                
-            const matchesFilter = filterActive === 'all' || 
-                                 (filterActive === 'active' && period.is_active === true) ||
-                                 (filterActive === 'inactive' && period.is_active === false);
+                (period.message && period.message.toLowerCase().includes(searchLower));
+
+            let matchesStatus = true;
+            if (filterStatus === 'current') {
+                matchesStatus = period.is_current;
+            } else if (filterStatus === 'upcoming') {
+                matchesStatus = period.is_upcoming;
+            } else if (filterStatus === 'active') {
+                matchesStatus = period.is_active;
+            } else if (filterStatus === 'closed') {
+                matchesStatus = !period.is_active || period.is_past;
+            }
+
+            const matchesYear = selectedYear === 'all' || period.year.toString() === selectedYear;
             
-            return matchesSearch && matchesFilter;
+            return matchesSearch && matchesStatus && matchesYear;
         });
-    }, [periodsArray, searchTerm, filterActive]);
+    }, [enrichedPeriods, searchTerm, filterStatus, selectedYear]);
 
     const totalPages = Math.ceil(filteredPeriods.length / itemsPerPage);
     const paginatedPeriods = filteredPeriods.slice(
@@ -90,325 +192,595 @@ export default function Index({ periods = [], flash }: Props) {
         currentPage * itemsPerPage
     );
 
-    const getMonthColor = (month: number) => {
-        const colors = [
-            'bg-rose-100 dark:bg-rose-500/15 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-500/25',
-            'bg-pink-100 dark:bg-pink-500/15 text-pink-700 dark:text-pink-400 border-pink-200 dark:border-pink-500/25',
-            'bg-purple-100 dark:bg-purple-500/15 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-500/25',
-            'bg-indigo-100 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-500/25',
-            'bg-blue-100 dark:bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/25',
-            'bg-cyan-100 dark:bg-cyan-500/15 text-cyan-700 dark:text-cyan-400 border-cyan-200 dark:border-cyan-500/25',
-            'bg-teal-100 dark:bg-teal-500/15 text-teal-700 dark:text-teal-400 border-teal-200 dark:border-teal-500/25',
-            'bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/25',
-            'bg-green-100 dark:bg-green-500/15 text-green-700 dark:text-green-400 border-green-200 dark:border-green-500/25',
-            'bg-lime-100 dark:bg-lime-500/15 text-lime-700 dark:text-lime-400 border-lime-200 dark:border-lime-500/25',
-            'bg-amber-100 dark:bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/25',
-            'bg-orange-100 dark:bg-orange-500/15 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-500/25',
-        ];
-        return colors[month - 1] || colors[0];
-    };
-
     const deletePeriod = (id: number, monthName: string, year: number) => {
-        if (!confirm(`¿Eliminar período de ${monthName} ${year}?`)) return;
+        if (!confirm(`¿Eliminar período de ${monthName} ${year}? Esta acción no se puede deshacer.`)) return;
         
         router.delete(`/admin/report-periods/${id}`, {
             preserveScroll: true,
-            onSuccess: () => router.reload()
+            onSuccess: () => {
+                setSuccessMessage('Período eliminado correctamente.');
+                setTimeout(() => setSuccessMessage(null), 4000);
+            }
         });
     };
 
     const clearFilters = () => {
         setSearchTerm('');
-        setFilterActive('all');
+        setFilterStatus('all');
+        setSelectedYear('all');
         setCurrentPage(1);
     };
 
-    const formatDateShort = (dateStr: string) => {
+    const formatDateReadable = (dateStr: string) => {
         if (!dateStr) return '';
+        const parts = dateStr.split('-');
+        if (parts.length === 3) {
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
         const d = new Date(dateStr);
-        return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}`;
+        return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
     };
 
     return (
-        <div className="p-4 md:p-6" style={{ fontSize: '11px' }}>
-            <Head title="Períodos de Envío" />
+        <div className="p-4 md:p-6 min-h-screen">
+            <Head title="Períodos por Mes" />
 
-            <div className="max-w-7xl mx-auto w-full space-y-4">
+            <div className="max-w-7xl mx-auto w-full space-y-6">
 
-                {/* ===== HEADER ===== */}
-                <div className="bg-white dark:bg-slate-800/50 rounded-2xl border border-gray-200 dark:border-white/10 p-4 md:p-6 shadow-sm dark:shadow-2xl">
-                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-purple-100 dark:bg-purple-500/20 rounded-xl border border-purple-200 dark:border-purple-500/20">
-                                <CalendarDays className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                {/* ===== HERO / ENCABEZADO MODERNO ===== */}
+                <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-900 via-slate-900 to-purple-950 p-6 md:p-8 text-white shadow-xl border border-indigo-500/20">
+                    <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+                    <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-blue-500/10 rounded-full blur-2xl pointer-events-none" />
+
+                    <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                        <div className="space-y-2">
+                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/10 text-xs font-medium text-purple-200">
+                                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                                <span>Administración de Plazos UPDI</span>
                             </div>
-                            <div>
-                                <h1 className="text-[11px] font-bold text-gray-900 dark:text-white">
-                                    Períodos de Envío
-                                </h1>
-                                <p className="text-[11px] text-gray-500 dark:text-neutral-400 flex items-center gap-1">
-                                    <Settings2 className="w-3.5 h-3.5" />
-                                    Configuración avanzada por mes
-                                </p>
-                            </div>
+                            <h1 className="text-xl md:text-2xl font-extrabold tracking-tight text-white">
+                                Períodos de Conformidad por Mes
+                            </h1>
+                            <p className="text-xs md:text-sm text-slate-300 max-w-2xl leading-relaxed">
+                                Define y controla las ventanas de tiempo en las que los directores pueden enviar los oficios de conformidad de servicio de internet.
+                            </p>
                         </div>
-                        <Link
-                            href="/admin/report-periods/create"
-                            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-xl text-[11px] font-medium transition-all shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 hover:scale-105 active:scale-95"
-                        >
-                            <Plus className="w-4 h-4" />
-                            Nuevo
-                        </Link>
+
+                        <div className="flex items-center gap-3">
+                            <Link
+                                href="/admin/report-periods/create"
+                                className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 hover:from-blue-600 hover:via-indigo-600 hover:to-purple-700 text-white text-xs font-semibold shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:scale-105 active:scale-95 transition-all duration-200"
+                            >
+                                <Plus className="w-4 h-4" />
+                                <span>Nuevo Período</span>
+                            </Link>
+                        </div>
                     </div>
                 </div>
 
-                {/* ===== TARJETAS DE ESTADÍSTICAS ===== */}
-                <div className="grid grid-cols-3 gap-4">
-                    {[
-                        { label: 'Total', value: stats.total, icon: CalendarDays, bgColor: 'bg-purple-100 dark:bg-purple-500/20', iconColor: 'text-purple-600 dark:text-purple-400', borderColor: 'border-purple-200 dark:border-purple-500/20' },
-                        { label: 'Activos', value: stats.active, icon: CheckCircle2, bgColor: 'bg-emerald-100 dark:bg-emerald-500/20', iconColor: 'text-emerald-600 dark:text-emerald-400', borderColor: 'border-emerald-200 dark:border-emerald-500/20' },
-                        { label: 'Inactivos', value: stats.inactive, icon: XCircle, bgColor: 'bg-rose-100 dark:bg-rose-500/20', iconColor: 'text-rose-600 dark:text-rose-400', borderColor: 'border-rose-200 dark:border-rose-500/20' }
-                    ].map((stat, index) => (
-                        <div key={index} className="bg-white dark:bg-slate-800/50 rounded-2xl p-4 border border-gray-200 dark:border-white/10 shadow-sm dark:shadow-2xl">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-[11px] font-medium text-gray-500 dark:text-neutral-400 uppercase tracking-wider">{stat.label}</p>
-                                    <p className="text-[11px] font-bold text-gray-900 dark:text-white">{stat.value}</p>
-                                </div>
-                                <div className={`${stat.bgColor} p-2 rounded-xl border ${stat.borderColor}`}>
-                                    <stat.icon className={`${stat.iconColor} w-4 h-4`} />
-                                </div>
+                {/* ===== MÉTRICAS / KPI CARDS ===== */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+                    {/* Total */}
+                    <div className="bg-white dark:bg-slate-800/60 rounded-2xl p-4 border border-gray-200/80 dark:border-white/10 shadow-sm hover:shadow-md transition-all duration-200">
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs font-medium text-gray-500 dark:text-neutral-400">Total Períodos</span>
+                            <div className="p-2 rounded-xl bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-500/20">
+                                <CalendarDays className="w-4 h-4" />
                             </div>
                         </div>
-                    ))}
+                        <div className="mt-2 flex items-baseline gap-2">
+                            <span className="text-2xl font-black text-gray-900 dark:text-white">{stats.total}</span>
+                            <span className="text-[11px] text-gray-500 dark:text-neutral-400">registrados</span>
+                        </div>
+                        <div className="mt-2 text-[10px] text-gray-400 dark:text-neutral-500">
+                            Cobertura anual de oficios
+                        </div>
+                    </div>
+
+                    {/* Vigentes / En recepción */}
+                    <div className="bg-white dark:bg-slate-800/60 rounded-2xl p-4 border border-emerald-200/80 dark:border-emerald-500/20 shadow-sm hover:shadow-md transition-all duration-200">
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs font-medium text-emerald-700 dark:text-emerald-400">En Curso Ahora</span>
+                            <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-500/20">
+                                <Flame className="w-4 h-4 animate-pulse" />
+                            </div>
+                        </div>
+                        <div className="mt-2 flex items-baseline gap-2">
+                            <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">{stats.active}</span>
+                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-500/20">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                                Abierto
+                            </span>
+                        </div>
+                        <div className="mt-2 text-[10px] text-emerald-600/80 dark:text-emerald-400/80">
+                            Recepción activa de directores
+                        </div>
+                    </div>
+
+                    {/* Próximos */}
+                    <div className="bg-white dark:bg-slate-800/60 rounded-2xl p-4 border border-blue-200/80 dark:border-blue-500/20 shadow-sm hover:shadow-md transition-all duration-200">
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs font-medium text-blue-700 dark:text-blue-400">Próximos a Abrir</span>
+                            <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-500/20">
+                                <Clock className="w-4 h-4" />
+                            </div>
+                        </div>
+                        <div className="mt-2 flex items-baseline gap-2">
+                            <span className="text-2xl font-black text-blue-600 dark:text-blue-400">{stats.upcoming}</span>
+                            <span className="text-[11px] text-gray-500 dark:text-neutral-400">programados</span>
+                        </div>
+                        <div className="mt-2 text-[10px] text-blue-600/80 dark:text-blue-400/80">
+                            Agendados para fechas futuras
+                        </div>
+                    </div>
+
+                    {/* Finalizados / Inactivos */}
+                    <div className="bg-white dark:bg-slate-800/60 rounded-2xl p-4 border border-gray-200/80 dark:border-white/10 shadow-sm hover:shadow-md transition-all duration-200">
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs font-medium text-gray-500 dark:text-neutral-400">Cerrados / Inactivos</span>
+                            <div className="p-2 rounded-xl bg-gray-100 dark:bg-neutral-800 text-gray-500 dark:text-neutral-400">
+                                <XCircle className="w-4 h-4" />
+                            </div>
+                        </div>
+                        <div className="mt-2 flex items-baseline gap-2">
+                            <span className="text-2xl font-black text-gray-700 dark:text-neutral-300">{stats.inactiveOrClosed}</span>
+                            <span className="text-[11px] text-gray-500 dark:text-neutral-400">concluidos</span>
+                        </div>
+                        <div className="mt-2 text-[10px] text-gray-400 dark:text-neutral-500">
+                            Plazo vencido o desactivado
+                        </div>
+                    </div>
                 </div>
 
-                {/* ===== MENSAJES ===== */}
+                {/* ===== ALERTAS FLASH ===== */}
                 {successMessage && (
-                    <div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-2xl flex items-center gap-2 text-[11px] animate-in">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                        <p className="font-medium text-emerald-700 dark:text-emerald-400">{successMessage}</p>
-                        <button onClick={() => setSuccessMessage(null)} className="ml-auto hover:bg-emerald-100 dark:hover:bg-emerald-800/50 p-1 rounded-lg transition-colors">
-                            <X className="w-3.5 h-3.5 text-emerald-500" />
+                    <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 rounded-2xl flex items-center gap-3 text-xs text-emerald-800 dark:text-emerald-300 animate-in fade-in slide-in-from-top duration-300 shadow-sm">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                        <span className="font-medium flex-1">{successMessage}</span>
+                        <button onClick={() => setSuccessMessage(null)} className="hover:bg-emerald-100 dark:hover:bg-emerald-800/50 p-1 rounded-lg transition-colors">
+                            <X className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                         </button>
                     </div>
                 )}
 
                 {errorMessage && (
-                    <div className="p-3 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded-2xl flex items-center gap-2 text-[11px] animate-in">
-                        <AlertCircle className="w-4 h-4 text-rose-500 flex-shrink-0" />
-                        <p className="font-medium text-rose-700 dark:text-rose-400">{errorMessage}</p>
-                        <button onClick={() => setErrorMessage(null)} className="ml-auto hover:bg-rose-100 dark:hover:bg-rose-800/50 p-1 rounded-lg transition-colors">
-                            <X className="w-3.5 h-3.5 text-rose-500" />
+                    <div className="p-3.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/50 rounded-2xl flex items-center gap-3 text-xs text-rose-800 dark:text-rose-300 animate-in fade-in slide-in-from-top duration-300 shadow-sm">
+                        <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
+                        <span className="font-medium flex-1">{errorMessage}</span>
+                        <button onClick={() => setErrorMessage(null)} className="hover:bg-rose-100 dark:hover:bg-rose-800/50 p-1 rounded-lg transition-colors">
+                            <X className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
                         </button>
                     </div>
                 )}
 
-                {/* ===== FILTROS ===== */}
-                <div className="bg-white dark:bg-slate-800/50 rounded-2xl border border-gray-200 dark:border-white/10 p-4 shadow-sm dark:shadow-2xl">
-                    <div className="flex flex-wrap items-center gap-2">
-                        <div className="relative flex-1 min-w-[140px]">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-neutral-500 w-4 h-4" />
+                {/* ===== BARRA DE CONTROL: FILTROS + SELECTOR DE VISTA ===== */}
+                <div className="bg-white dark:bg-slate-800/60 rounded-2xl border border-gray-200/80 dark:border-white/10 p-3.5 md:p-4 shadow-sm">
+                    <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+                        
+                        {/* Buscador */}
+                        <div className="relative flex-1 min-w-[200px]">
+                            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-neutral-500 w-4 h-4" />
                             <input
                                 type="text"
-                                placeholder="Buscar..."
-                                className="w-full rounded-xl border-2 border-gray-200 dark:border-white/10 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all py-2 pl-9 pr-3 text-[11px] bg-white dark:bg-slate-900 text-gray-900 dark:text-white outline-none placeholder:text-gray-400 dark:placeholder:text-neutral-500"
+                                placeholder="Buscar por mes, año o mensaje..."
+                                className="w-full rounded-xl border border-gray-200 dark:border-white/10 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all py-2 pl-10 pr-9 text-xs bg-gray-50/50 dark:bg-slate-900/50 text-gray-900 dark:text-white outline-none placeholder:text-gray-400"
                                 value={searchTerm}
                                 onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
                             />
+                            {searchTerm && (
+                                <button 
+                                    onClick={() => setSearchTerm('')}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-0.5"
+                                >
+                                    <X className="w-3.5 h-3.5" />
+                                </button>
+                            )}
                         </div>
 
-                        <div className="flex items-center gap-2 bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl px-3 py-2 border border-gray-200 dark:border-white/10 transition-all focus-within:border-blue-500/50">
-                            <Filter className="text-gray-400 dark:text-neutral-400 w-4 h-4" />
-                            <select 
-                                value={filterActive} 
-                                onChange={(e) => { setFilterActive(e.target.value); setCurrentPage(1); }}
-                                className="bg-transparent border-0 text-[11px] focus:ring-0 min-w-[80px] text-gray-900 dark:text-white [&>option]:bg-white dark:[&>option]:bg-slate-800 outline-none"
+                        {/* Filtros tipo pills */}
+                        <div className="flex flex-wrap items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0">
+                            {[
+                                { id: 'all', label: 'Todos' },
+                                { id: 'current', label: '🟢 En Curso' },
+                                { id: 'upcoming', label: '🔵 Próximos' },
+                                { id: 'closed', label: '⚪ Concluidos' },
+                            ].map(filter => (
+                                <button
+                                    key={filter.id}
+                                    onClick={() => { setFilterStatus(filter.id); setCurrentPage(1); }}
+                                    className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
+                                        filterStatus === filter.id
+                                            ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20'
+                                            : 'bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-neutral-400 hover:bg-gray-200 dark:hover:bg-white/10'
+                                    }`}
+                                >
+                                    {filter.label}
+                                </button>
+                            ))}
+
+                            {/* Selector de Año */}
+                            {availableYears.length > 1 && (
+                                <select
+                                    value={selectedYear}
+                                    onChange={(e) => { setSelectedYear(e.target.value); setCurrentPage(1); }}
+                                    className="px-3 py-1.5 rounded-xl text-xs font-medium bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-700 dark:text-neutral-300 outline-none"
+                                >
+                                    <option value="all">Todos los años</option>
+                                    {availableYears.map(year => (
+                                        <option key={year} value={year.toString()}>{year}</option>
+                                    ))}
+                                </select>
+                            )}
+
+                            {(searchTerm || filterStatus !== 'all' || selectedYear !== 'all') && (
+                                <button
+                                    onClick={clearFilters}
+                                    className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-medium text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all"
+                                    title="Limpiar filtros"
+                                >
+                                    <RefreshCw className="w-3.5 h-3.5" />
+                                    <span>Limpiar</span>
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Toggle Grid vs Table */}
+                        <div className="flex items-center gap-1 border border-gray-200 dark:border-white/10 rounded-xl p-1 bg-gray-50 dark:bg-slate-900/50 self-end lg:self-auto shrink-0">
+                            <button
+                                onClick={() => setViewMode('grid')}
+                                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
+                                    viewMode === 'grid'
+                                        ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                                        : 'text-gray-500 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-white'
+                                }`}
+                                title="Vista en tarjetas"
                             >
-                                <option value="all">Todos</option>
-                                <option value="active">Activos</option>
-                                <option value="inactive">Inactivos</option>
-                            </select>
+                                <LayoutGrid className="w-3.5 h-3.5" />
+                                <span>Tarjetas</span>
+                            </button>
+                            <button
+                                onClick={() => setViewMode('table')}
+                                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
+                                    viewMode === 'table'
+                                        ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                                        : 'text-gray-500 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-white'
+                                }`}
+                                title="Vista en tabla"
+                            >
+                                <List className="w-3.5 h-3.5" />
+                                <span>Tabla</span>
+                            </button>
                         </div>
 
-                        {(searchTerm || filterActive !== 'all') && (
-                            <button onClick={clearFilters} className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-700 dark:text-neutral-300 rounded-xl text-[11px] font-medium transition-all border border-gray-300 dark:border-white/10 hover:border-gray-400 dark:hover:border-white/20">
-                                <RefreshCw className="w-4 h-4" />
-                                Limpiar
-                            </button>
-                        )}
                     </div>
                 </div>
 
-                {/* ===== TABLA ===== */}
-                <div className="bg-white dark:bg-slate-800/50 rounded-2xl border border-gray-200 dark:border-white/10 overflow-hidden shadow-sm dark:shadow-2xl">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left text-[11px]">
-                            <thead className="bg-gray-50 dark:bg-white/5">
-                                <tr>
-                                    <th className="px-4 py-3 font-semibold text-gray-500 dark:text-neutral-400 uppercase tracking-wider text-[11px]">Mes / Año</th>
-                                    <th className="px-4 py-3 font-semibold text-gray-500 dark:text-neutral-400 uppercase tracking-wider text-[11px]">Período</th>
-                                    <th className="px-4 py-3 font-semibold text-gray-500 dark:text-neutral-400 uppercase tracking-wider text-[11px]">Estado</th>
-                                    <th className="px-4 py-3 font-semibold text-gray-500 dark:text-neutral-400 uppercase tracking-wider text-[11px]">Mensaje</th>
-                                    <th className="px-4 py-3 font-semibold text-gray-500 dark:text-neutral-400 uppercase tracking-wider text-[11px] text-right">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-200 dark:divide-white/5">
-                                {paginatedPeriods.length > 0 ? (
-                                    paginatedPeriods.map((period) => (
-                                        <tr key={period.id} className="hover:bg-gray-50 dark:hover:bg-white/10 transition-colors">
-                                            <td className="px-4 py-3">
-                                                <div className="flex items-center gap-2">
-                                                    <span className={`inline-flex items-center justify-center w-7 h-7 rounded-xl text-[11px] font-bold border ${getMonthColor(period.month)}`}>
-                                                        {period.month}
-                                                    </span>
+                {/* ===== CONTENIDO: VISTA TARJETAS (GRID) ===== */}
+                {viewMode === 'grid' ? (
+                    paginatedPeriods.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+                            {paginatedPeriods.map((period) => {
+                                const gradient = MONTH_GRADIENTS[(period.month - 1) % MONTH_GRADIENTS.length];
+                                
+                                return (
+                                    <div 
+                                        key={period.id}
+                                        className={`group relative overflow-hidden rounded-3xl bg-white dark:bg-slate-800/60 border transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${
+                                            period.is_current 
+                                                ? 'border-emerald-300 dark:border-emerald-500/30 shadow-emerald-500/5 ring-1 ring-emerald-500/20' 
+                                                : period.is_upcoming 
+                                                    ? 'border-blue-200 dark:border-blue-500/20' 
+                                                    : 'border-gray-200/80 dark:border-white/10'
+                                        }`}
+                                    >
+                                        {/* Luz decorativa superior */}
+                                        <div className={`h-1.5 w-full bg-gradient-to-r ${gradient}`} />
+
+                                        <div className="p-5 space-y-4">
+                                            {/* Cabecera de la tarjeta */}
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${gradient} flex flex-col items-center justify-center text-white shadow-md shadow-indigo-500/10 shrink-0`}>
+                                                        <span className="text-[10px] font-bold uppercase tracking-wider">
+                                                            {MONTH_NAMES[period.month - 1]?.substring(0, 3)}
+                                                        </span>
+                                                        <span className="text-sm font-black leading-none">
+                                                            {period.month.toString().padStart(2, '0')}
+                                                        </span>
+                                                    </div>
                                                     <div>
-                                                        <div className="font-medium text-gray-900 dark:text-white text-[11px]">
-                                                            {period.month_name}
-                                                        </div>
-                                                        <div className="text-[11px] text-gray-500 dark:text-neutral-400">
-                                                            {period.year}
-                                                        </div>
+                                                        <h3 className="text-base font-bold text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                                                            {period.month_name || MONTH_NAMES[period.month - 1]}
+                                                        </h3>
+                                                        <p className="text-xs text-gray-500 dark:text-neutral-400 font-medium">
+                                                            Año fiscal {period.year}
+                                                        </p>
                                                     </div>
                                                 </div>
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <div className="flex items-center gap-1.5">
-                                                    <Clock className="w-3.5 h-3.5 text-gray-400 dark:text-neutral-500" />
-                                                    <span className="text-[11px] text-gray-700 dark:text-neutral-300">
-                                                        {formatDateShort(period.start_date)} - {formatDateShort(period.end_date)}
+
+                                                {/* Badge de estado */}
+                                                <div>
+                                                    {period.is_current ? (
+                                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/25">
+                                                            <span className="relative flex h-1.5 w-1.5">
+                                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                                                                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
+                                                            </span>
+                                                            En curso
+                                                        </span>
+                                                    ) : period.is_upcoming ? (
+                                                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-blue-100 dark:bg-blue-500/15 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-500/25">
+                                                            <Clock className="w-3 h-3" />
+                                                            Próximo
+                                                        </span>
+                                                    ) : period.is_active ? (
+                                                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-neutral-400 border border-gray-200 dark:border-white/10">
+                                                            Finalizado
+                                                        </span>
+                                                    ) : (
+                                                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium bg-rose-100 dark:bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-500/25">
+                                                            <XCircle className="w-3 h-3" />
+                                                            Inactivo
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* Fechas de vigencia */}
+                                            <div className="p-3 bg-gray-50/80 dark:bg-slate-900/40 rounded-2xl border border-gray-200/60 dark:border-white/5 space-y-2">
+                                                <div className="flex items-center justify-between text-xs">
+                                                    <div className="flex items-center gap-1.5 text-gray-600 dark:text-neutral-300 font-medium">
+                                                        <Calendar className="w-3.5 h-3.5 text-indigo-500" />
+                                                        <span>Vigencia:</span>
+                                                    </div>
+                                                    <span className="text-[11px] font-semibold text-gray-900 dark:text-white">
+                                                        {formatDateReadable(period.start_date_clean)} - {formatDateReadable(period.end_date_clean)}
                                                     </span>
                                                 </div>
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${
-                                                    period.is_active 
-                                                        ? 'bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/25' 
-                                                        : 'bg-rose-100 dark:bg-rose-500/15 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-500/25'
-                                                }`}>
-                                                    {period.is_active ? (
-                                                        <><CheckCircle2 className="w-3 h-3" /> Activo</>
-                                                    ) : (
-                                                        <><XCircle className="w-3 h-3" /> Inactivo</>
+
+                                                <div className="flex items-center justify-between text-[11px] text-gray-500 dark:text-neutral-400">
+                                                    <span>Duración: {period.duration_days} días</span>
+                                                    {period.is_current && (
+                                                        <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                                                            {period.days_remaining === 0 ? '¡Vence hoy!' : `Quedan ${period.days_remaining} días`}
+                                                        </span>
                                                     )}
-                                                </span>
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <span className="text-[11px] text-gray-500 dark:text-neutral-400 line-clamp-1 max-w-[180px] block">
-                                                    {period.message || (
-                                                        <span className="text-gray-400 dark:text-neutral-500 italic">Sin mensaje</span>
+                                                    {period.is_upcoming && (
+                                                        <span className="font-semibold text-blue-600 dark:text-blue-400">
+                                                            Abre en {period.days_remaining} días
+                                                        </span>
                                                     )}
-                                                </span>
-                                            </td>
-                                            <td className="px-4 py-3 text-right">
-                                                <div className="flex items-center justify-end gap-1.5">
-                                                    <Link
-                                                        href={`/admin/report-periods/${period.id}/edit`}
-                                                        className="p-2 bg-blue-100 dark:bg-blue-500/15 hover:bg-blue-200 dark:hover:bg-blue-500/25 text-blue-700 dark:text-blue-400 rounded-xl transition-all border border-blue-200 dark:border-blue-500/20 hover:scale-110 active:scale-95"
-                                                        title="Editar"
-                                                    >
-                                                        <Edit2 className="w-4 h-4" />
-                                                    </Link>
-                                                    <button
-                                                        onClick={() => deletePeriod(period.id, period.month_name, period.year)}
-                                                        className="p-2 bg-rose-100 dark:bg-rose-500/15 hover:bg-rose-200 dark:hover:bg-rose-500/25 text-rose-700 dark:text-rose-400 rounded-xl transition-all border border-rose-200 dark:border-rose-500/20 hover:scale-110 active:scale-95"
-                                                        title="Eliminar"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </button>
                                                 </div>
-                                            </td>
-                                        </tr>
-                                    ))
-                                ) : (
-                                    <tr>
-                                        <td colSpan={5} className="py-16 text-center">
-                                            <div className="flex flex-col items-center gap-4">
-                                                <div className="p-6 bg-gray-100 dark:bg-white/5 rounded-full border border-gray-200 dark:border-white/10">
-                                                    <CalendarDays className="w-16 h-16 text-gray-400 dark:text-neutral-600" />
-                                                </div>
-                                                <p className="text-[11px] font-medium text-gray-900 dark:text-white">No hay períodos configurados</p>
-                                                <p className="text-[11px] text-gray-500 dark:text-neutral-400">
-                                                    {searchTerm || filterActive !== 'all' 
-                                                        ? 'No se encontraron períodos con los filtros aplicados'
-                                                        : 'Comienza creando tu primer período de envío'
-                                                    }
-                                                </p>
-                                                {!searchTerm && filterActive === 'all' && (
-                                                    <Link
-                                                        href="/admin/report-periods/create"
-                                                        className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-xl text-[11px] font-medium transition-all shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 hover:scale-105 active:scale-95 mt-2"
-                                                    >
-                                                        <Plus className="w-4 h-4" />
-                                                        Crear primer período
-                                                    </Link>
+
+                                                {/* Barra de progreso si está en curso */}
+                                                {period.is_current && (
+                                                    <div className="w-full h-1.5 bg-gray-200 dark:bg-neutral-700 rounded-full overflow-hidden">
+                                                        <div 
+                                                            className="h-full bg-gradient-to-r from-emerald-500 to-teal-600 rounded-full transition-all duration-500"
+                                                            style={{ width: `${period.progress_percent}%` }}
+                                                        />
+                                                    </div>
                                                 )}
                                             </div>
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
 
-                    {/* ===== PAGINACIÓN ===== */}
-                    {totalPages > 1 && (
-                        <div className="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-white/5 border-t border-gray-200 dark:border-white/10">
-                            <span className="text-[11px] text-gray-500 dark:text-neutral-400">
-                                {filteredPeriods.length} períodos
-                            </span>
-                            <div className="flex items-center gap-0.5">
-                                <button
-                                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                                    disabled={currentPage === 1}
-                                    className="p-1.5 hover:bg-gray-200 dark:hover:bg-white/10 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                                >
-                                    <ChevronLeft className="w-4 h-4" />
-                                </button>
-                                {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                                    let pageNum;
-                                    if (totalPages <= 5) {
-                                        pageNum = i + 1;
-                                    } else if (currentPage <= 3) {
-                                        pageNum = i + 1;
-                                    } else if (currentPage >= totalPages - 2) {
-                                        pageNum = totalPages - 4 + i;
-                                    } else {
-                                        pageNum = currentPage - 2 + i;
-                                    }
-                                    return (
+                                            {/* Mensaje adicional si existe */}
+                                            {period.message ? (
+                                                <div className="flex items-start gap-2 p-2.5 bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/30 rounded-xl text-xs text-indigo-900 dark:text-indigo-300">
+                                                    <Info className="w-3.5 h-3.5 text-indigo-500 shrink-0 mt-0.5" />
+                                                    <span className="line-clamp-2 leading-relaxed">{period.message}</span>
+                                                </div>
+                                            ) : (
+                                                <div className="text-[11px] text-gray-400 dark:text-neutral-500 italic px-1">
+                                                    Sin observaciones personalizadas
+                                                </div>
+                                            )}
+
+                                            {/* Acciones */}
+                                            <div className="pt-3 border-t border-gray-100 dark:border-white/5 flex items-center justify-between gap-2">
+                                                <Link
+                                                    href={`/admin/report-periods/${period.id}/edit`}
+                                                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-gray-100 dark:bg-white/5 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-gray-700 dark:text-neutral-300 hover:text-indigo-600 dark:hover:text-indigo-300 text-xs font-semibold border border-gray-200/80 dark:border-white/10 transition-all hover:border-indigo-200 dark:hover:border-indigo-800"
+                                                >
+                                                    <Edit2 className="w-3.5 h-3.5" />
+                                                    <span>Editar</span>
+                                                </Link>
+
+                                                <button
+                                                    onClick={() => deletePeriod(period.id, period.month_name, period.year)}
+                                                    className="p-2 rounded-xl text-gray-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 border border-transparent hover:border-rose-200 dark:hover:border-rose-800 transition-all"
+                                                    title="Eliminar período"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <div className="bg-white dark:bg-slate-800/50 rounded-3xl border border-gray-200 dark:border-white/10 p-12 text-center shadow-sm">
+                            <div className="max-w-md mx-auto space-y-4">
+                                <div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-500 flex items-center justify-center mx-auto border border-indigo-100 dark:border-indigo-500/20">
+                                    <CalendarDays className="w-8 h-8" />
+                                </div>
+                                <h3 className="text-base font-bold text-gray-900 dark:text-white">
+                                    No se encontraron períodos
+                                </h3>
+                                <p className="text-xs text-gray-500 dark:text-neutral-400">
+                                    {searchTerm || filterStatus !== 'all' || selectedYear !== 'all'
+                                        ? 'Intenta ajustar tus términos de búsqueda o cambiar los filtros seleccionados.'
+                                        : 'Aún no se han configurado períodos de entrega de oficios. Comienza agregando uno.'}
+                                </p>
+                                <div className="pt-2">
+                                    {searchTerm || filterStatus !== 'all' || selectedYear !== 'all' ? (
                                         <button
-                                            key={i}
-                                            onClick={() => setCurrentPage(pageNum)}
-                                            className={`px-3 py-1 rounded-lg text-[11px] font-medium transition-all ${
-                                                currentPage === pageNum
-                                                    ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/20'
-                                                    : 'hover:bg-gray-200 dark:hover:bg-white/10 text-gray-600 dark:text-neutral-400'
-                                            }`}
+                                            onClick={clearFilters}
+                                            className="px-4 py-2 rounded-xl bg-gray-100 dark:bg-white/5 hover:bg-gray-200 text-xs font-semibold text-gray-700 dark:text-neutral-300 transition-all"
                                         >
-                                            {pageNum}
+                                            Restablecer filtros
                                         </button>
-                                    );
-                                })}
-                                <button
-                                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                                    disabled={currentPage === totalPages}
-                                    className="p-1.5 hover:bg-gray-200 dark:hover:bg-white/10 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                                >
-                                    <ChevronRight className="w-4 h-4" />
-                                </button>
+                                    ) : (
+                                        <Link
+                                            href="/admin/report-periods/create"
+                                            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-lg shadow-indigo-500/20 transition-all"
+                                        >
+                                            <Plus className="w-4 h-4" />
+                                            <span>Crear Primer Período</span>
+                                        </Link>
+                                    )}
+                                </div>
                             </div>
                         </div>
-                    )}
-                </div>
+                    )
+                ) : (
+                    /* ===== VISTA DE TABLA DETALLADA ===== */
+                    <div className="bg-white dark:bg-slate-800/60 rounded-2xl border border-gray-200/80 dark:border-white/10 overflow-hidden shadow-sm">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left text-xs">
+                                <thead className="bg-gray-50/80 dark:bg-slate-900/60 border-b border-gray-200 dark:border-white/10 text-gray-500 dark:text-neutral-400 font-semibold uppercase tracking-wider text-[10px]">
+                                    <tr>
+                                        <th className="px-5 py-3.5">Mes / Año</th>
+                                        <th className="px-5 py-3.5">Vigencia Oficial</th>
+                                        <th className="px-5 py-3.5">Estado</th>
+                                        <th className="px-5 py-3.5">Duración</th>
+                                        <th className="px-5 py-3.5">Mensaje al Director</th>
+                                        <th className="px-5 py-3.5 text-right">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100 dark:divide-white/5">
+                                    {paginatedPeriods.length > 0 ? (
+                                        paginatedPeriods.map((period) => {
+                                            const gradient = MONTH_GRADIENTS[(period.month - 1) % MONTH_GRADIENTS.length];
+                                            
+                                            return (
+                                                <tr key={period.id} className="hover:bg-indigo-50/30 dark:hover:bg-white/5 transition-colors">
+                                                    <td className="px-5 py-4">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${gradient} text-white flex items-center justify-center font-black text-xs shrink-0 shadow-sm`}>
+                                                                {period.month.toString().padStart(2, '0')}
+                                                            </div>
+                                                            <div>
+                                                                <div className="font-bold text-gray-900 dark:text-white">
+                                                                    {period.month_name || MONTH_NAMES[period.month - 1]}
+                                                                </div>
+                                                                <div className="text-[11px] text-gray-500 dark:text-neutral-400 font-medium">
+                                                                    Año {period.year}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </td>
 
-                {/* ===== FOOTER ===== */}
-                {filteredPeriods.length > 0 && (
-                    <div className="text-center text-[11px] text-gray-500 dark:text-neutral-400">
-                        Mostrando {paginatedPeriods.length} de {filteredPeriods.length} períodos
-                        {filteredPeriods.length !== periodsArray.length && ` (${periodsArray.length} total)`}
+                                                    <td className="px-5 py-4">
+                                                        <div className="flex items-center gap-1.5 font-medium text-gray-700 dark:text-neutral-300">
+                                                            <Calendar className="w-3.5 h-3.5 text-indigo-500" />
+                                                            <span>{formatDateReadable(period.start_date_clean)} - {formatDateReadable(period.end_date_clean)}</span>
+                                                        </div>
+                                                    </td>
+
+                                                    <td className="px-5 py-4">
+                                                        {period.is_current ? (
+                                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/25">
+                                                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                                                                En curso ({period.days_remaining}d)
+                                                            </span>
+                                                        ) : period.is_upcoming ? (
+                                                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-100 dark:bg-blue-500/15 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-500/25">
+                                                                Próximo
+                                                            </span>
+                                                        ) : period.is_active ? (
+                                                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-neutral-400 border border-gray-200 dark:border-white/10">
+                                                                Concluido
+                                                            </span>
+                                                        ) : (
+                                                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-rose-100 dark:bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-500/25">
+                                                                Inactivo
+                                                            </span>
+                                                        )}
+                                                    </td>
+
+                                                    <td className="px-5 py-4 text-gray-600 dark:text-neutral-400">
+                                                        {period.duration_days} días
+                                                    </td>
+
+                                                    <td className="px-5 py-4">
+                                                        <span className="text-gray-600 dark:text-neutral-400 line-clamp-1 max-w-[220px]">
+                                                            {period.message || <span className="text-gray-400 italic">Sin mensaje</span>}
+                                                        </span>
+                                                    </td>
+
+                                                    <td className="px-5 py-4 text-right">
+                                                        <div className="flex items-center justify-end gap-1.5">
+                                                            <Link
+                                                                href={`/admin/report-periods/${period.id}/edit`}
+                                                                className="p-1.5 rounded-lg bg-gray-100 dark:bg-white/5 hover:bg-indigo-100 hover:text-indigo-600 dark:hover:bg-indigo-900/40 dark:hover:text-indigo-300 text-gray-600 dark:text-neutral-300 transition-all"
+                                                                title="Editar"
+                                                            >
+                                                                <Edit2 className="w-4 h-4" />
+                                                            </Link>
+                                                            <button
+                                                                onClick={() => deletePeriod(period.id, period.month_name, period.year)}
+                                                                className="p-1.5 rounded-lg text-gray-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-all"
+                                                                title="Eliminar"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })
+                                    ) : (
+                                        <tr>
+                                            <td colSpan={6} className="py-12 text-center text-gray-500 dark:text-neutral-400">
+                                                No se encontraron períodos con los filtros aplicados.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 )}
+
+                {/* ===== PAGINACIÓN ===== */}
+                {totalPages > 1 && (
+                    <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-800/60 rounded-2xl border border-gray-200/80 dark:border-white/10 text-xs">
+                        <span className="text-gray-500 dark:text-neutral-400">
+                            Mostrando {paginatedPeriods.length} de {filteredPeriods.length} períodos
+                        </span>
+                        <div className="flex items-center gap-1">
+                            <button
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                disabled={currentPage === 1}
+                                className="p-1.5 rounded-lg border border-gray-200 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-white/5 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                            >
+                                <ChevronLeft className="w-4 h-4" />
+                            </button>
+                            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                                <button
+                                    key={page}
+                                    onClick={() => setCurrentPage(page)}
+                                    className={`w-8 h-8 rounded-lg font-semibold text-xs transition-all ${
+                                        currentPage === page
+                                            ? 'bg-indigo-600 text-white shadow-sm'
+                                            : 'hover:bg-gray-100 dark:hover:bg-white/5 text-gray-700 dark:text-neutral-300'
+                                    }`}
+                                >
+                                    {page}
+                                </button>
+                            ))}
+                            <button
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                disabled={currentPage === totalPages}
+                                className="p-1.5 rounded-lg border border-gray-200 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-white/5 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                            >
+                                <ChevronRight className="w-4 h-4" />
+                            </button>
+                        </div>
+                    </div>
+                )}
+
             </div>
         </div>
     );
@@ -417,6 +789,6 @@ export default function Index({ periods = [], flash }: Props) {
 Index.layout = {
     breadcrumbs: [
         { title: 'Dashboard', href: dashboard() },
-        { title: 'Períodos de Envío', href: '#' }
+        { title: 'Períodos de Conformidad', href: '#' }
     ],
 };

@@ -14,6 +14,9 @@ import {
     WifiOff, // ✅ Solo WifiOff para Sin Servicio
     Eye
 } from 'lucide-react';
+import { PeriodCountdownCard, FormattedPeriod } from '@/components/period-countdown-card';
+import { MissingSignatureAlert } from '@/components/missing-signature-alert';
+import { PdfViewerModal } from '@/components/pdf-viewer-modal';
 
 interface Institution {
     id: number;
@@ -22,15 +25,8 @@ interface Institution {
     level: string;
 }
 
-interface ReportPeriod {
-    id: number;
-    month: number;
-    year: number;
-    start_date: string;
-    end_date: string;
-    is_active: boolean;
-    message: string | null;
-    month_name?: string;
+interface ReportPeriod extends FormattedPeriod {
+    is_active?: boolean;
 }
 
 interface CreateReportProps {
@@ -82,6 +78,17 @@ export default function Create({
     const [uploadProgress, setUploadProgress] = useState(0);
     const [isUploading, setIsUploading] = useState(false);
     const [isPasteActive, setIsPasteActive] = useState(false);
+    const [previewPdfModal, setPreviewPdfModal] = useState<{
+        isOpen: boolean;
+        url: string | null;
+        title: string;
+        subtitle: string;
+    }>({
+        isOpen: false,
+        url: null,
+        title: '',
+        subtitle: '',
+    });
 
     // ✅ SOLO 2 OPCIONES: OPERATIVO Y SIN SERVICIO
     const serviceOptions = [
@@ -131,7 +138,15 @@ export default function Create({
             office_number: data.office_number || '001',
         });
 
-        window.open(`/reportes/preview-pdf?${params.toString()}`, '_blank');
+        const activeMonth = data.month || selectedMonth;
+        const activeYear = data.year || selectedYear;
+
+        setPreviewPdfModal({
+            isOpen: true,
+            url: `/reportes/preview-pdf?${params.toString()}`,
+            title: `Borrador del Oficio N° ${data.office_number || '001'}`,
+            subtitle: `${selectedInstitution?.name || 'Institución'} • Mes: ${monthsList[activeMonth] || activeMonth} ${activeYear}`,
+        });
     };
 
     useEffect(() => {
@@ -519,19 +534,15 @@ export default function Create({
                         </div>
                     </div>
 
-                    {/* ===== PERIODOS ACTIVOS ===== */}
+                    {/* ===== ALERTA DE FIRMA DIGITAL FALTANTE ===== */}
+                    <MissingSignatureAlert />
+
+                    {/* ===== ALERTA DE PLAZO / CONTADOR DE DÍAS RESTANTES ===== */}
                     {availablePeriods && availablePeriods.length > 0 && (
-                        <div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-2xl">
-                            <div className="flex flex-wrap items-center gap-2 text-[11px]">
-                                <CheckCircle className="w-4 h-4 text-emerald-500" />
-                                <span className="font-medium text-emerald-700 dark:text-emerald-300">Períodos activos:</span>
-                                {availablePeriods.map((p, i) => (
-                                    <span key={i} className="px-2 py-0.5 bg-white/60 dark:bg-black/20 rounded-full text-gray-600 dark:text-neutral-300 border border-emerald-200 dark:border-emerald-800">
-                                        {p.month_name} {p.year}
-                                    </span>
-                                ))}
-                            </div>
-                        </div>
+                        <PeriodCountdownCard 
+                            periods={availablePeriods} 
+                            showAction={false} 
+                        />
                     )}
 
                     {/* ===== ALERTA DE PEGADO (feedback visual) ===== */}
@@ -869,6 +880,16 @@ export default function Create({
                     </div>
                 </div>
             </div>
+
+            {/* ===== MODAL DE PREVISUALIZACIÓN DE PDF ===== */}
+            <PdfViewerModal
+                isOpen={previewPdfModal.isOpen}
+                onClose={() => setPreviewPdfModal(prev => ({ ...prev, isOpen: false }))}
+                pdfUrl={previewPdfModal.url}
+                title={previewPdfModal.title}
+                subtitle={previewPdfModal.subtitle}
+                downloadFileName="Borrador_Oficio_Conformidad.pdf"
+            />
         </>
     );
 }

@@ -56,6 +56,7 @@ class HandleInertiaRequests extends Middleware
                     'email' => $user->email,
                     'role' => $user->role,
                     'dni' => $user->dni,
+                    'has_signature' => method_exists($user, 'hasSignature') ? $user->hasSignature() : false,
                 ] : null,
             ],
             'notifications' => $notifications,

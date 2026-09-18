@@ -10,6 +10,7 @@ use App\Models\ReportPeriod;
 use App\Models\User;
 use App\Services\ReportService;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -73,6 +74,14 @@ class ReportController extends Controller
             'rejected' => 'Rechazado',
         ];
 
+        $today = Carbon::today();
+        $activePeriods = ReportPeriod::where('is_active', true)
+            ->where('year', date('Y'))
+            ->orderBy('month', 'asc')
+            ->get()
+            ->map(fn ($p) => $this->formatPeriodData($p, $today, $months))
+            ->values();
+
         return Inertia::render('Reports/Index', [
             'reports' => $reports,
             'filters' => [
@@ -85,8 +94,55 @@ class ReportController extends Controller
             'institutions' => $institutions,
             'months' => $months,
             'statuses' => $statuses,
-            'currentYear' => date('Y'),
+            'currentYear' => (int) date('Y'),
+            'activePeriods' => $activePeriods,
         ]);
+    }
+
+    /**
+     * Formatea un periodo de reporte con cálculos de días restantes y progreso.
+     *
+     * @param  array<int, string>  $months
+     * @return array<string, mixed>
+     */
+    private function formatPeriodData(ReportPeriod $period, Carbon $today, array $months): array
+    {
+        $start = Carbon::parse($period->start_date)->startOfDay();
+        $end = Carbon::parse($period->end_date)->endOfDay();
+        $isCurrent = $today->between($start, $end);
+        $isUpcoming = $today->lt($start);
+        $isPast = $today->gt($end);
+
+        // Días restantes
+        $daysRemaining = 0;
+        if ($isCurrent) {
+            $daysRemaining = max(0, (int) $today->diffInDays($end, false));
+        } elseif ($isUpcoming) {
+            $daysRemaining = max(0, (int) $today->diffInDays($start, false));
+        }
+
+        // Porcentaje transcurrido
+        $totalDays = max(1, $start->diffInDays($end));
+        $daysPassed = min($totalDays, max(0, $start->diffInDays($today)));
+        $progressPercentage = $isCurrent ? (int) round(($daysPassed / $totalDays) * 100) : ($isPast ? 100 : 0);
+
+        return [
+            'id' => $period->id,
+            'month' => $period->month,
+            'month_name' => $months[$period->month] ?? (string) $period->month,
+            'year' => $period->year,
+            'start_date' => $period->start_date ? $period->start_date->format('Y-m-d') : '',
+            'end_date' => $period->end_date ? $period->end_date->format('Y-m-d') : '',
+            'start_date_formatted' => $period->start_date ? $period->start_date->format('d/m/Y') : '',
+            'end_date_formatted' => $period->end_date ? $period->end_date->format('d/m/Y') : '',
+            'is_active' => (bool) $period->is_active,
+            'message' => $period->message,
+            'is_current' => $isCurrent,
+            'is_upcoming' => $isUpcoming,
+            'is_past' => $isPast,
+            'days_remaining' => $daysRemaining,
+            'progress_percentage' => $progressPercentage,
+        ];
     }
 
     public function create(Request $request) // ✅ Ya tiene tipo
@@ -104,19 +160,20 @@ class ReportController extends Controller
             $reportedMonths[$institution->id] = $reported;
         }
 
-        $currentMonth = date('n');
-        $currentYear = date('Y');
-        $today = date('Y-m-d');
+        $currentMonth = (int) date('n');
+        $currentYear = (int) date('Y');
+        $today = Carbon::today();
+        $todayStr = date('Y-m-d');
 
-        $availablePeriods = ReportPeriod::where('is_active', true)
+        $availablePeriodsQuery = ReportPeriod::where('is_active', true)
             ->where('year', $currentYear)
-            ->where('start_date', '<=', $today)
-            ->where('end_date', '>=', $today)
+            ->where('start_date', '<=', $todayStr)
+            ->where('end_date', '>=', $todayStr)
             ->orderBy('month', 'asc')
             ->get();
 
-        if ($availablePeriods->isEmpty()) {
-            $availablePeriods = ReportPeriod::where('is_active', true)
+        if ($availablePeriodsQuery->isEmpty()) {
+            $availablePeriodsQuery = ReportPeriod::where('is_active', true)
                 ->where('year', $currentYear)
                 ->orderBy('month', 'asc')
                 ->get();
@@ -128,9 +185,9 @@ class ReportController extends Controller
             9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre',
         ];
 
-        foreach ($availablePeriods as $period) {
-            $period->month_name = $months[$period->month] ?? $period->month;
-        }
+        $availablePeriods = $availablePeriodsQuery
+            ->map(fn ($p) => $this->formatPeriodData($p, $today, $months))
+            ->values();
 
         $reportPeriod = $availablePeriods->first();
 

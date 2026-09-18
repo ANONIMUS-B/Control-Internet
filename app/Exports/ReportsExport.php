@@ -4,13 +4,13 @@ namespace App\Exports;
 
 use App\Models\MonthlyReport;
 use Maatwebsite\Excel\Concerns\FromQuery;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class ReportsExport implements FromQuery, WithHeadings, WithMapping, WithStyles, ShouldAutoSize
+class ReportsExport implements FromQuery, ShouldAutoSize, WithHeadings, WithMapping, WithStyles
 {
     protected $filters;
 
@@ -24,19 +24,19 @@ class ReportsExport implements FromQuery, WithHeadings, WithMapping, WithStyles,
         $query = MonthlyReport::with(['institution', 'user']);
 
         // ✅ Aplicar filtros
-        if (!empty($this->filters['month'])) {
+        if (! empty($this->filters['month'])) {
             $query->where('month', $this->filters['month']);
         }
 
-        if (!empty($this->filters['year'])) {
+        if (! empty($this->filters['year'])) {
             $query->where('year', $this->filters['year']);
         }
 
-        if (!empty($this->filters['status'])) {
+        if (! empty($this->filters['status'])) {
             $query->where('status', $this->filters['status']);
         }
 
-        if (!empty($this->filters['institution_id'])) {
+        if (! empty($this->filters['institution_id'])) {
             $query->where('institution_id', $this->filters['institution_id']);
         }
 
@@ -71,20 +71,20 @@ class ReportsExport implements FromQuery, WithHeadings, WithMapping, WithStyles,
         $months = [
             1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril',
             5 => 'Mayo', 6 => 'Junio', 7 => 'Julio', 8 => 'Agosto',
-            9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre'
+            9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre',
         ];
 
         $statusLabels = [
             'pending' => 'Pendiente',
             'approved' => 'Aprobado',
             'observed' => 'Observado',
-            'rejected' => 'Rechazado'
+            'rejected' => 'Rechazado',
         ];
 
         $serviceLabels = [
             'operative' => 'Operativo',
             'intermittent' => 'Intermitente',
-            'no_service' => 'Sin Servicio'
+            'no_service' => 'Sin Servicio',
         ];
 
         return [
@@ -131,4 +131,4 @@ class ReportsExport implements FromQuery, WithHeadings, WithMapping, WithStyles,
             'Q' => ['width' => 40],
         ];
     }
-} 
+}

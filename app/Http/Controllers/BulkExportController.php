@@ -5,10 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\MonthlyReport;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use ZipArchive;
-use Illuminate\Support\Str;
 
 class BulkExportController extends Controller
 {
@@ -19,7 +17,7 @@ class BulkExportController extends Controller
     {
         // ✅ PROTECCIÓN DE RUTA - Verificar rol
         $user = $request->user();
-        if (!in_array($user->role, ['admin', 'specialist', 'super_admin'])) {
+        if (! in_array($user->role, ['admin', 'specialist', 'super_admin'])) {
             return redirect()->route('dashboard')->with('error', 'No tienes permiso para acceder a esta sección.');
         }
 
@@ -51,7 +49,7 @@ class BulkExportController extends Controller
         $months = [
             1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril',
             5 => 'Mayo', 6 => 'Junio', 7 => 'Julio', 8 => 'Agosto',
-            9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre'
+            9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre',
         ];
 
         return inertia('Reports/BulkExport', [
@@ -73,7 +71,7 @@ class BulkExportController extends Controller
     {
         // ✅ PROTECCIÓN DE RUTA - Verificar rol
         $user = $request->user();
-        if (!in_array($user->role, ['admin', 'specialist', 'super_admin'])) {
+        if (! in_array($user->role, ['admin', 'specialist', 'super_admin'])) {
             return redirect()->route('dashboard')->with('error', 'No tienes permiso para acceder a esta sección.');
         }
 
@@ -83,7 +81,7 @@ class BulkExportController extends Controller
         ]);
 
         $reportIds = $request->report_ids;
-        
+
         // ✅ Obtener reportes con todas las relaciones
         $reports = MonthlyReport::with(['institution', 'user', 'evidences'])
             ->whereIn('id', $reportIds)
@@ -95,23 +93,23 @@ class BulkExportController extends Controller
 
         // ✅ CREAR DIRECTORIO TEMPORAL
         $tempDir = storage_path('app/temp');
-        if (!file_exists($tempDir)) {
+        if (! file_exists($tempDir)) {
             mkdir($tempDir, 0777, true);
         }
 
-        $uniqueDir = $tempDir . '/' . uniqid();
+        $uniqueDir = $tempDir.'/'.uniqid();
         mkdir($uniqueDir, 0777, true);
 
         $months = [
             1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril',
             5 => 'Mayo', 6 => 'Junio', 7 => 'Julio', 8 => 'Agosto',
-            9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre'
+            9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre',
         ];
 
         $stateLabels = [
             'operative' => 'OPERATIVO',
             'intermittent' => 'INTERMITENTE',
-            'no_service' => 'SIN SERVICIO'
+            'no_service' => 'SIN SERVICIO',
         ];
 
         // ✅ CARGAR LA IMAGEN DEL HEADER UNA SOLA VEZ (base64)
@@ -130,11 +128,11 @@ class BulkExportController extends Controller
                 $evidenciasBase64 = [];
                 if ($report->evidences && $report->evidences->count() > 0) {
                     foreach ($report->evidences as $evidence) {
-                        $path = storage_path('app/public/' . $evidence->file_path);
+                        $path = storage_path('app/public/'.$evidence->file_path);
                         if (file_exists($path)) {
                             $type = pathinfo($path, PATHINFO_EXTENSION);
                             $data = file_get_contents($path);
-                            $evidenciasBase64[] = 'data:image/' . $type . ';base64,' . base64_encode($data);
+                            $evidenciasBase64[] = 'data:image/'.$type.';base64,'.base64_encode($data);
                         }
                     }
                 }
@@ -142,11 +140,11 @@ class BulkExportController extends Controller
                 // Firma en base64
                 $signatureBase64 = null;
                 if ($report->user && $report->user->hasSignature()) {
-                    $path = storage_path('app/public/' . $report->user->signature_path);
+                    $path = storage_path('app/public/'.$report->user->signature_path);
                     if (file_exists($path)) {
                         $type = pathinfo($path, PATHINFO_EXTENSION);
                         $data = file_get_contents($path);
-                        $signatureBase64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
+                        $signatureBase64 = 'data:image/'.$type.';base64,'.base64_encode($data);
                     }
                 }
 
@@ -171,32 +169,33 @@ class BulkExportController extends Controller
                 ]);
 
                 // ✅ Guardar PDF con nombre único
-                $filename = 'REPORTE_' . ($report->institution->modular_code ?? '000') . '_' . $report->month . '_' . $report->year . '_' . $report->id . '.pdf';
-                $pdfPath = $uniqueDir . '/' . $filename;
+                $filename = 'REPORTE_'.($report->institution->modular_code ?? '000').'_'.$report->month.'_'.$report->year.'_'.$report->id.'.pdf';
+                $pdfPath = $uniqueDir.'/'.$filename;
                 file_put_contents($pdfPath, $pdf->output());
                 $pdfFiles[] = $pdfPath;
-                
-                Log::info('PDF generado: ' . $filename);
-                
+
+                Log::info('PDF generado: '.$filename);
+
             } catch (\Exception $e) {
-                $errorMsg = 'Error en reporte ID ' . $report->id . ': ' . $e->getMessage();
+                $errorMsg = 'Error en reporte ID '.$report->id.': '.$e->getMessage();
                 $errors[] = $errorMsg;
                 Log::error($errorMsg);
+
                 continue;
             }
         }
 
         // ✅ Verificar si se generaron archivos
         if (empty($pdfFiles)) {
-            return back()->with('error', 'No se pudieron generar los PDFs. ' . implode('; ', $errors));
+            return back()->with('error', 'No se pudieron generar los PDFs. '.implode('; ', $errors));
         }
 
         // ✅ CREAR ZIP
-        $zipFileName = 'reportes_' . now()->format('Y-m-d_H-i') . '.zip';
-        $zipPath = $tempDir . '/' . $zipFileName;
+        $zipFileName = 'reportes_'.now()->format('Y-m-d_H-i').'.zip';
+        $zipPath = $tempDir.'/'.$zipFileName;
 
-        $zip = new ZipArchive();
-        if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === TRUE) {
+        $zip = new ZipArchive;
+        if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true) {
             foreach ($pdfFiles as $file) {
                 if (file_exists($file)) {
                     $zip->addFile($file, basename($file));
@@ -206,7 +205,7 @@ class BulkExportController extends Controller
         }
 
         // ✅ VERIFICAR QUE EL ZIP EXISTE
-        if (!file_exists($zipPath) || filesize($zipPath) === 0) {
+        if (! file_exists($zipPath) || filesize($zipPath) === 0) {
             return back()->with('error', 'Error al crear el archivo ZIP.');
         }
 
@@ -215,7 +214,7 @@ class BulkExportController extends Controller
 
         register_shutdown_function(function () use ($uniqueDir) {
             if (file_exists($uniqueDir)) {
-                $files = glob($uniqueDir . '/*');
+                $files = glob($uniqueDir.'/*');
                 foreach ($files as $file) {
                     if (is_file($file)) {
                         @unlink($file);
@@ -234,19 +233,21 @@ class BulkExportController extends Controller
     private function getHeaderLogoBase64(): ?string
     {
         $headerPath = public_path('images/logos_header.png');
-        
+
         if (file_exists($headerPath)) {
             $type = pathinfo($headerPath, PATHINFO_EXTENSION);
             $data = file_get_contents($headerPath);
-            return 'data:image/' . $type . ';base64,' . base64_encode($data);
+
+            return 'data:image/'.$type.';base64,'.base64_encode($data);
         }
-        
+
         // ✅ Si no existe, intentar con otra ruta
         $headerPath = storage_path('app/public/images/logos_header.png');
         if (file_exists($headerPath)) {
             $type = pathinfo($headerPath, PATHINFO_EXTENSION);
             $data = file_get_contents($headerPath);
-            return 'data:image/' . $type . ';base64,' . base64_encode($data);
+
+            return 'data:image/'.$type.';base64,'.base64_encode($data);
         }
 
         return null;

@@ -31,6 +31,7 @@ import {
     Eye
 } from 'lucide-react';
 import ReportHistory from '@/components/ReportHistory';
+import { PdfViewerModal } from '@/components/pdf-viewer-modal';
 
 // ✅ DEFINIR EL TIPO PARA EL ESTADO DEL SERVICIO
 type ServiceState = 'operative' | 'intermittent';
@@ -110,6 +111,17 @@ export default function Edit({ report, flash, months = {} }: EditReportProps) {
     const [dragActive, setDragActive] = useState(false);
     const [isPasteActive, setIsPasteActive] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
+    const [previewPdfModal, setPreviewPdfModal] = useState<{
+        isOpen: boolean;
+        url: string | null;
+        title: string;
+        subtitle: string;
+    }>({
+        isOpen: false,
+        url: null,
+        title: '',
+        subtitle: '',
+    });
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const monthsList = months || {
@@ -280,7 +292,15 @@ export default function Edit({ report, flash, months = {} }: EditReportProps) {
             office_number: data.office_number || '001',
         });
 
-        window.open(`/reportes/preview-pdf?${params.toString()}`, '_blank');
+        const reportMonth = report.month ?? 1;
+        const monthLabel = monthsList[reportMonth] || String(reportMonth);
+
+        setPreviewPdfModal({
+            isOpen: true,
+            url: `/reportes/preview-pdf?${params.toString()}`,
+            title: `Borrador del Oficio N° ${data.office_number || '001'}`,
+            subtitle: `${report.institution?.name || 'Institución'} • ${monthLabel} ${report.year ?? ''}`,
+        });
     };
 
     const submit = (e: FormEvent) => {
@@ -777,6 +797,16 @@ export default function Edit({ report, flash, months = {} }: EditReportProps) {
                     )}
                 </div>
             </div>
+
+            {/* ===== MODAL DE PREVISUALIZACIÓN DE PDF ===== */}
+            <PdfViewerModal
+                isOpen={previewPdfModal.isOpen}
+                onClose={() => setPreviewPdfModal(prev => ({ ...prev, isOpen: false }))}
+                pdfUrl={previewPdfModal.url}
+                title={previewPdfModal.title}
+                subtitle={previewPdfModal.subtitle}
+                downloadFileName={`Oficio_Corregido_${data.office_number || '001'}.pdf`}
+            />
         </>
     );
 }

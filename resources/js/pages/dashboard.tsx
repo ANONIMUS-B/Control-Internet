@@ -21,6 +21,7 @@ import {
     PowerOff,
     X
 } from 'lucide-react';
+import { MissingSignatureAlert } from '@/components/missing-signature-alert';
 
 // ✅ DEFINIR LA INTERFAZ DE LOS PROPS
 interface PageProps {
@@ -154,6 +155,9 @@ export default function Dashboard() {
                         )}
                     </div>
                 )}
+
+                {/* ===== ALERTA DE FIRMA DIGITAL FALTANTE ===== */}
+                <MissingSignatureAlert className="mb-4" />
 
                 {/* ========================================== */}
                 {/* SECCIÓN INFORMATIVA COMPLETA */}

@@ -19,6 +19,9 @@ import {
     EyeOff
 } from 'lucide-react';
 import { Pagination } from '@/components/Pagination';
+import { PeriodCountdownCard, FormattedPeriod } from '@/components/period-countdown-card';
+import { MissingSignatureAlert } from '@/components/missing-signature-alert';
+import { PdfViewerModal } from '@/components/pdf-viewer-modal';
 
 interface Report {
     id: number;
@@ -62,6 +65,7 @@ interface IndexProps {
     months: Record<number, string>;
     statuses: Record<string, string>;
     currentYear: number;
+    activePeriods?: FormattedPeriod[];
 }
 
 export default function Index({ 
@@ -70,7 +74,8 @@ export default function Index({
     institutions, 
     months, 
     statuses,
-    currentYear 
+    currentYear,
+    activePeriods = []
 }: IndexProps) {
     // ✅ Obtener el usuario desde usePage
     const { props } = usePage();
@@ -89,6 +94,17 @@ export default function Index({
     const [hoveredCard, setHoveredCard] = useState<string | null>(null);
     const [comment, setComment] = useState('');
     const [reportToObserve, setReportToObserve] = useState<number | null>(null);
+    const [previewPdfModal, setPreviewPdfModal] = useState<{
+        isOpen: boolean;
+        url: string | null;
+        title: string;
+        subtitle: string;
+    }>({
+        isOpen: false,
+        url: null,
+        title: '',
+        subtitle: '',
+    });
 
     const applyFilters = () => {
         router.get('/reportes', {
@@ -319,6 +335,15 @@ export default function Index({
                             </div>
                         </div>
                     </div>
+
+                    {/* ===== ALERTA DE FIRMA DIGITAL FALTANTE ===== */}
+                    <MissingSignatureAlert />
+
+                    {/* ===== ALERTA DE PLAZO / CONTADOR DE DÍAS RESTANTES ===== */}
+                    <PeriodCountdownCard 
+                        periods={activePeriods} 
+                        showAction={userRole === 'director'} 
+                    />
 
                     {/* ===== TARJETAS DE ESTADÍSTICAS ===== */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
@@ -660,11 +685,24 @@ export default function Index({
                                                                     <Pencil className="w-4 h-4" />
                                                                 </Link>
                                                             )}
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setPreviewPdfModal({
+                                                                    isOpen: true,
+                                                                    url: `/reportes/${report.id}/pdf`,
+                                                                    title: `Oficio de Conformidad - ${getOfficeNumber(report)}`,
+                                                                    subtitle: `${getInstitutionName(report)} • ${getMonthName(report)} ${getYear(report)}`,
+                                                                })}
+                                                                className="p-2 rounded-xl bg-blue-100 dark:bg-blue-500/10 hover:bg-blue-200 dark:hover:bg-blue-500/20 text-blue-700 dark:text-blue-400 transition-all border border-blue-200 dark:border-blue-500/20 hover:scale-110 active:scale-95" 
+                                                                title="Visualizar documento en pantalla"
+                                                            >
+                                                                <Eye className="w-4 h-4" />
+                                                            </button>
                                                             <a 
                                                                 href={`/reportes/${report.id}/pdf`} 
                                                                 target="_blank" 
                                                                 className="p-2 rounded-xl bg-rose-100 dark:bg-rose-500/10 hover:bg-rose-200 dark:hover:bg-rose-500/20 text-rose-700 dark:text-rose-400 transition-all border border-rose-200 dark:border-rose-500/20 hover:scale-110 active:scale-95" 
-                                                                title="Descargar PDF"
+                                                                title="Descargar / Abrir en pestaña"
                                                             >
                                                                 <FileDown className="w-4 h-4" />
                                                             </a>
@@ -769,6 +807,16 @@ export default function Index({
                     </div>
                 </div>
             )}
+
+            {/* ===== MODAL DE PREVISUALIZACIÓN DE PDF ===== */}
+            <PdfViewerModal
+                isOpen={previewPdfModal.isOpen}
+                onClose={() => setPreviewPdfModal(prev => ({ ...prev, isOpen: false }))}
+                pdfUrl={previewPdfModal.url}
+                title={previewPdfModal.title}
+                subtitle={previewPdfModal.subtitle}
+                downloadFileName="Oficio_Conformidad.pdf"
+            />
         </>
     );
 }

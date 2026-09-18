@@ -2,17 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\EducationalInstitution;
 use App\Imports\InstitutionsImport;
+use App\Models\EducationalInstitution;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
-use Illuminate\Support\Facades\Log;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class InstitutionController extends Controller
 {
@@ -28,9 +28,9 @@ class InstitutionController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'LIKE', "%{$search}%")
-                  ->orWhere('modular_code', 'LIKE', "%{$search}%")
-                  ->orWhere('district', 'LIKE', "%{$search}%")
-                  ->orWhere('local_code', 'LIKE', "%{$search}%");
+                    ->orWhere('modular_code', 'LIKE', "%{$search}%")
+                    ->orWhere('district', 'LIKE', "%{$search}%")
+                    ->orWhere('local_code', 'LIKE', "%{$search}%");
             });
         }
 
@@ -68,17 +68,17 @@ class InstitutionController extends Controller
         return Inertia::render('Admin/Institutions/Index', [
             'institutions' => $institutions,
             'filters' => [
-                'search'          => $request->input('search'),
-                'level'           => $request->input('level'),
+                'search' => $request->input('search'),
+                'level' => $request->input('level'),
                 'type_management' => $request->input('type_management'),
-                'district'        => $request->input('district'),
-                'is_active'       => $request->input('is_active'),
-                'sort'            => $sortField,
-                'direction'       => $sortDirection,
-                'per_page'        => $perPage,
+                'district' => $request->input('district'),
+                'is_active' => $request->input('is_active'),
+                'sort' => $sortField,
+                'direction' => $sortDirection,
+                'per_page' => $perPage,
             ],
-            'districts'       => $districts,
-            'levels'          => $levels,
+            'districts' => $districts,
+            'levels' => $levels,
             'typeManagements' => $typeManagements,
         ]);
     }
@@ -89,26 +89,26 @@ class InstitutionController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'modular_code'     => 'nullable|string|max:10',
-            'local_code'       => 'nullable|string|max:20',
-            'name'             => 'nullable|string|max:150',
-            'level'            => 'nullable|string|max:50',
-            'type_management'  => 'nullable|string|max:100',
-            'department'       => 'nullable|string|max:100',
-            'province'         => 'nullable|string|max:100',
-            'district'         => 'nullable|string|max:100',
-            'ugel'             => 'nullable|string|max:100',
+            'modular_code' => 'nullable|string|max:10',
+            'local_code' => 'nullable|string|max:20',
+            'name' => 'nullable|string|max:150',
+            'level' => 'nullable|string|max:50',
+            'type_management' => 'nullable|string|max:100',
+            'department' => 'nullable|string|max:100',
+            'province' => 'nullable|string|max:100',
+            'district' => 'nullable|string|max:100',
+            'ugel' => 'nullable|string|max:100',
             'populated_center' => 'nullable|string|max:100',
-            'address'          => 'nullable|string|max:255',
+            'address' => 'nullable|string|max:255',
         ]);
 
         $validated['department'] = $validated['department'] ?? 'Huánuco';
-        $validated['province']   = $validated['province'] ?? 'Ambo';
-        $validated['ugel']       = $validated['ugel'] ?? 'UGEL Ambo';
-        $validated['is_active']  = true;
+        $validated['province'] = $validated['province'] ?? 'Ambo';
+        $validated['ugel'] = $validated['ugel'] ?? 'UGEL Ambo';
+        $validated['is_active'] = true;
 
         EducationalInstitution::create($validated);
-        
+
         return back()->with('success', 'IE registrada correctamente.');
     }
 
@@ -124,11 +124,11 @@ class InstitutionController extends Controller
         return Inertia::render('Admin/Institutions/Show', [
             'institution' => $institution,
             'stats' => [
-                'totalReports'    => $institution->monthlyReports()->count(),
-                'pendingReports'  => $institution->monthlyReports()->where('status', 'pending')->count(),
+                'totalReports' => $institution->monthlyReports()->count(),
+                'pendingReports' => $institution->monthlyReports()->where('status', 'pending')->count(),
                 'approvedReports' => $institution->monthlyReports()->where('status', 'approved')->count(),
                 'observedReports' => $institution->monthlyReports()->where('status', 'observed')->count(),
-            ]
+            ],
         ]);
     }
 
@@ -138,21 +138,21 @@ class InstitutionController extends Controller
     public function update(Request $request, EducationalInstitution $institution)
     {
         $validated = $request->validate([
-            'modular_code'     => 'nullable|string|max:10',
-            'local_code'       => 'nullable|string|max:20',
-            'name'             => 'nullable|string|max:150',
-            'level'            => 'nullable|string|max:50',
-            'type_management'  => 'nullable|string|max:100',
-            'department'       => 'nullable|string|max:100',
-            'province'         => 'nullable|string|max:100',
-            'district'         => 'nullable|string|max:100',
-            'ugel'             => 'nullable|string|max:100',
+            'modular_code' => 'nullable|string|max:10',
+            'local_code' => 'nullable|string|max:20',
+            'name' => 'nullable|string|max:150',
+            'level' => 'nullable|string|max:50',
+            'type_management' => 'nullable|string|max:100',
+            'department' => 'nullable|string|max:100',
+            'province' => 'nullable|string|max:100',
+            'district' => 'nullable|string|max:100',
+            'ugel' => 'nullable|string|max:100',
             'populated_center' => 'nullable|string|max:100',
-            'address'          => 'nullable|string|max:255',
+            'address' => 'nullable|string|max:255',
         ]);
 
         $institution->update($validated);
-        
+
         return back()->with('success', 'Institución actualizada correctamente.');
     }
 
@@ -166,6 +166,7 @@ class InstitutionController extends Controller
         }
 
         $institution->delete();
+
         return back()->with('success', 'Institución eliminada correctamente.');
     }
 
@@ -197,9 +198,10 @@ class InstitutionController extends Controller
      */
     public function toggle(EducationalInstitution $institution)
     {
-        $institution->update(['is_active' => !$institution->is_active]);
-        
+        $institution->update(['is_active' => ! $institution->is_active]);
+
         $status = $institution->is_active ? 'activada' : 'desactivada';
+
         return back()->with('success', "Institución {$status} correctamente.");
     }
 
@@ -234,51 +236,53 @@ class InstitutionController extends Controller
 
         try {
             $file = $request->file('file');
-            
-            Log::info('=== INICIO IMPORTACIÓN INSTITUCIONES ===');
-            Log::info('Nombre del archivo: ' . $file->getClientOriginalName());
-            Log::info('Tamaño: ' . $file->getSize() . ' bytes');
-            Log::info('Tipo MIME: ' . $file->getMimeType());
 
-            $import = new InstitutionsImport();
+            Log::info('=== INICIO IMPORTACIÓN INSTITUCIONES ===');
+            Log::info('Nombre del archivo: '.$file->getClientOriginalName());
+            Log::info('Tamaño: '.$file->getSize().' bytes');
+            Log::info('Tipo MIME: '.$file->getMimeType());
+
+            $import = new InstitutionsImport;
             Excel::import($import, $file);
 
             $imported = $import->getImportedCount();
             $skipped = $import->getSkippedCount();
             $errors = $import->getErrors();
 
-            Log::info('Instituciones CREADAS: ' . $imported);
-            Log::info('Filas OMITIDAS: ' . $skipped);
-            Log::info('Errores: ' . json_encode($errors));
+            Log::info('Instituciones CREADAS: '.$imported);
+            Log::info('Filas OMITIDAS: '.$skipped);
+            Log::info('Errores: '.json_encode($errors));
 
             if ($imported > 0) {
                 $message = "✅ Se importaron {$imported} instituciones correctamente.";
                 if ($skipped > 0) {
                     $message .= " {$skipped} filas fueron omitidas (sin nombre o datos mínimos).";
                 }
-                if (!empty($errors)) {
-                    $message .= " Detalles: " . implode('; ', array_slice($errors, 0, 3));
+                if (! empty($errors)) {
+                    $message .= ' Detalles: '.implode('; ', array_slice($errors, 0, 3));
                     if (count($errors) > 3) {
-                        $message .= " y " . (count($errors) - 3) . " más.";
+                        $message .= ' y '.(count($errors) - 3).' más.';
                     }
                 }
+
                 return redirect()->route('institutions.index')->with('success', $message);
             } else {
-                $errorMsg = "❌ No se importó ninguna institución.";
-                if (!empty($errors)) {
-                    $errorMsg .= " Errores: " . implode('; ', array_slice($errors, 0, 3));
+                $errorMsg = '❌ No se importó ninguna institución.';
+                if (! empty($errors)) {
+                    $errorMsg .= ' Errores: '.implode('; ', array_slice($errors, 0, 3));
                 } else {
-                    $errorMsg .= " Verifica que el archivo tenga datos válidos.";
+                    $errorMsg .= ' Verifica que el archivo tenga datos válidos.';
                 }
+
                 return redirect()->route('institutions.import')->with('error', $errorMsg);
             }
 
         } catch (\Exception $e) {
-            Log::error('ERROR IMPORT INSTITUCIONES: ' . $e->getMessage());
-            Log::error('LINEA: ' . $e->getLine());
-            Log::error('ARCHIVO: ' . $e->getFile());
-            
-            return redirect()->route('institutions.import')->with('error', '❌ Error al importar: ' . $e->getMessage());
+            Log::error('ERROR IMPORT INSTITUCIONES: '.$e->getMessage());
+            Log::error('LINEA: '.$e->getLine());
+            Log::error('ARCHIVO: '.$e->getFile());
+
+            return redirect()->route('institutions.import')->with('error', '❌ Error al importar: '.$e->getMessage());
         }
     }
 
@@ -292,7 +296,7 @@ class InstitutionController extends Controller
             return redirect()->route('institutions.index')->with('error', 'No tienes permiso para descargar esta plantilla. Solo el Super Administrador puede hacerlo.');
         }
 
-        $spreadsheet = new Spreadsheet();
+        $spreadsheet = new Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet();
 
         $headers = [
@@ -306,17 +310,17 @@ class InstitutionController extends Controller
             'district',
             'ugel',
             'populated_center',
-            'address'
+            'address',
         ];
 
         $headerStyle = [
             'font' => [
-                'bold'  => true,
+                'bold' => true,
                 'color' => ['rgb' => 'FFFFFF'],
-                'size'  => 11,
+                'size' => 11,
             ],
             'fill' => [
-                'fillType'   => Fill::FILL_SOLID,
+                'fillType' => Fill::FILL_SOLID,
                 'startColor' => ['rgb' => '4F46E5'],
             ],
             'alignment' => [
@@ -325,7 +329,7 @@ class InstitutionController extends Controller
             'borders' => [
                 'allBorders' => [
                     'borderStyle' => Border::BORDER_THIN,
-                    'color'       => ['rgb' => '000000'],
+                    'color' => ['rgb' => '000000'],
                 ],
             ],
         ];
@@ -356,7 +360,7 @@ class InstitutionController extends Controller
         $exampleStyle = [
             'font' => [
                 'color' => ['rgb' => '666666'],
-                'size'  => 10,
+                'size' => 10,
             ],
             'alignment' => [
                 'horizontal' => Alignment::HORIZONTAL_LEFT,
@@ -364,7 +368,7 @@ class InstitutionController extends Controller
             'borders' => [
                 'allBorders' => [
                     'borderStyle' => Border::BORDER_THIN,
-                    'color'       => ['rgb' => 'CCCCCC'],
+                    'color' => ['rgb' => 'CCCCCC'],
                 ],
             ],
         ];
@@ -378,20 +382,20 @@ class InstitutionController extends Controller
         $sheet->setCellValue('A8', '4. No modifiques los nombres de los encabezados (fila 1).');
         $sheet->setCellValue('A9', '5. Guarda el archivo en formato .xlsx');
         $sheet->setCellValue('A10', '6. Elimina la fila de ejemplo (fila 2) antes de cargar tus datos.');
-        
+
         $sheet->getStyle('A4')->getFont()->setBold(true)->setSize(11);
         $sheet->getStyle('A4:A10')->getFont()->setSize(10);
         $sheet->getStyle('A4:A10')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
 
         $writer = new Xlsx($spreadsheet);
-        
+
         return response()->stream(
             function () use ($writer) {
                 $writer->save('php://output');
             },
             200,
             [
-                'Content-Type'        => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                 'Content-Disposition' => 'attachment; filename="plantilla_instituciones.xlsx"',
             ]
         );

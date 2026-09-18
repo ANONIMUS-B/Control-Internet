@@ -3,11 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\ReportPeriod;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
-use Carbon\Carbon;
 
 class ReportPeriodController extends Controller
 {
@@ -73,7 +72,7 @@ class ReportPeriodController extends Controller
 
         if ($exists) {
             return back()->withErrors([
-                'month' => 'Ya existe un período configurado para este mes y año.'
+                'month' => 'Ya existe un período configurado para este mes y año.',
             ]);
         }
 
@@ -89,7 +88,7 @@ class ReportPeriodController extends Controller
         ]);
 
         // ✅ Limpiar caché
-        Cache::forget('report_period_' . $period->month . '_' . $period->year);
+        Cache::forget('report_period_'.$period->month.'_'.$period->year);
 
         return redirect()->route('admin.report-periods.index')
             ->with('success', "✅ Período configurado correctamente para {$period->month_name} {$period->year}.");
@@ -136,7 +135,7 @@ class ReportPeriodController extends Controller
         ]);
 
         // ✅ Limpiar caché
-        Cache::forget('report_period_' . $period->month . '_' . $period->year);
+        Cache::forget('report_period_'.$period->month.'_'.$period->year);
 
         return redirect()->route('admin.report-periods.index')
             ->with('success', "✅ Período actualizado correctamente para {$period->month_name} {$period->year}.");
@@ -156,7 +155,7 @@ class ReportPeriodController extends Controller
         $year = $period->year;
 
         // ✅ Limpiar caché
-        Cache::forget('report_period_' . $period->month . '_' . $period->year);
+        Cache::forget('report_period_'.$period->month.'_'.$period->year);
 
         $period->delete();
 
@@ -169,8 +168,8 @@ class ReportPeriodController extends Controller
      */
     public function getPeriod($month, $year)
     {
-        $cacheKey = 'report_period_' . $month . '_' . $year;
-        
+        $cacheKey = 'report_period_'.$month.'_'.$year;
+
         return Cache::remember($cacheKey, 3600, function () use ($month, $year) {
             return ReportPeriod::where('month', $month)
                 ->where('year', $year)

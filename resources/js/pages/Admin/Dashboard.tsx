@@ -2,10 +2,11 @@ import { useState, useMemo } from 'react';
 import { Head, router } from '@inertiajs/react';
 import { 
     CheckCircle2, AlertCircle, FileDown, Search, User, Building2, X, CalendarDays,
-    Filter, Clock, FileText
+    Filter, Clock, FileText, Eye
 } from 'lucide-react';
 import { Pagination } from '@/components/Pagination';
 import { dashboard } from '@/routes';
+import { PdfViewerModal } from '@/components/pdf-viewer-modal';
 
 interface Report {
     id: number;
@@ -67,6 +68,17 @@ export default function AdminDashboard({
     const [perPage, setPerPage] = useState<number>(filters.per_page || 10);
     const [comment, setComment] = useState('');
     const [reportToObserve, setReportToObserve] = useState<number | null>(null);
+    const [previewPdfModal, setPreviewPdfModal] = useState<{
+        isOpen: boolean;
+        url: string | null;
+        title: string;
+        subtitle: string;
+    }>({
+        isOpen: false,
+        url: null,
+        title: '',
+        subtitle: '',
+    });
 
     const applyFilters = () => {
         router.get('/updi/dashboard', {
@@ -377,11 +389,24 @@ export default function AdminDashboard({
                                                 </td>
                                                 <td className="px-4 md:px-6 py-3 md:py-4 text-right">
                                                     <div className="flex items-center justify-end gap-1.5">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setPreviewPdfModal({
+                                                                isOpen: true,
+                                                                url: `/reportes/${report.id}/pdf`,
+                                                                title: `Oficio de Conformidad - ${report.office_number || 'S/N'}`,
+                                                                subtitle: `${report.institution?.name || 'IE'} • ${months[report.month] || report.month} ${report.year}`,
+                                                            })}
+                                                            className="p-2 bg-blue-100 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-500/20 rounded-xl transition-all border border-blue-200 dark:border-blue-500/20 hover:scale-110 active:scale-95"
+                                                            title="Visualizar documento en pantalla"
+                                                        >
+                                                            <Eye className="w-4 h-4" />
+                                                        </button>
                                                         <a 
                                                             href={`/reportes/${report.id}/pdf`} 
                                                             target="_blank" 
                                                             className="p-2 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 rounded-xl transition-all border border-gray-200 dark:border-white/10 hover:scale-110 active:scale-95"
-                                                            title="Descargar PDF"
+                                                            title="Descargar / Abrir en pestaña"
                                                         >
                                                             <FileDown className="w-4 h-4 text-gray-600 dark:text-neutral-400" />
                                                         </a>
@@ -490,6 +515,16 @@ export default function AdminDashboard({
                     </div>
                 </div>
             )}
+
+            {/* ===== MODAL DE PREVISUALIZACIÓN DE PDF ===== */}
+            <PdfViewerModal
+                isOpen={previewPdfModal.isOpen}
+                onClose={() => setPreviewPdfModal(prev => ({ ...prev, isOpen: false }))}
+                pdfUrl={previewPdfModal.url}
+                title={previewPdfModal.title}
+                subtitle={previewPdfModal.subtitle}
+                downloadFileName="Oficio_Conformidad.pdf"
+            />
         </div>
     );
 }

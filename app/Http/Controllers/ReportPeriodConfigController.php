@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -12,8 +13,8 @@ class ReportPeriodConfigController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        
-        if (!$user || $user->role !== 'super_admin') {
+
+        if (! $user || $user->role !== 'super_admin') {
             abort(403, 'No tienes permiso para acceder a esta sección.');
         }
 
@@ -36,7 +37,7 @@ class ReportPeriodConfigController extends Controller
     public function update(Request $request)
     {
         $user = $request->user();
-        if (!$user || $user->role !== 'super_admin') {
+        if (! $user || $user->role !== 'super_admin') {
             abort(403, 'No tienes permiso para realizar esta acción.');
         }
 
@@ -86,22 +87,16 @@ class ReportPeriodConfigController extends Controller
 
     /**
      * Guardar la configuración del período
-     * 
-     * @param int $startDay
-     * @param int $endDay
-     * @param bool $enabled
-     * @param string|null $message
-     * @param int|null $month
-     * @param int|null $year
-     * @param \App\Models\User|null $user
+     *
+     * @param  User|null  $user
      * @return void
      */
     protected function savePeriodConfig(
-        int $startDay, 
-        int $endDay, 
-        bool $enabled, 
-        ?string $message = null, 
-        ?int $month = null, 
+        int $startDay,
+        int $endDay,
+        bool $enabled,
+        ?string $message = null,
+        ?int $month = null,
         ?int $year = null,
         $user = null // ✅ Recibir el usuario como parámetro
     ) {
@@ -139,8 +134,8 @@ class ReportPeriodConfigController extends Controller
         $content .= "    'period' => [\n";
         $content .= "        'start_day' => {$config['start_day']},\n";
         $content .= "        'end_day' => {$config['end_day']},\n";
-        $content .= "        'enabled' => " . ($config['enabled'] ? 'true' : 'false') . ",\n";
-        $content .= "        'message' => " . ($config['message'] ? "'" . addslashes($config['message']) . "'" : 'null') . ",\n";
+        $content .= "        'enabled' => ".($config['enabled'] ? 'true' : 'false').",\n";
+        $content .= "        'message' => ".($config['message'] ? "'".addslashes($config['message'])."'" : 'null').",\n";
         $content .= "        'month' => {$config['month']},\n";
         $content .= "        'year' => {$config['year']},\n";
         $content .= "    ],\n";

@@ -24,7 +24,7 @@ class MaintenanceController extends Controller
     public function enable(Request $request)
     {
         $user = $request->user();
-        
+
         if ($user->role !== 'super_admin') {
             return back()->with('error', 'No tienes permiso para realizar esta acción.');
         }
@@ -40,7 +40,7 @@ class MaintenanceController extends Controller
     public function disable(Request $request)
     {
         $user = $request->user();
-        
+
         if ($user->role !== 'super_admin') {
             return back()->with('error', 'No tienes permiso para realizar esta acción.');
         }

@@ -2,19 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\NetworkEquipment;
-use App\Models\EducationalInstitution;
 use App\Imports\NetworkEquipmentsImport;
+use App\Models\NetworkEquipment;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class NetworkEquipmentController extends Controller
 {
@@ -34,7 +33,7 @@ class NetworkEquipmentController extends Controller
                 ->pluck('educational_institutions.local_code')
                 ->filter()
                 ->toArray();
-            
+
             if (empty($institutionCodes)) {
                 return Inertia::render('NetworkEquipments/Index', [
                     'equipments' => [
@@ -60,7 +59,7 @@ class NetworkEquipmentController extends Controller
                     'institutionCount' => 0,
                 ]);
             }
-            
+
             $query->whereIn('local_code', $institutionCodes);
         }
 
@@ -69,11 +68,11 @@ class NetworkEquipmentController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('institution_name', 'LIKE', "%{$search}%")
-                  ->orWhere('local_code', 'LIKE', "%{$search}%")
-                  ->orWhere('brand', 'LIKE', "%{$search}%")
-                  ->orWhere('model', 'LIKE', "%{$search}%")
-                  ->orWhere('mac_address', 'LIKE', "%{$search}%")
-                  ->orWhere('description', 'LIKE', "%{$search}%");
+                    ->orWhere('local_code', 'LIKE', "%{$search}%")
+                    ->orWhere('brand', 'LIKE', "%{$search}%")
+                    ->orWhere('model', 'LIKE', "%{$search}%")
+                    ->orWhere('mac_address', 'LIKE', "%{$search}%")
+                    ->orWhere('description', 'LIKE', "%{$search}%");
             });
         }
 
@@ -153,45 +152,48 @@ class NetworkEquipmentController extends Controller
 
         try {
             $file = $request->file('file');
-            
-            Log::info('=== INICIO IMPORTACIÓN EQUIPOS DE RED ===');
-            Log::info('Nombre del archivo: ' . $file->getClientOriginalName());
-            Log::info('Tamaño: ' . $file->getSize() . ' bytes');
 
-            $import = new NetworkEquipmentsImport();
+            Log::info('=== INICIO IMPORTACIÓN EQUIPOS DE RED ===');
+            Log::info('Nombre del archivo: '.$file->getClientOriginalName());
+            Log::info('Tamaño: '.$file->getSize().' bytes');
+
+            $import = new NetworkEquipmentsImport;
             Excel::import($import, $file);
 
             $imported = $import->getImportedCount();
             $skipped = $import->getSkippedCount();
             $errors = $import->getErrors();
 
-            Log::info('Equipos importados: ' . $imported);
-            Log::info('Filas omitidas: ' . $skipped);
-            Log::info('Errores: ' . json_encode($errors));
+            Log::info('Equipos importados: '.$imported);
+            Log::info('Filas omitidas: '.$skipped);
+            Log::info('Errores: '.json_encode($errors));
 
             if ($imported > 0) {
                 $message = "✅ Se importaron {$imported} equipos correctamente.";
                 if ($skipped > 0) {
                     $message .= " ({$skipped} filas fueron omitidas).";
                 }
-                if (!empty($errors)) {
-                    $message .= " Detalle errores: " . implode('; ', array_slice($errors, 0, 3));
+                if (! empty($errors)) {
+                    $message .= ' Detalle errores: '.implode('; ', array_slice($errors, 0, 3));
                     if (count($errors) > 3) {
-                        $message .= " y " . (count($errors) - 3) . " más.";
+                        $message .= ' y '.(count($errors) - 3).' más.';
                     }
                 }
+
                 return redirect()->route('network-equipments.index')->with('success', $message);
             } else {
                 $msg = '❌ No se importó ningún equipo.';
-                if (!empty($errors)) {
-                    $msg .= ' Error: ' . implode('; ', array_slice($errors, 0, 2));
+                if (! empty($errors)) {
+                    $msg .= ' Error: '.implode('; ', array_slice($errors, 0, 2));
                 }
+
                 return redirect()->route('network-equipments.import')->with('error', $msg);
             }
 
         } catch (\Exception $e) {
-            Log::error('ERROR IMPORT EQUIPOS: ' . $e->getMessage());
-            return redirect()->route('network-equipments.import')->with('error', '❌ Error al importar: ' . $e->getMessage());
+            Log::error('ERROR IMPORT EQUIPOS: '.$e->getMessage());
+
+            return redirect()->route('network-equipments.import')->with('error', '❌ Error al importar: '.$e->getMessage());
         }
     }
 
@@ -205,7 +207,7 @@ class NetworkEquipmentController extends Controller
             return redirect()->route('network-equipments.index')->with('error', 'No tienes permiso para descargar la plantilla.');
         }
 
-        $spreadsheet = new Spreadsheet();
+        $spreadsheet = new Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet();
 
         $headers = [
@@ -214,7 +216,7 @@ class NetworkEquipmentController extends Controller
             'marca',
             'modelo',
             'mac',
-            'estado'
+            'estado',
         ];
 
         $headerStyle = [
@@ -286,7 +288,7 @@ class NetworkEquipmentController extends Controller
         $sheet->getStyle('A4:A9')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
 
         $writer = new Xlsx($spreadsheet);
-        
+
         return response()->stream(
             function () use ($writer) {
                 $writer->save('php://output');
@@ -314,11 +316,11 @@ class NetworkEquipmentController extends Controller
                 ->pluck('educational_institutions.local_code')
                 ->filter()
                 ->toArray();
-            
+
             if (empty($institutionCodes)) {
                 return back()->with('error', 'No tienes instituciones asignadas para exportar.');
             }
-            
+
             $query->whereIn('local_code', $institutionCodes);
         }
 
@@ -326,10 +328,10 @@ class NetworkEquipmentController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('institution_name', 'LIKE', "%{$search}%")
-                  ->orWhere('local_code', 'LIKE', "%{$search}%")
-                  ->orWhere('brand', 'LIKE', "%{$search}%")
-                  ->orWhere('model', 'LIKE', "%{$search}%")
-                  ->orWhere('mac_address', 'LIKE', "%{$search}%");
+                    ->orWhere('local_code', 'LIKE', "%{$search}%")
+                    ->orWhere('brand', 'LIKE', "%{$search}%")
+                    ->orWhere('model', 'LIKE', "%{$search}%")
+                    ->orWhere('mac_address', 'LIKE', "%{$search}%");
             });
         }
 
@@ -339,7 +341,7 @@ class NetworkEquipmentController extends Controller
 
         $equipments = $query->orderBy('institution_name')->get();
 
-        $spreadsheet = new Spreadsheet();
+        $spreadsheet = new Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet();
 
         $headers = ['Código Local', 'Institución', 'Nivel', 'Descripción', 'Marca', 'Modelo', 'MAC', 'Estado'];
@@ -373,7 +375,7 @@ class NetworkEquipmentController extends Controller
         }
 
         $writer = new Xlsx($spreadsheet);
-        
+
         return response()->stream(
             function () use ($writer) {
                 $writer->save('php://output');
@@ -401,11 +403,11 @@ class NetworkEquipmentController extends Controller
                 ->pluck('educational_institutions.local_code')
                 ->filter()
                 ->toArray();
-            
-            if (!in_array($localCode, $institutionCodes)) {
+
+            if (! in_array($localCode, $institutionCodes)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'No tienes permiso para ver los equipos de esta institución.'
+                    'message' => 'No tienes permiso para ver los equipos de esta institución.',
                 ], 403);
             }
         }
@@ -424,11 +426,11 @@ class NetworkEquipmentController extends Controller
     public function show(Request $request, NetworkEquipment $equipment)
     {
         $user = $request->user();
-        
-        if (!in_array($user->role, ['super_admin', 'admin'])) {
+
+        if (! in_array($user->role, ['super_admin', 'admin'])) {
             return response()->json([
                 'success' => false,
-                'message' => 'No tienes permiso para ver este equipo.'
+                'message' => 'No tienes permiso para ver este equipo.',
             ], 403);
         }
 
@@ -444,7 +446,7 @@ class NetworkEquipmentController extends Controller
     public function update(Request $request, NetworkEquipment $equipment)
     {
         $user = $request->user();
-        if (!in_array($user->role, ['super_admin', 'admin'])) {
+        if (! in_array($user->role, ['super_admin', 'admin'])) {
             return redirect()->route('network-equipments.index')->with('error', 'No tienes permiso para editar equipos.');
         }
 
@@ -470,7 +472,7 @@ class NetworkEquipmentController extends Controller
     public function destroy(Request $request, NetworkEquipment $equipment)
     {
         $user = $request->user();
-        if (!in_array($user->role, ['super_admin', 'admin'])) {
+        if (! in_array($user->role, ['super_admin', 'admin'])) {
             return redirect()->route('network-equipments.index')->with('error', 'No tienes permiso para eliminar equipos.');
         }
 
