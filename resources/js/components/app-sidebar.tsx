@@ -67,7 +67,7 @@ export function AppSidebar() {
         // ✅ Items base para todos los usuarios (incluyendo director)
         const baseItems: MenuItem[] = [
             {
-                title: 'Dashboard',
+                title: 'Panel Principal',
                 href: dashboard(),
                 icon: LayoutGrid,
             },

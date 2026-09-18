@@ -85,7 +85,7 @@ export default function Dashboard() {
 
     return (
         <>
-            <Head title="Dashboard" />
+            <Head title="Panel Principal" />
             <div className="p-4 md:p-6" style={{ fontSize: '11px' }}>
                 
                 {/* ===== BOTÓN DE MANTENIMIENTO (SOLO SUPER ADMIN) ===== */}
@@ -318,7 +318,7 @@ export default function Dashboard() {
 Dashboard.layout = {
     breadcrumbs: [
         {
-            title: 'Dashboard',
+            title: 'Panel Principal',
             href: dashboard(),
         },
     ],

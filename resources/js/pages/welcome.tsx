@@ -49,7 +49,7 @@ export default function Welcome() {
                                     href={dashboard()}
                                     className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 hover:scale-[1.02] transition-all duration-300"
                                 >
-                                    Dashboard
+                                    Panel Principal
                                     <ChevronRight className="w-4 h-4" />
                                 </Link>
                             ) : (

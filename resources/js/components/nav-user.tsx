@@ -21,42 +21,47 @@ export function NavUser() {
     const { state } = useSidebar();
     const isMobile = useIsMobile();
 
+    const isCollapsed = state === 'collapsed';
+
     if (!auth?.user) {
         return null;
     }
 
     return (
-        <div className="flex items-center gap-2">
+        <div className={`flex ${isCollapsed ? 'flex-col items-center justify-center gap-2 w-full' : 'items-center gap-2 w-full'}`}>
             {/* NOTIFICACIONES */}
-            <Notifications 
-                notifications={notifications || []}
-                unreadCount={unreadCount || 0}
-            />
+            <div className={isCollapsed ? 'flex justify-center w-full' : ''}>
+                <Notifications 
+                    notifications={notifications || []}
+                    unreadCount={unreadCount || 0}
+                />
+            </div>
 
             {/* MENÚ DE USUARIO */}
-            <SidebarMenu>
-                <SidebarMenuItem>
+            <SidebarMenu className={isCollapsed ? 'w-auto' : 'flex-1'}>
+                <SidebarMenuItem className={isCollapsed ? 'flex justify-center' : ''}>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <SidebarMenuButton
                                 size="lg"
-                                className="group text-sidebar-accent-foreground data-[state=open]:bg-sidebar-accent"
+                                className="group text-sidebar-accent-foreground data-[state=open]:bg-sidebar-accent group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-0! group-data-[collapsible=icon]:justify-center"
                                 data-test="sidebar-menu-button"
                             >
                                 <UserInfo user={auth.user} />
-                                <ChevronsUpDown className="ml-auto size-4" />
+                                <ChevronsUpDown className="ml-auto size-4 group-data-[collapsible=icon]:hidden" />
                             </SidebarMenuButton>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent
-                            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
-                            align="end"
+                            className="w-56 rounded-lg"
+                            align={isCollapsed ? 'center' : 'end'}
                             side={
                                 isMobile
                                     ? 'bottom'
-                                    : state === 'collapsed'
-                                      ? 'left'
-                                      : 'bottom'
+                                    : isCollapsed
+                                      ? 'right'
+                                      : 'top'
                             }
+                            sideOffset={8}
                         >
                             <UserMenuContent user={auth.user} />
                         </DropdownMenuContent>

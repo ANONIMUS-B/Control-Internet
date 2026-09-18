@@ -2,20 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\MonthlyReport;
-use App\Models\EducationalInstitution;
-use App\Services\ReportService;
-use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Support\Facades\Storage;
-use App\Models\ReportEvidence;
-use Illuminate\Database\QueryException;
 use App\Helpers\ReportHelper;
+use App\Models\EducationalInstitution;
+use App\Models\MonthlyReport;
+use App\Models\ReportEvidence;
 use App\Models\ReportPeriod;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\JsonResponse;
 use App\Models\User;
+use App\Services\ReportService;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Database\QueryException;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class ReportController extends Controller
 {
@@ -59,18 +59,18 @@ class ReportController extends Controller
         $reports = $query->paginate($perPage)->withQueryString();
 
         $institutions = EducationalInstitution::orderBy('name')->get(['id', 'name', 'modular_code']);
-        
+
         $months = [
             1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril',
             5 => 'Mayo', 6 => 'Junio', 7 => 'Julio', 8 => 'Agosto',
-            9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre'
+            9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre',
         ];
 
         $statuses = [
             'pending' => 'Pendiente',
             'observed' => 'Observado',
             'approved' => 'Aprobado',
-            'rejected' => 'Rechazado'
+            'rejected' => 'Rechazado',
         ];
 
         return Inertia::render('Reports/Index', [
@@ -92,9 +92,9 @@ class ReportController extends Controller
     public function create(Request $request) // ✅ Ya tiene tipo
     {
         $user = $request->user();
-        
+
         $institutions = $user->institutions;
-        
+
         $reportedMonths = [];
         foreach ($institutions as $institution) {
             $reported = MonthlyReport::where('institution_id', $institution->id)
@@ -107,7 +107,7 @@ class ReportController extends Controller
         $currentMonth = date('n');
         $currentYear = date('Y');
         $today = date('Y-m-d');
-        
+
         $availablePeriods = ReportPeriod::where('is_active', true)
             ->where('year', $currentYear)
             ->where('start_date', '<=', $today)
@@ -125,9 +125,9 @@ class ReportController extends Controller
         $months = [
             1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril',
             5 => 'Mayo', 6 => 'Junio', 7 => 'Julio', 8 => 'Agosto',
-            9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre'
+            9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre',
         ];
-        
+
         foreach ($availablePeriods as $period) {
             $period->month_name = $months[$period->month] ?? $period->month;
         }
@@ -155,9 +155,9 @@ class ReportController extends Controller
         $allowedIds = $user->institutions()->pluck('educational_institutions.id')->toArray();
 
         $validatedData = $request->validate([
-            'educational_institution_id' => 'required|in:' . implode(',', $allowedIds),
+            'educational_institution_id' => 'required|in:'.implode(',', $allowedIds),
             'month' => 'required|integer|min:1|max:12',
-            'year' => 'required|integer|min:2000|max:' . (date('Y') + 1),
+            'year' => 'required|integer|min:2000|max:'.(date('Y') + 1),
             'service_state' => 'required|in:operative,intermittent,no_service',
             'office_number' => 'nullable|string|max:50',
             'evidences' => 'nullable|array',
@@ -189,7 +189,7 @@ class ReportController extends Controller
                 '📄 Nuevo reporte creado',
                 "El director {$user->name} ha creado un nuevo reporte para {$institution->name}",
                 $report->id,
-                "/updi/dashboard"
+                '/updi/dashboard'
             );
 
             if ($request->hasFile('evidences')) {
@@ -204,9 +204,9 @@ class ReportController extends Controller
         } catch (QueryException $e) {
             if ($e->getCode() == 23000 || str_contains($e->getMessage(), 'Duplicate entry')) {
                 return back()->withErrors([
-                    'educational_institution_id' => 'Ya existe un reporte para esta institución en el mes ' . 
-                        date('F', mktime(0, 0, 0, $validatedData['month'], 1)) . 
-                        ' de ' . $validatedData['year'] . '.'
+                    'educational_institution_id' => 'Ya existe un reporte para esta institución en el mes '.
+                        date('F', mktime(0, 0, 0, $validatedData['month'], 1)).
+                        ' de '.$validatedData['year'].'.',
                 ])->withInput();
             }
             throw $e;
@@ -219,11 +219,11 @@ class ReportController extends Controller
     public function downloadPdf(MonthlyReport $report) // ✅ Ya tiene tipo (Model Binding)
     {
         $report->load(['institution', 'user', 'evidences']);
-        
+
         $months = [
             1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril',
             5 => 'Mayo', 6 => 'Junio', 7 => 'Julio', 8 => 'Agosto',
-            9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre'
+            9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre',
         ];
         $report->month_name = $months[$report->month] ?? $report->month;
 
@@ -232,35 +232,35 @@ class ReportController extends Controller
         if (file_exists($headerLogoPath)) {
             $type = pathinfo($headerLogoPath, PATHINFO_EXTENSION);
             $data = file_get_contents($headerLogoPath);
-            $headerLogoBase64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
+            $headerLogoBase64 = 'data:image/'.$type.';base64,'.base64_encode($data);
         }
 
         $evidenciasBase64 = [];
         if ($report->evidences && $report->evidences->count() > 0) {
             foreach ($report->evidences as $evidence) {
-                $path = storage_path('app/public/' . $evidence->file_path);
+                $path = storage_path('app/public/'.$evidence->file_path);
                 if (file_exists($path)) {
                     $type = pathinfo($path, PATHINFO_EXTENSION);
                     $data = file_get_contents($path);
-                    $evidenciasBase64[] = 'data:image/' . $type . ';base64,' . base64_encode($data);
+                    $evidenciasBase64[] = 'data:image/'.$type.';base64,'.base64_encode($data);
                 }
             }
         }
 
         $signatureBase64 = null;
         if ($report->user && $report->user->hasSignature()) {
-            $path = storage_path('app/public/' . $report->user->signature_path);
+            $path = storage_path('app/public/'.$report->user->signature_path);
             if (file_exists($path)) {
                 $type = pathinfo($path, PATHINFO_EXTENSION);
                 $data = file_get_contents($path);
-                $signatureBase64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
+                $signatureBase64 = 'data:image/'.$type.';base64,'.base64_encode($data);
             }
         }
 
         $stateLabels = [
             'operative' => 'OPERATIVO',
             'intermittent' => 'INTERMITENTE',
-            'no_service' => 'SIN SERVICIO'
+            'no_service' => 'SIN SERVICIO',
         ];
 
         $pdf = Pdf::loadView('pdf.reporte_conformidad', [
@@ -270,9 +270,9 @@ class ReportController extends Controller
             'signatureBase64' => $signatureBase64,
             'stateLabels' => $stateLabels,
         ]);
-        
+
         $pdf->setPaper('A4', 'portrait');
-        
+
         $pdf->setOptions([
             'defaultFont' => 'Times New Roman',
             'isHtml5ParserEnabled' => true,
@@ -283,27 +283,142 @@ class ReportController extends Controller
             ],
         ]);
 
-        return $pdf->stream('OFICIO_CONFORMIDAD_' . $report->institution->modular_code . '_' . $report->month . '_' . $report->year . '.pdf');
+        return $pdf->stream('OFICIO_CONFORMIDAD_'.$report->institution->modular_code.'_'.$report->month.'_'.$report->year.'.pdf');
+    }
+
+    /**
+     * Previsualizar PDF del reporte antes de guardar (en memoria)
+     */
+    public function previewPdf(Request $request)
+    {
+        $user = $request->user();
+        $institutionId = $request->input('educational_institution_id') ?? $request->input('institution_id');
+
+        $institution = null;
+        if ($institutionId) {
+            $institution = EducationalInstitution::find($institutionId);
+        }
+
+        if (! $institution && $user && method_exists($user, 'institutions') && $user->institutions()->exists()) {
+            $institution = $user->institutions()->first();
+        }
+
+        if (! $institution) {
+            $institution = new EducationalInstitution([
+                'name' => 'Institución Educativa',
+                'modular_code' => '000000',
+                'local_code' => '000000',
+                'level' => 'Secundaria',
+                'district' => 'Ambo',
+            ]);
+        }
+
+        $month = (int) $request->input('month', date('n'));
+        $year = (int) $request->input('year', date('Y'));
+        $serviceState = $request->input('service_state', 'operative');
+        $officeNumber = $request->input('office_number', '001');
+
+        $report = new MonthlyReport([
+            'month' => $month,
+            'year' => $year,
+            'service_state' => $serviceState,
+            'office_number' => $officeNumber,
+            'status' => 'pending',
+            'created_at' => now(),
+            'submitted_at' => now(),
+        ]);
+
+        $report->setRelation('institution', $institution);
+        $report->setRelation('user', $user ?? new User(['name' => 'DIRECTOR']));
+        $report->setRelation('evidences', collect([]));
+
+        $months = [
+            1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril',
+            5 => 'Mayo', 6 => 'Junio', 7 => 'Julio', 8 => 'Agosto',
+            9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre',
+        ];
+        $report->month_name = $months[$report->month] ?? $report->month;
+
+        $headerLogoPath = public_path('images/logos_header.png');
+        $headerLogoBase64 = null;
+        if (file_exists($headerLogoPath)) {
+            $type = pathinfo($headerLogoPath, PATHINFO_EXTENSION);
+            $data = file_get_contents($headerLogoPath);
+            $headerLogoBase64 = 'data:image/'.$type.';base64,'.base64_encode($data);
+        }
+
+        $evidenciasBase64 = [];
+        if ($request->filled('report_id')) {
+            $existingReport = MonthlyReport::with('evidences')->find($request->input('report_id'));
+            if ($existingReport && $existingReport->evidences) {
+                foreach ($existingReport->evidences as $evidence) {
+                    $path = storage_path('app/public/'.$evidence->file_path);
+                    if (file_exists($path)) {
+                        $type = pathinfo($path, PATHINFO_EXTENSION);
+                        $data = file_get_contents($path);
+                        $evidenciasBase64[] = 'data:image/'.$type.';base64,'.base64_encode($data);
+                    }
+                }
+            }
+        }
+
+        $signatureBase64 = null;
+        if ($user && method_exists($user, 'hasSignature') && $user->hasSignature()) {
+            $path = storage_path('app/public/'.$user->signature_path);
+            if (file_exists($path)) {
+                $type = pathinfo($path, PATHINFO_EXTENSION);
+                $data = file_get_contents($path);
+                $signatureBase64 = 'data:image/'.$type.';base64,'.base64_encode($data);
+            }
+        }
+
+        $stateLabels = [
+            'operative' => 'OPERATIVO',
+            'intermittent' => 'INTERMITENTE',
+            'no_service' => 'SIN SERVICIO',
+        ];
+
+        $pdf = Pdf::loadView('pdf.reporte_conformidad', [
+            'report' => $report,
+            'headerLogoBase64' => $headerLogoBase64,
+            'evidenciasBase64' => $evidenciasBase64,
+            'signatureBase64' => $signatureBase64,
+            'stateLabels' => $stateLabels,
+        ]);
+
+        $pdf->setPaper('A4', 'portrait');
+
+        $pdf->setOptions([
+            'defaultFont' => 'Times New Roman',
+            'isHtml5ParserEnabled' => true,
+            'isRemoteEnabled' => true,
+            'chroot' => [
+                public_path(),
+                storage_path('app/public'),
+            ],
+        ]);
+
+        return $pdf->stream('VISTA_PREVIA_OFICIO_'.($institution->modular_code ?? 'IE').'_'.$report->month.'_'.$report->year.'.pdf');
     }
 
     /**
      * Formulario para editar un reporte
      * ✅ CORREGIDO - Se agregó tipo int y se usa Model Binding
      */
-    public function edit(int $id): \Inertia\Response
+    public function edit(int $id): Response
     {
         $report = MonthlyReport::with(['evidences', 'user', 'institution'])
             ->with(['history' => function ($query) {
                 $query->with('user')->orderBy('created_at', 'desc');
             }])
             ->findOrFail($id);
-        
+
         $months = [
             1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril',
             5 => 'Mayo', 6 => 'Junio', 7 => 'Julio', 8 => 'Agosto',
-            9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre'
+            9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre',
         ];
-        
+
         return Inertia::render('Reports/Edit', [
             'report' => $report,
             'months' => $months,
@@ -318,7 +433,7 @@ class ReportController extends Controller
     {
         $report = MonthlyReport::findOrFail($id);
         $oldData = $report->getAttributes();
-        
+
         $request->validate([
             'service_state' => 'required|in:operative,intermittent,no_service',
             'office_number' => 'required|string|max:255',
@@ -345,21 +460,21 @@ class ReportController extends Controller
             }
         }
 
-        if (!empty($changes)) {
+        if (! empty($changes)) {
             ReportHelper::logHistory($report, 'updated', $changes);
         }
 
         ReportHelper::notifyAdmins(
             'warning',
             '🔄 Reporte actualizado',
-            "El director ha actualizado el reporte después de una observación",
+            'El director ha actualizado el reporte después de una observación',
             $report->id,
-            "/updi/dashboard"
+            '/updi/dashboard'
         );
 
         if ($request->hasFile('evidences')) {
             foreach ($request->file('evidences') as $file) {
-                $path = $file->store('evidences/' . $report->id, 'public');
+                $path = $file->store('evidences/'.$report->id, 'public');
                 $report->evidences()->create(['file_path' => $path]);
             }
         }
@@ -374,20 +489,20 @@ class ReportController extends Controller
     public function destroyEvidence(ReportEvidence $evidence): RedirectResponse
     {
         $user = request()->user();
-        
-        if (!$user) {
+
+        if (! $user) {
             return back()->with('error', 'Debes iniciar sesión para realizar esta acción.');
         }
 
         $report = $evidence->report;
 
         if ($report->user_id !== $user->id) {
-            if (!in_array($user->role, ['admin', 'specialist'])) {
+            if (! in_array($user->role, ['admin', 'specialist'])) {
                 return back()->with('error', 'No tienes permiso para eliminar esta evidencia.');
             }
         }
 
-        if (!in_array($report->status, ['pending', 'observed'])) {
+        if (! in_array($report->status, ['pending', 'observed'])) {
             return back()->with('error', 'No se puede eliminar evidencias de un reporte aprobado o rechazado.');
         }
 
@@ -427,18 +542,18 @@ class ReportController extends Controller
         $reports = $query->paginate($perPage)->withQueryString();
 
         $institutions = EducationalInstitution::orderBy('name')->get(['id', 'name', 'modular_code']);
-        
+
         $months = [
             1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril',
             5 => 'Mayo', 6 => 'Junio', 7 => 'Julio', 8 => 'Agosto',
-            9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre'
+            9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre',
         ];
 
         $statuses = [
             'pending' => 'Pendiente',
             'observed' => 'Observado',
             'approved' => 'Aprobado',
-            'rejected' => 'Rechazado'
+            'rejected' => 'Rechazado',
         ];
 
         return inertia('Admin/Dashboard', [
@@ -465,10 +580,10 @@ class ReportController extends Controller
     {
         $report = MonthlyReport::findOrFail($id);
         $oldStatus = $report->status;
-        
+
         $report->update([
             'status' => 'approved',
-            'admin_comments' => null
+            'admin_comments' => null,
         ]);
 
         ReportHelper::logHistory($report, 'approved', [
@@ -478,7 +593,7 @@ class ReportController extends Controller
 
         $director = $report->user;
         $institution = $report->institution;
-        
+
         if ($director) {
             ReportHelper::notify(
                 $director->id,
@@ -486,7 +601,7 @@ class ReportController extends Controller
                 '✅ Reporte aprobado',
                 "Tu reporte para {$institution->name} ha sido aprobado por UPDI",
                 $report->id,
-                "/reportes"
+                '/reportes'
             );
         }
 
@@ -500,10 +615,10 @@ class ReportController extends Controller
     public function observe(Request $request, int $id): RedirectResponse
     {
         $request->validate(['admin_comments' => 'required|string|min:5']);
-        
+
         $report = MonthlyReport::findOrFail($id);
         $oldStatus = $report->status;
-        
+
         $report->update([
             'status' => 'observed',
             'admin_comments' => $request->admin_comments,
@@ -522,7 +637,7 @@ class ReportController extends Controller
 
         $director = $report->user;
         $institution = $report->institution;
-        
+
         if ($director) {
             ReportHelper::notify(
                 $director->id,

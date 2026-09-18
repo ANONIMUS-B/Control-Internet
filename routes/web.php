@@ -3,25 +3,17 @@
 use App\Http\Controllers\AdminStatisticsController;
 use App\Http\Controllers\BulkExportController;
 use App\Http\Controllers\ExportController;
-use App\Http\Controllers\NotificationController;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ReportController;
 use App\Http\Controllers\InstitutionController;
-use App\Http\Controllers\InternetTestController;
 use App\Http\Controllers\MaintenanceController;
-use App\Http\Controllers\ReportPeriodConfigController;
-use App\Http\Controllers\ReportPeriodController;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\SignatureController;
-use App\Http\Controllers\SimpleSpeedtestController;
-use App\Http\Controllers\SpeedtestCaptureController;
-use App\Http\Controllers\SpeedtestCliController;
-use App\Http\Controllers\SpeedtestController;
-use App\Http\Controllers\SpeedtestOoklaController;
-use App\Http\Controllers\SpeedtestRealController;
-use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\NetworkEquipmentController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\ReportPeriodController;
+use App\Http\Controllers\SignatureController;
 use App\Http\Controllers\TutorialController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\UserManagementController;
+use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
 
@@ -38,12 +30,12 @@ Route::get('/maintenance/status', [MaintenanceController::class, 'status'])->nam
 // ==========================================
 Route::middleware(['auth', 'verified', 'maintenance'])->group(function () {
     Route::inertia('dashboard', 'dashboard')->name('dashboard');
-    
+
     // ==========================================
     // RUTAS PARA LA GESTIÓN DE REPORTES MENSUALES
     // ==========================================
     Route::get('/reportes', [ReportController::class, 'index'])->name('reports.index');
-    
+
     // ✅ RUTAS DE CREACIÓN/EDICIÓN CON RESTRICCIÓN DE FECHAS
     Route::middleware(['report.period'])->group(function () {
         Route::get('/reportes/nuevo', [ReportController::class, 'create'])->name('reports.create');
@@ -51,8 +43,9 @@ Route::middleware(['auth', 'verified', 'maintenance'])->group(function () {
         Route::get('/reportes/{report}/editar', [ReportController::class, 'edit'])->name('reports.edit');
         Route::put('/reportes/{report}', [ReportController::class, 'update'])->name('reports.update');
     });
-    
+
     // ✅ RUTAS DE SOLO LECTURA (SIN RESTRICCIÓN)
+    Route::get('/reportes/preview-pdf', [ReportController::class, 'previewPdf'])->name('reports.preview-pdf');
     Route::get('/reportes/{report}/pdf', [ReportController::class, 'downloadPdf'])->name('reports.pdf');
     Route::delete('/evidencias/{evidence}', [ReportController::class, 'destroyEvidence'])->name('evidences.destroy');
 
@@ -121,35 +114,35 @@ Route::middleware(['auth', 'verified', 'maintenance'])->group(function () {
         Route::post('/usuarios/{user}/toggle', [UserManagementController::class, 'toggleActive'])->name('admin.users.toggle');
         Route::post('/usuarios/{user}/assign', [UserManagementController::class, 'assignInstitutions'])->name('admin.users.assign');
         Route::post('/usuarios/{user}/reset-signature', [UserManagementController::class, 'resetSignature'])->name('admin.users.reset-signature');
-        
+
         // IMPORTAR USUARIOS MASIVO (SUPER ADMIN)
         Route::get('/usuarios/importar', [UserManagementController::class, 'importIndex'])->name('admin.users.import');
         Route::post('/usuarios/importar', [UserManagementController::class, 'import'])->name('admin.users.import.store');
         Route::get('/usuarios/plantilla', [UserManagementController::class, 'downloadTemplate'])->name('admin.users.import.template');
-        
+
         // ==========================================
         // ✅ CONFIGURACIÓN DE PERÍODOS POR MES
         // ==========================================
         Route::get('/report-periods', [ReportPeriodController::class, 'index'])
             ->name('admin.report-periods.index')
             ->middleware(['user.active']);
-        
+
         Route::get('/report-periods/create', [ReportPeriodController::class, 'create'])
             ->name('admin.report-periods.create')
             ->middleware(['user.active']);
-        
+
         Route::post('/report-periods', [ReportPeriodController::class, 'store'])
             ->name('admin.report-periods.store')
             ->middleware(['user.active']);
-        
+
         Route::get('/report-periods/{period}/edit', [ReportPeriodController::class, 'edit'])
             ->name('admin.report-periods.edit')
             ->middleware(['user.active']);
-        
+
         Route::put('/report-periods/{period}', [ReportPeriodController::class, 'update'])
             ->name('admin.report-periods.update')
             ->middleware(['user.active']);
-        
+
         Route::delete('/report-periods/{period}', [ReportPeriodController::class, 'destroy'])
             ->name('admin.report-periods.destroy')
             ->middleware(['user.active']);
@@ -161,33 +154,33 @@ Route::middleware(['auth', 'verified', 'maintenance'])->group(function () {
     Route::get('/equipos-red', [NetworkEquipmentController::class, 'index'])
         ->name('network-equipments.index')
         ->middleware(['user.active']);
-    
+
     Route::get('/equipos-red/exportar', [NetworkEquipmentController::class, 'export'])
         ->name('network-equipments.export')
         ->middleware(['user.active']);
-    
+
     // Rutas de importación (solo super_admin)
     Route::get('/equipos-red/importar', [NetworkEquipmentController::class, 'importIndex'])
         ->name('network-equipments.import')
         ->middleware(['user.active']);
-    
+
     Route::post('/equipos-red/importar', [NetworkEquipmentController::class, 'import'])
         ->name('network-equipments.import.store')
         ->middleware(['user.active']);
-    
+
     Route::get('/equipos-red/plantilla', [NetworkEquipmentController::class, 'downloadTemplate'])
         ->name('network-equipments.import.template')
         ->middleware(['user.active']);
-    
+
     // ✅ RUTAS CRUD PARA EQUIPOS DE RED
     Route::get('/equipos-red/{equipment}', [NetworkEquipmentController::class, 'show'])
         ->name('network-equipments.show')
         ->middleware(['user.active']);
-    
+
     Route::put('/equipos-red/{equipment}', [NetworkEquipmentController::class, 'update'])
         ->name('network-equipments.update')
         ->middleware(['user.active']);
-    
+
     Route::delete('/equipos-red/{equipment}', [NetworkEquipmentController::class, 'destroy'])
         ->name('network-equipments.destroy')
         ->middleware(['user.active']);
@@ -208,12 +201,10 @@ Route::middleware(['auth', 'verified', 'maintenance'])->group(function () {
     Route::post('/reportes/exportar-excel', [ExportController::class, 'export'])->name('reports.export-excel.download');
     Route::get('/reportes/exportar-todos', [ExportController::class, 'exportAll'])->name('reports.export-all');
 
-
-      Route::get('/tutoriales', [TutorialController::class, 'index'])
+    Route::get('/tutoriales', [TutorialController::class, 'index'])
         ->name('tutorials.index')
         ->middleware(['user.active']);
 
-        
-    });
+});
 
 require __DIR__.'/settings.php';

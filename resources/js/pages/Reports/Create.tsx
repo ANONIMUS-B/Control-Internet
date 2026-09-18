@@ -11,7 +11,8 @@ import {
     Clock, CalendarDays, Info, Sparkles,
     Shield, Image as ImageIcon,
     Award, Users, Wifi, ExternalLink,
-    WifiOff // ✅ Solo WifiOff para Sin Servicio
+    WifiOff, // ✅ Solo WifiOff para Sin Servicio
+    Eye
 } from 'lucide-react';
 
 interface Institution {
@@ -114,6 +115,24 @@ export default function Create({
         window.open('https://infistel.pe/test-velocidad', '_blank');
     };
     */
+
+    // ✅ PREVISUALIZAR PDF ANTES DE GUARDAR
+    const handlePreviewPdf = () => {
+        if (!data.educational_institution_id) {
+            setErrorMessage('Por favor selecciona una institución para previsualizar el oficio.');
+            return;
+        }
+
+        const params = new URLSearchParams({
+            educational_institution_id: String(data.educational_institution_id),
+            month: String(data.month || selectedMonth),
+            year: String(data.year || selectedYear),
+            service_state: data.service_state,
+            office_number: data.office_number || '001',
+        });
+
+        window.open(`/reportes/preview-pdf?${params.toString()}`, '_blank');
+    };
 
     useEffect(() => {
         if (availablePeriods && availablePeriods.length > 0) {
@@ -481,6 +500,15 @@ export default function Create({
                                     <ExternalLink className="w-3 h-3" />
                                 </button>
                                 */}
+                                <button
+                                    type="button"
+                                    onClick={handlePreviewPdf}
+                                    className="flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white rounded-xl text-[11px] font-medium transition-all shadow-md shadow-emerald-500/20 hover:shadow-emerald-500/40 hover:scale-105 active:scale-95"
+                                    title="Previsualizar el oficio en PDF antes de guardar"
+                                >
+                                    <Eye className="w-3.5 h-3.5" />
+                                    <span>Previsualizar Oficio</span>
+                                </button>
                                 <Link 
                                     href="/reportes" 
                                     className="flex items-center gap-1.5 px-3 py-2 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-700 dark:text-neutral-300 rounded-xl text-[11px] font-medium transition-all border border-gray-300 dark:border-white/10 hover:border-gray-400 dark:hover:border-white/20"
@@ -677,7 +705,7 @@ export default function Create({
                                 )}
                             </div>
 
-                            {/* ===== EVIDENCIAS ===== */}
+                            {/* ===== APARTADO DE EVIDENCIAS (DESHABILITADO TEMPORALMENTE) =====
                             <div>
                                 <div className="flex items-center justify-between mb-1.5">
                                     <label className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-700 dark:text-neutral-300">
@@ -756,8 +784,7 @@ export default function Create({
                                 )}
                             </div>
 
-                            {/* ===== BARRA DE PROGRESO ===== */}
-                            {isUploading && (
+                            isUploading && (
                                 <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-xl border border-blue-200 dark:border-blue-800">
                                     <div className="flex items-center justify-between text-[11px]">
                                         <span className="text-blue-600 dark:text-blue-400">Subiendo... {uploadProgress}%</span>
@@ -766,7 +793,8 @@ export default function Create({
                                         <div className="bg-gradient-to-r from-blue-500 to-indigo-600 h-full rounded-full transition-all" style={{ width: `${uploadProgress}%` }} />
                                     </div>
                                 </div>
-                            )}
+                            )
+                            ===== FIN APARTADO DE EVIDENCIAS ===== */}
 
                             {/* ===== BOTONES ===== */}
                             <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-200 dark:border-white/10">
@@ -781,6 +809,15 @@ export default function Create({
                                     <ExternalLink className="w-3 h-3" />
                                 </button>
                                 */}
+                                
+                                <button
+                                    type="button"
+                                    onClick={handlePreviewPdf}
+                                    className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white rounded-xl text-[11px] font-medium transition-all shadow-md shadow-emerald-500/20 hover:shadow-emerald-500/40 hover:scale-105 active:scale-95"
+                                >
+                                    <Eye className="w-4 h-4" />
+                                    Previsualizar Oficio
+                                </button>
                                 
                                 <button
                                     type="submit"
