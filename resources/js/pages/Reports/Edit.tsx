@@ -581,16 +581,22 @@ export default function Edit({ report, flash, months = {} }: EditReportProps) {
                             {/* ===== N° OFICIO ===== */}
                             <div>
                                 <label htmlFor="office_number" className="block text-[11px] font-semibold text-gray-700 dark:text-neutral-300 mb-1.5 flex items-center gap-1.5">
-                                    <FileText className="w-3.5 h-3.5 text-blue-500" /> N° Oficio
+                                    <FileText className="w-3.5 h-3.5 text-blue-500" /> N° Oficio <span className="text-gray-400 font-normal">(Solo números)</span>
                                 </label>
                                 <input 
                                     id="office_number"
                                     name="office_number"
                                     type="text" 
+                                    inputMode="numeric"
+                                    pattern="[0-9]*"
                                     value={data.office_number || ''}
-                                    onChange={(e) => setData('office_number', e.target.value)} 
+                                    onChange={(e) => {
+                                        const numericValue = e.target.value.replace(/\D/g, '');
+                                        setData('office_number', numericValue);
+                                    }} 
                                     className="w-full rounded-xl border-2 border-gray-200 dark:border-white/10 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all py-2 px-3 text-[11px] bg-white dark:bg-slate-900 text-gray-900 dark:text-white outline-none placeholder:text-gray-400 dark:placeholder:text-neutral-500"
-                                    placeholder="OFICIO N° 045-2026-DIR-IE"
+                                    placeholder="Ej. 039"
+                                    maxLength={10}
                                     autoComplete="off"
                                 />
                             </div>
