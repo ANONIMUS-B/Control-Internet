@@ -135,9 +135,55 @@
 @layer base {
     * {
         @apply border-border;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(156, 163, 175, 0.25) transparent;
     }
 
     body {
         @apply bg-background text-foreground;
     }
 }
+
+/* Scrollbars modernos, suaves y delgados (elimina barras toscas de Windows) */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(156, 163, 175, 0.25);
+    border-radius: 9999px;
+    transition: background-color 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(156, 163, 175, 0.45);
+}
+
+/* Scrollbar específico para el Sidebar (ultra delgado y natural) */
+[data-slot="sidebar-content"] {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(156, 163, 175, 0.2) transparent;
+}
+
+[data-slot="sidebar-content"]::-webkit-scrollbar {
+    width: 4px;
+}
+
+[data-slot="sidebar-content"]::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+[data-slot="sidebar-content"]::-webkit-scrollbar-thumb {
+    background: rgba(156, 163, 175, 0.2);
+    border-radius: 9999px;
+}
+
+[data-slot="sidebar-content"]:hover::-webkit-scrollbar-thumb {
+    background: rgba(156, 163, 175, 0.4);
+}
+
