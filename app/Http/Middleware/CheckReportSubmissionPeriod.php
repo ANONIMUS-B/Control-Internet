@@ -2,11 +2,11 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\ReportPeriod;
+use Carbon\Carbon;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Models\ReportPeriod;
-use Carbon\Carbon;
 use Symfony\Component\HttpFoundation\Response;
 
 class CheckReportSubmissionPeriod
@@ -18,38 +18,59 @@ class CheckReportSubmissionPeriod
         if ($user) {
             // ✅ SUPER_ADMIN, ADMIN, SPECIALIST siempre pueden enviar
             $allowedRoles = ['super_admin', 'admin', 'specialist'];
-            
+
             if (in_array($user->role, $allowedRoles)) {
                 return $next($request);
             }
 
             // ✅ Solo verificar para directores
             if ($user->role === 'director') {
-                $today = Carbon::now();
-                
-                // ✅ Buscar períodos activos vigentes (fecha actual dentro del rango)
-                $activePeriods = ReportPeriod::where('is_active', true)
-                    ->where('start_date', '<=', $today)
-                    ->where('end_date', '>=', $today)
-                    ->get();
+                $todayStr = Carbon::today()->toDateString();
 
-                // ✅ Si hay períodos activos, permitir el acceso
-                if ($activePeriods->count() > 0) {
+                // 1. Si es envío de nuevo reporte (POST /reportes):
+                if ($request->isMethod('POST') && $request->routeIs('reports.store')) {
+                    $month = (int) $request->input('month');
+                    $year = (int) $request->input('year');
+
+                    $validPeriod = ReportPeriod::where('is_active', true)
+                        ->where('month', $month)
+                        ->where('year', $year)
+                        ->whereDate('start_date', '<=', $todayStr)
+                        ->whereDate('end_date', '>=', $todayStr)
+                        ->exists();
+
+                    if (! $validPeriod) {
+                        return back()->withErrors([
+                            'month' => '⛔ El período para enviar el reporte de este mes ha finalizado o no está habilitado.',
+                        ])->with('error', '⛔ No puedes enviar un reporte fuera del rango de fechas establecido por la administración.');
+                    }
+
                     return $next($request);
                 }
 
-                // ✅ Si no hay períodos vigentes, pero hay períodos activos futuros o pasados
-                // permitir también (para que puedan ver el formulario)
-                $anyActivePeriods = ReportPeriod::where('is_active', true)->get();
-                
-                if ($anyActivePeriods->count() > 0) {
-                    return $next($request);
-                }
+                // 2. Si es acceso al formulario de creación (GET /reportes/nuevo):
+                if ($request->routeIs('reports.create')) {
+                    $hasCurrentPeriod = ReportPeriod::where('is_active', true)
+                        ->whereDate('start_date', '<=', $todayStr)
+                        ->whereDate('end_date', '>=', $todayStr)
+                        ->exists();
 
-                // ✅ Si no hay ningún período configurado, bloquear con mensaje
-                return redirect()->route('reports.index')->with('error', 
-                    '⛔ No hay períodos de envío configurados. Contacta al administrador.'
-                );
+                    if (! $hasCurrentPeriod) {
+                        $nextPeriod = ReportPeriod::where('is_active', true)
+                            ->whereDate('start_date', '>', $todayStr)
+                            ->orderBy('start_date', 'asc')
+                            ->first();
+
+                        $msg = '⛔ Actualmente no hay ningún período de entrega de reportes habilitado.';
+                        if ($nextPeriod) {
+                            $msg .= " El próximo período de recepción iniciará el {$nextPeriod->start_date->format('d/m/Y')}.";
+                        } else {
+                            $msg .= ' Por favor, contacta a la administración de la UPDI.';
+                        }
+
+                        return redirect()->route('reports.index')->with('error', $msg);
+                    }
+                }
             }
         }
 

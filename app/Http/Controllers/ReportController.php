@@ -164,19 +164,26 @@ class ReportController extends Controller
         $currentYear = (int) date('Y');
         $today = Carbon::today();
         $todayStr = date('Y-m-d');
+        $isAdminOrSpecialist = in_array($user->role, ['super_admin', 'admin', 'specialist']);
 
         $availablePeriodsQuery = ReportPeriod::where('is_active', true)
             ->where('year', $currentYear)
-            ->where('start_date', '<=', $todayStr)
-            ->where('end_date', '>=', $todayStr)
+            ->whereDate('start_date', '<=', $todayStr)
+            ->whereDate('end_date', '>=', $todayStr)
             ->orderBy('month', 'asc')
             ->get();
 
-        if ($availablePeriodsQuery->isEmpty()) {
+        // Solo permitir ver períodos fuera de fecha a administradores para pruebas
+        if ($availablePeriodsQuery->isEmpty() && $isAdminOrSpecialist) {
             $availablePeriodsQuery = ReportPeriod::where('is_active', true)
                 ->where('year', $currentYear)
                 ->orderBy('month', 'asc')
                 ->get();
+        }
+
+        // Si es director y no hay períodos activos en fecha, bloquear acceso
+        if ($availablePeriodsQuery->isEmpty() && ! $isAdminOrSpecialist) {
+            return redirect()->route('reports.index')->with('error', '⛔ No hay ningún período de entrega de reportes habilitado en este momento.');
         }
 
         $months = [
@@ -220,6 +227,25 @@ class ReportController extends Controller
             'evidences' => 'nullable|array',
             'evidences.*' => 'image|mimes:jpeg,png,jpg',
         ]);
+
+        // ✅ VALIDACIÓN ESTRICTA DE PERÍODO (Backend Guard)
+        $isAdminOrSpecialist = in_array($user->role, ['super_admin', 'admin', 'specialist']);
+        if (! $isAdminOrSpecialist) {
+            $todayStr = Carbon::today()->toDateString();
+
+            $periodActive = ReportPeriod::where('is_active', true)
+                ->where('month', (int) $validatedData['month'])
+                ->where('year', (int) $validatedData['year'])
+                ->whereDate('start_date', '<=', $todayStr)
+                ->whereDate('end_date', '>=', $todayStr)
+                ->exists();
+
+            if (! $periodActive) {
+                return back()->withErrors([
+                    'month' => '⛔ El período para el mes seleccionado no está vigente o ha expirado.',
+                ])->with('error', '⛔ No puedes enviar un reporte fuera del rango de fechas establecido por la administración.');
+            }
+        }
 
         try {
             $report = $user->reports()->create([

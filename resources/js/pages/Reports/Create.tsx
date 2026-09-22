@@ -217,18 +217,26 @@ export default function Create({
 
     const isPeriodValid = (period: ReportPeriod) => {
         if (!period || !period.is_active) return false;
-        const todayStr = today.toISOString().split('T')[0];
-        return todayStr >= period.start_date && todayStr <= period.end_date;
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const todayStr = `${year}-${month}-${day}`;
+
+        const startDate = (period.start_date || '').split('T')[0];
+        const endDate = (period.end_date || '').split('T')[0];
+
+        return todayStr >= startDate && todayStr <= endDate;
     };
 
     const isSelectedMonthInPeriod = (monthNum: number, yearNum: number) => {
         if (availablePeriods && availablePeriods.length > 0) {
-            return availablePeriods.some(p => p.month === monthNum && p.year === yearNum && p.is_active);
+            return availablePeriods.some(p => p.month === monthNum && p.year === yearNum && isPeriodValid(p));
         }
-        if (reportPeriod && reportPeriod.is_active) {
+        if (reportPeriod && isPeriodValid(reportPeriod)) {
             return reportPeriod.month === monthNum && reportPeriod.year === yearNum;
         }
-        return true;
+        return false;
     };
 
     const isFutureMonth = (month: number, year: number) => {
@@ -252,14 +260,14 @@ export default function Create({
 
         if (availablePeriods && availablePeriods.length > 0) {
             available = availablePeriods
-                .filter(p => p.is_active)
+                .filter(p => isPeriodValid(p))
                 .map(p => p.month)
                 .filter(month => {
                     const isReported = reported.includes(month);
                     const isFuture = isFutureMonth(month, currentYearDate);
                     return !isReported && !isFuture;
                 });
-        } else if (reportPeriod && reportPeriod.is_active) {
+        } else if (reportPeriod && isPeriodValid(reportPeriod)) {
             const periodMonth = reportPeriod.month;
             const isReported = reported.includes(periodMonth);
             const isFuture = isFutureMonth(periodMonth, reportPeriod.year);
@@ -267,13 +275,7 @@ export default function Create({
                 available = [periodMonth];
             }
         } else {
-            available = Object.keys(monthsList)
-                .map(m => parseInt(m))
-                .filter(m => {
-                    const isReported = reported.includes(m);
-                    const isFuture = isFutureMonth(m, selectedYear);
-                    return !isReported && !isFuture;
-                });
+            available = [];
         }
 
         return available.map(m => String(m));

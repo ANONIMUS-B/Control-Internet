@@ -1,4 +1,4 @@
-import { Link, usePage } from '@inertiajs/react';
+import { Link, usePage, type InertiaLinkProps } from '@inertiajs/react';
 import { 
     FileText, 
     ShieldCheck, 
@@ -38,7 +38,7 @@ import { useState } from 'react';
 interface MenuItem {
     title: string;
     icon?: any;
-    href?: string;
+    href?: NonNullable<InertiaLinkProps['href']> | string;
     items?: MenuItem[];
     isSection?: boolean;
 }
