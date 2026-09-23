@@ -399,19 +399,35 @@ class UserManagementController extends Controller
 
             $imported = $import->getImportedCount();
             $skipped = $import->getSkippedCount();
+            $alreadyExisting = $import->getAlreadyExistingCount();
+            $repeatedUsers = $import->getRepeatedUsers();
             $errors = $import->getErrors();
 
-            $message = "✅ Se importaron {$imported} usuarios correctamente.";
+            $summary = [
+                'imported' => $imported,
+                'not_imported' => $skipped,
+                'already_existing' => $alreadyExisting,
+                'repeated_users' => $repeatedUsers,
+                'errors' => $errors,
+            ];
 
-            if ($skipped > 0) {
-                $message .= " {$skipped} filas fueron omitidas.";
+            $message = "✅ Importación finalizada: {$imported} importados, {$skipped} no importados.";
+            if ($alreadyExisting > 0) {
+                $message .= " ({$alreadyExisting} repetidos).";
+            }
+            if (! empty($repeatedUsers)) {
+                $repeatedNames = array_map(function ($u) {
+                    return "{$u['name']} (DNI {$u['dni']})";
+                }, array_slice($repeatedUsers, 0, 5));
+                $message .= ' Repetidos: '.implode(', ', $repeatedNames);
+                if (count($repeatedUsers) > 5) {
+                    $message .= ' y '.(count($repeatedUsers) - 5).' más.';
+                }
             }
 
-            if (! empty($errors)) {
-                $message .= ' Detalles: '.implode('; ', $errors);
-            }
-
-            return redirect()->route('admin.users.index')->with('success', $message);
+            return redirect()->route('admin.users.index')
+                ->with('success', $message)
+                ->with('import_summary', $summary);
 
         } catch (\Exception $e) {
             return back()->with('error', '❌ Error al importar: '.$e->getMessage());

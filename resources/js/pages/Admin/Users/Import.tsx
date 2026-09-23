@@ -87,25 +87,9 @@ export default function Import({ flash, templateUrl, institutions, roles }: Impo
         }
 
         post('/admin/usuarios/importar', {
-            onSuccess: (page) => {
-                const flashData = page.props.flash as { success?: string; error?: string } | undefined;
-                
-                if (flashData?.success) {
-                    setSuccessMessage(flashData.success);
-                } else {
-                    setSuccessMessage('✅ Importación completada exitosamente.');
-                }
-                
+            onSuccess: () => {
                 reset();
                 setPreview(null);
-                
-                setTimeout(() => setSuccessMessage(null), 5000);
-                
-                setTimeout(() => {
-                    router.visit('/admin/usuarios', {
-                        preserveScroll: true,
-                    });
-                }, 1500);
             },
             onError: (errors) => {
                 const errorMsg = errors.file || 'Error al importar el archivo.';

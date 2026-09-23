@@ -4,10 +4,25 @@ import {
     Search, X, User, Building2, UserCog, Filter, 
     CheckCircle, AlertCircle, Edit2, Trash2, Plus,
     Eye, EyeOff, RefreshCw, Save, Key, UserCheck,
-    UserX, FileSignature, Upload
+    UserX, FileSignature, Upload, FileSpreadsheet, Users
 } from 'lucide-react';
 import { Pagination } from '@/components/Pagination';
 import { dashboard } from '@/routes';
+
+interface RepeatedUser {
+    dni: string;
+    name: string;
+    row: number;
+    reason?: string;
+}
+
+interface ImportSummary {
+    imported: number;
+    not_imported: number;
+    already_existing: number;
+    repeated_users: RepeatedUser[];
+    errors: string[];
+}
 
 interface User {
     id: number;
@@ -64,9 +79,17 @@ interface UserManagementProps {
     filters: Filters;
     roles: Record<string, string>;
     stats?: UserStats;
+    flash?: {
+        success?: string;
+        error?: string;
+        import_summary?: ImportSummary;
+    };
 }
 
-export default function UserManagement({ users, institutions, filters, roles, stats: serverStats }: UserManagementProps) {
+export default function UserManagement({ users, institutions, filters, roles, stats: serverStats, flash }: UserManagementProps) {
+    const [importSummary, setImportSummary] = useState<ImportSummary | null>(flash?.import_summary || null);
+    const [flashSuccess, setFlashSuccess] = useState<string | null>(flash?.success || null);
+    const [flashError, setFlashError] = useState<string | null>(flash?.error || null);
     const [search, setSearch] = useState<string>(filters.search || '');
     const [selectedRole, setSelectedRole] = useState<string>(filters.role || '');
     const [selectedInstitution, setSelectedInstitution] = useState<string>(filters.institution_id || '');
@@ -230,6 +253,133 @@ export default function UserManagement({ users, institutions, filters, roles, st
                             </div>
                         </div>
                     </div>
+
+                    {/* ===== RESUMEN DETALLADO DE IMPORTACIÓN ===== */}
+                    {importSummary && (
+                        <div className="bg-white dark:bg-slate-800/90 rounded-2xl border-2 border-indigo-200 dark:border-indigo-500/30 p-4 shadow-md dark:shadow-2xl animate-in slide-in-from-top duration-300">
+                            <div className="flex items-start justify-between gap-3">
+                                <div className="space-y-2 flex-1">
+                                    <div className="flex items-center gap-2">
+                                        <div className="p-1.5 bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-lg">
+                                            <FileSpreadsheet className="w-4 h-4" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-[12px] font-bold text-gray-900 dark:text-white">
+                                                Resultado de la Importación de Usuarios
+                                            </h3>
+                                            <p className="text-[10px] text-gray-500 dark:text-neutral-400">
+                                                Resumen de registros procesados desde el archivo
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Indicadores numéricos principales */}
+                                    <div className="flex flex-wrap items-center gap-2 pt-1">
+                                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 text-[11px] font-semibold border border-emerald-200 dark:border-emerald-500/25">
+                                            <CheckCircle className="w-3.5 h-3.5" />
+                                            {importSummary.imported} {importSummary.imported === 1 ? 'usuario importado' : 'usuarios importados'}
+                                        </span>
+
+                                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-amber-100 dark:bg-amber-500/15 text-amber-700 dark:text-amber-400 text-[11px] font-semibold border border-amber-200 dark:border-amber-500/25">
+                                            <AlertCircle className="w-3.5 h-3.5" />
+                                            {importSummary.not_imported} {importSummary.not_imported === 1 ? 'no importado' : 'no importados'}
+                                        </span>
+
+                                        {importSummary.already_existing > 0 && (
+                                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-blue-100 dark:bg-blue-500/15 text-blue-700 dark:text-blue-400 text-[11px] font-semibold border border-blue-200 dark:border-blue-500/25">
+                                                <Users className="w-3.5 h-3.5" />
+                                                {importSummary.already_existing} {importSummary.already_existing === 1 ? 'se repitió (DNI ya registrado)' : 'se repitieron (DNI ya registrado)'}
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    onClick={() => setImportSummary(null)}
+                                    className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-neutral-200 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-white/5"
+                                    title="Cerrar resumen"
+                                >
+                                    <X className="w-4 h-4" />
+                                </button>
+                            </div>
+
+                            {/* Detalle de quiénes se repitieron */}
+                            {importSummary.repeated_users && importSummary.repeated_users.length > 0 && (
+                                <div className="mt-3 pt-3 border-t border-gray-100 dark:border-white/5">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <p className="text-[11px] font-semibold text-gray-800 dark:text-neutral-200 flex items-center gap-1.5">
+                                            <Users className="w-3.5 h-3.5 text-indigo-500" />
+                                            ¿Quiénes se repitieron y NO se volvieron a subir? ({importSummary.repeated_users.length}):
+                                        </p>
+                                    </div>
+                                    <div className="max-h-56 overflow-y-auto space-y-1.5 pr-1 divide-y divide-gray-100 dark:divide-white/5">
+                                        {importSummary.repeated_users.map((item, idx) => (
+                                            <div
+                                                key={idx}
+                                                className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-4 p-2 rounded-xl bg-gray-50/70 dark:bg-white/5 border border-gray-100 dark:border-white/5 text-[11px]"
+                                            >
+                                                <div className="flex items-center gap-2 min-w-0">
+                                                    <span className="font-mono font-bold px-2 py-0.5 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/20 text-[10px] flex-shrink-0">
+                                                        DNI: {item.dni}
+                                                    </span>
+                                                    <span className="font-semibold text-gray-900 dark:text-white truncate">
+                                                        {item.name}
+                                                    </span>
+                                                </div>
+                                                <span className="text-[10px] text-gray-500 dark:text-neutral-400 flex-shrink-0">
+                                                    {item.reason || 'DNI ya registrado en el sistema'} (Fila {item.row})
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Otros errores de validación si existen */}
+                            {importSummary.errors && importSummary.errors.length > 0 && (
+                                <div className="mt-3 pt-2 border-t border-gray-100 dark:border-white/5 text-[10px] text-rose-600 dark:text-rose-400">
+                                    <span className="font-semibold">Otros errores en el archivo ({importSummary.errors.length}): </span>
+                                    {importSummary.errors.slice(0, 3).join('; ')}
+                                    {importSummary.errors.length > 3 && ` ... (${importSummary.errors.length - 3} adicionales)`}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Mensaje Flash de éxito estándar si no hay resumen de importación */}
+                    {!importSummary && flashSuccess && (
+                        <div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-2xl flex items-center justify-between gap-3 text-[11px] animate-in">
+                            <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-medium">
+                                <CheckCircle className="w-4 h-4 flex-shrink-0" />
+                                <p>{flashSuccess}</p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setFlashSuccess(null)}
+                                className="hover:bg-emerald-100 dark:hover:bg-emerald-800/50 p-1 rounded-lg transition-colors text-emerald-600"
+                            >
+                                <X className="w-3.5 h-3.5" />
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Mensaje Flash de error */}
+                    {flashError && (
+                        <div className="p-3 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded-2xl flex items-center justify-between gap-3 text-[11px] animate-in">
+                            <div className="flex items-center gap-2 text-rose-700 dark:text-rose-400 font-medium">
+                                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                                <p>{flashError}</p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setFlashError(null)}
+                                className="hover:bg-rose-100 dark:hover:bg-rose-800/50 p-1 rounded-lg transition-colors text-rose-600"
+                            >
+                                <X className="w-3.5 h-3.5" />
+                            </button>
+                        </div>
+                    )}
 
                     {/* ===== TARJETAS DE ESTADÍSTICAS ===== */}
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
