@@ -659,6 +659,13 @@
       "_createLucideIcon-CsrKEwpU.js"
     ]
   },
+  "_user-check-DlZI-Pw3.js": {
+    "file": "assets/user-check-DlZI-Pw3.js",
+    "name": "user-check",
+    "imports": [
+      "_createLucideIcon-CsrKEwpU.js"
+    ]
+  },
   "_user-cog-DgXosruO.js": {
     "file": "assets/user-cog-DgXosruO.js",
     "name": "user-cog",
@@ -717,7 +724,7 @@
     ]
   },
   "resources/css/app.css": {
-    "file": "assets/app-oHVbPQPs.css",
+    "file": "assets/app-D5Cq5EL6.css",
     "name": "app",
     "names": [
       "app.css"
@@ -726,7 +733,7 @@
     "isEntry": true
   },
   "resources/js/app.tsx": {
-    "file": "assets/app-D388Pj3n.js",
+    "file": "assets/app-DZN1V6QT.js",
     "name": "app",
     "src": "resources/js/app.tsx",
     "isEntry": true,
@@ -853,7 +860,7 @@
     ]
   },
   "resources/js/pages/Admin/Institutions/Index.tsx": {
-    "file": "assets/Index-CGYqikfk.js",
+    "file": "assets/Index-Cj3YL_vw.js",
     "name": "Index",
     "src": "resources/js/pages/Admin/Institutions/Index.tsx",
     "isDynamicEntry": true,
@@ -862,14 +869,15 @@
       "_createLucideIcon-CsrKEwpU.js",
       "_compiler-runtime-fgK8MdTJ.js",
       "_building-2-CxzMrZO0.js",
+      "_circle-alert-nDm1zEZo.js",
       "_circle-check-Bm3V4vug.js",
-      "_circle-x-BneU8ZCu.js",
       "_filter-D5fqUFR0.js",
       "_pen-BDQ9NvoU.js",
       "_plus-DxlfIkBF.js",
       "_search-CEvPcJpr.js",
       "_trash-2-CUfyNe_-.js",
       "_upload-XnlAK7Ek.js",
+      "_user-check-DlZI-Pw3.js",
       "_x-CqNAuz3r.js",
       "_routes-CYBO3Anv.js",
       "_Pagination-UEKljXxU.js"
@@ -1033,7 +1041,7 @@
     ]
   },
   "resources/js/pages/Admin/Users/Index.tsx": {
-    "file": "assets/Index-BiR6HFHO.js",
+    "file": "assets/Index-DxGtA2H-.js",
     "name": "Index",
     "src": "resources/js/pages/Admin/Users/Index.tsx",
     "isDynamicEntry": true,
@@ -1052,6 +1060,7 @@
       "_search-CEvPcJpr.js",
       "_trash-2-CUfyNe_-.js",
       "_upload-XnlAK7Ek.js",
+      "_user-check-DlZI-Pw3.js",
       "_user-cog-DgXosruO.js",
       "_user-DLPNYWVD.js",
       "_x-CqNAuz3r.js",

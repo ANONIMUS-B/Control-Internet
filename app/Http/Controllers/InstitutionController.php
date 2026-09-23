@@ -21,7 +21,7 @@ class InstitutionController extends Controller
      */
     public function index(Request $request)
     {
-        $query = EducationalInstitution::query();
+        $query = EducationalInstitution::query()->with('users:id,name,email');
 
         // Búsqueda por nombre, código modular, distrito o código local
         if ($request->filled('search')) {
@@ -49,10 +49,13 @@ class InstitutionController extends Controller
 
         // ✅ Estadísticas calculadas sobre el total de instituciones (no solo la página actual)
         $statsResult = (clone $query)
+            ->without('users')
             ->selectRaw('
                 COUNT(*) as total,
                 SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active,
-                SUM(CASE WHEN is_active = 0 THEN 1 ELSE 0 END) as inactive
+                SUM(CASE WHEN is_active = 0 THEN 1 ELSE 0 END) as inactive,
+                SUM(CASE WHEN EXISTS (SELECT 1 FROM institution_user WHERE institution_user.educational_institution_id = educational_institutions.id) THEN 1 ELSE 0 END) as assigned,
+                SUM(CASE WHEN NOT EXISTS (SELECT 1 FROM institution_user WHERE institution_user.educational_institution_id = educational_institutions.id) THEN 1 ELSE 0 END) as unassigned
             ')
             ->first();
 
@@ -60,10 +63,21 @@ class InstitutionController extends Controller
             'total' => (int) ($statsResult->total ?? 0),
             'active' => (int) ($statsResult->active ?? 0),
             'inactive' => (int) ($statsResult->inactive ?? 0),
+            'assigned' => (int) ($statsResult->assigned ?? 0),
+            'unassigned' => (int) ($statsResult->unassigned ?? 0),
         ];
 
         if ($request->filled('is_active')) {
             $query->where('is_active', $request->is_active === 'true' ? 1 : 0);
+        }
+
+        // ✅ Filtro por asignación de director/usuario
+        if ($request->filled('assigned_status')) {
+            if ($request->assigned_status === 'assigned') {
+                $query->has('users');
+            } elseif ($request->assigned_status === 'unassigned') {
+                $query->doesntHave('users');
+            }
         }
 
         // Ordenamiento
@@ -89,6 +103,7 @@ class InstitutionController extends Controller
                 'type_management' => $request->input('type_management'),
                 'district' => $request->input('district'),
                 'is_active' => $request->input('is_active'),
+                'assigned_status' => $request->input('assigned_status'),
                 'sort' => $sortField,
                 'direction' => $sortDirection,
                 'per_page' => $perPage,

@@ -11,10 +11,18 @@ import {
     Filter,
     CheckCircle2,
     XCircle,
-    RotateCcw
+    RotateCcw,
+    UserCheck,
+    AlertCircle
 } from "lucide-react";
 import { Pagination } from '@/components/Pagination';
 import { dashboard } from '@/routes';
+
+interface UserMinimal {
+    id: number;
+    name: string;
+    email: string;
+}
 
 interface Institution {
     id: number;
@@ -30,6 +38,7 @@ interface Institution {
     populated_center: string;
     address: string;
     is_active: boolean;
+    users?: UserMinimal[];
 }
 
 interface Filters {
@@ -38,6 +47,7 @@ interface Filters {
     type_management?: string;
     district?: string;
     is_active?: string;
+    assigned_status?: string;
     per_page?: number;
 }
 
@@ -45,6 +55,8 @@ interface InstitutionStats {
     total: number;
     active: number;
     inactive: number;
+    assigned?: number;
+    unassigned?: number;
 }
 
 interface Props {
@@ -76,9 +88,11 @@ export default function Institutions({
     const [selectedTypeManagement, setSelectedTypeManagement] = useState<string>(filters.type_management || "");
     const [selectedDistrict, setSelectedDistrict] = useState<string>(filters.district || "");
     const [selectedStatus, setSelectedStatus] = useState<string>(filters.is_active || "");
+    const [selectedAssignedStatus, setSelectedAssignedStatus] = useState<string>(filters.assigned_status || "");
     const [perPage, setPerPage] = useState<number>(filters.per_page || 15);
     const [editing, setEditing] = useState<Institution | null>(null);
-    const [showFilters, setShowFilters] = useState(false);
+    const hasInitialFilters = Boolean(filters.search || filters.level || filters.type_management || filters.district || filters.is_active || filters.assigned_status);
+    const [showFilters, setShowFilters] = useState(hasInitialFilters);
 
     const {
         data,
@@ -108,6 +122,7 @@ export default function Institutions({
             type_management: selectedTypeManagement,
             district: selectedDistrict,
             is_active: selectedStatus,
+            assigned_status: selectedAssignedStatus,
             per_page: perPage,
         }, {
             preserveState: true,
@@ -121,6 +136,7 @@ export default function Institutions({
         setSelectedTypeManagement("");
         setSelectedDistrict("");
         setSelectedStatus("");
+        setSelectedAssignedStatus("");
         setPerPage(15);
         
         router.get('/institutions', {
@@ -171,9 +187,11 @@ export default function Institutions({
         total: institutions?.total || 0,
         active: institutions?.data?.filter(i => i.is_active).length || 0,
         inactive: institutions?.data?.filter(i => !i.is_active).length || 0,
+        assigned: institutions?.data?.filter(i => i.users && i.users.length > 0).length || 0,
+        unassigned: institutions?.data?.filter(i => !i.users || i.users.length === 0).length || 0,
     };
 
-    const hasActiveFilters = search || selectedLevel || selectedTypeManagement || selectedDistrict || selectedStatus;
+    const hasActiveFilters = search || selectedLevel || selectedTypeManagement || selectedDistrict || selectedStatus || selectedAssignedStatus;
 
     const inputClass = "w-full rounded-xl border-2 border-gray-200 dark:border-white/10 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all py-2 px-3 text-[11px] bg-white dark:bg-slate-900 text-gray-900 dark:text-white outline-none placeholder:text-gray-400 dark:placeholder:text-neutral-500";
     const labelClass = "block text-[11px] font-semibold text-gray-700 dark:text-neutral-300 mb-1.5";
@@ -228,11 +246,12 @@ export default function Institutions({
                     </div>
 
                     {/* ===== TARJETAS DE ESTADÍSTICAS ===== */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         {[
                             { label: 'Total Registros', value: stats.total, icon: Building2, bgColor: 'bg-indigo-100 dark:bg-indigo-500/20', iconColor: 'text-indigo-600 dark:text-indigo-400', borderColor: 'border-indigo-200 dark:border-indigo-500/20' },
-                            { label: 'Instituciones Activas', value: stats.active, icon: CheckCircle2, bgColor: 'bg-emerald-100 dark:bg-emerald-500/20', iconColor: 'text-emerald-600 dark:text-emerald-400', borderColor: 'border-emerald-200 dark:border-emerald-500/20' },
-                            { label: 'Instituciones Inactivas', value: stats.inactive, icon: XCircle, bgColor: 'bg-rose-100 dark:bg-rose-500/20', iconColor: 'text-rose-600 dark:text-rose-400', borderColor: 'border-rose-200 dark:border-rose-500/20' }
+                            { label: 'Asignadas a Director', value: stats.assigned ?? 0, icon: UserCheck, bgColor: 'bg-emerald-100 dark:bg-emerald-500/20', iconColor: 'text-emerald-600 dark:text-emerald-400', borderColor: 'border-emerald-200 dark:border-emerald-500/20' },
+                            { label: 'Faltan por Asignar', value: stats.unassigned ?? 0, icon: AlertCircle, bgColor: 'bg-amber-100 dark:bg-amber-500/20', iconColor: 'text-amber-600 dark:text-amber-400', borderColor: 'border-amber-200 dark:border-amber-500/20' },
+                            { label: 'Instituciones Activas', value: stats.active, icon: CheckCircle2, bgColor: 'bg-blue-100 dark:bg-blue-500/20', iconColor: 'text-blue-600 dark:text-blue-400', borderColor: 'border-blue-200 dark:border-blue-500/20' }
                         ].map((stat, index) => (
                             <div key={index} className="bg-white dark:bg-slate-800/50 rounded-2xl p-4 border border-gray-200 dark:border-white/10 shadow-sm dark:shadow-2xl">
                                 <div className="flex items-center justify-between">
@@ -403,94 +422,158 @@ export default function Institutions({
                     {/* ===== FILTROS AVANZADOS ===== */}
                     {showFilters && (
                         <div className="bg-white dark:bg-slate-800/50 rounded-2xl border border-gray-200 dark:border-white/10 p-4 shadow-sm dark:shadow-2xl animate-in slide-in-from-top duration-200">
-                            <div className="flex items-center justify-between mb-3">
-                                <h3 className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-800 dark:text-slate-200">
-                                    <Filter className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-                                    Filtros de Búsqueda
-                                </h3>
+                            {/* Cabecera del panel de filtros */}
+                            <div className="flex items-center justify-between pb-3 mb-3 border-b border-gray-100 dark:border-white/5">
+                                <div className="flex items-center gap-2">
+                                    <div className="p-1.5 bg-indigo-50 dark:bg-indigo-500/10 rounded-lg text-indigo-600 dark:text-indigo-400">
+                                        <Filter className="w-3.5 h-3.5" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-[11px] font-semibold text-gray-800 dark:text-slate-200">
+                                            Filtros de Búsqueda
+                                        </h3>
+                                    </div>
+                                </div>
                                 {hasActiveFilters && (
                                     <button
+                                        type="button"
                                         onClick={clearFilters}
-                                        className="text-[11px] text-rose-600 hover:text-rose-700 dark:text-rose-400 flex items-center gap-1 transition-colors"
+                                        className="text-[11px] font-medium text-rose-600 hover:text-rose-700 dark:text-rose-400 flex items-center gap-1 transition-colors px-2 py-1 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10"
                                     >
                                         <X className="w-3.5 h-3.5" />
                                         Limpiar filtros
                                     </button>
                                 )}
                             </div>
-                            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
-                                <div className="col-span-2 relative">
+
+                            {/* Controles en cuadrícula equilibrada */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                                {/* Fila 1 */}
+                                <div className="sm:col-span-2 relative">
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-neutral-500 w-4 h-4" />
                                     <input
                                         type="text"
-                                        placeholder="Buscar código, nombre..."
+                                        placeholder="Buscar código modular, nombre o código local..."
                                         className={`${inputClass} pl-9`}
                                         value={search}
                                         onChange={(e) => setSearch(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                applyFilters();
+                                            }
+                                        }}
                                     />
                                 </div>
 
-                                <select
-                                    value={selectedLevel}
-                                    onChange={(e) => setSelectedLevel(e.target.value)}
-                                    className={inputClass}
-                                >
-                                    <option value="">Todos los niveles</option>
-                                    {levels.map((level) => (
-                                        <option key={level} value={level}>{level}</option>
-                                    ))}
-                                </select>
-
-                                <select
-                                    value={selectedTypeManagement}
-                                    onChange={(e) => setSelectedTypeManagement(e.target.value)}
-                                    className={inputClass}
-                                >
-                                    <option value="">Todas las gestiones</option>
-                                    {typeManagements.map((type) => (
-                                        <option key={type} value={type}>{type}</option>
-                                    ))}
-                                </select>
-
-                                <select
-                                    value={selectedDistrict}
-                                    onChange={(e) => setSelectedDistrict(e.target.value)}
-                                    className={inputClass}
-                                >
-                                    <option value="">Todos los distritos</option>
-                                    {districts.map((district) => (
-                                        <option key={district} value={district}>{district}</option>
-                                    ))}
-                                </select>
-
-                                <select
-                                    value={selectedStatus}
-                                    onChange={(e) => setSelectedStatus(e.target.value)}
-                                    className={inputClass}
-                                >
-                                    <option value="">Todos los estados</option>
-                                    <option value="true">Activos</option>
-                                    <option value="false">Inactivos</option>
-                                </select>
-
-                                <select
-                                    value={perPage}
-                                    onChange={(e) => setPerPage(Number(e.target.value))}
-                                    className={inputClass}
-                                >
-                                    <option value={10}>10 por pág.</option>
-                                    <option value={15}>15 por pág.</option>
-                                    <option value={25}>25 por pág.</option>
-                                    <option value={50}>50 por pág.</option>
-                                </select>
-
-                                <div className="col-span-2 md:col-span-1 lg:col-span-1">
-                                    <button
-                                        onClick={applyFilters}
-                                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white rounded-xl text-[11px] font-medium transition-all shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 hover:scale-105 active:scale-95"
+                                <div>
+                                    <select
+                                        value={selectedAssignedStatus}
+                                        onChange={(e) => setSelectedAssignedStatus(e.target.value)}
+                                        className={`${inputClass} ${selectedAssignedStatus ? 'border-indigo-500 dark:border-indigo-400 font-semibold' : ''}`}
                                     >
-                                        <Search className="w-4 h-4" />
-                                        Aplicar
+                                        <option value="">Todas las IEs (Asignación)</option>
+                                        <option value="assigned">✅ Solo Asignadas</option>
+                                        <option value="unassigned">⚠️ Faltan por asignar</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <select
+                                        value={selectedLevel}
+                                        onChange={(e) => setSelectedLevel(e.target.value)}
+                                        className={inputClass}
+                                    >
+                                        <option value="">Todos los niveles</option>
+                                        {levels.map((level) => (
+                                            <option key={level} value={level}>{level}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {/* Fila 2 */}
+                                <div>
+                                    <select
+                                        value={selectedTypeManagement}
+                                        onChange={(e) => setSelectedTypeManagement(e.target.value)}
+                                        className={inputClass}
+                                    >
+                                        <option value="">Todas las gestiones</option>
+                                        {typeManagements.map((type) => (
+                                            <option key={type} value={type}>{type}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <select
+                                        value={selectedDistrict}
+                                        onChange={(e) => setSelectedDistrict(e.target.value)}
+                                        className={inputClass}
+                                    >
+                                        <option value="">Todos los distritos</option>
+                                        {districts.map((district) => (
+                                            <option key={district} value={district}>{district}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <select
+                                        value={selectedStatus}
+                                        onChange={(e) => setSelectedStatus(e.target.value)}
+                                        className={inputClass}
+                                    >
+                                        <option value="">Todos los estados</option>
+                                        <option value="true">Activos</option>
+                                        <option value="false">Inactivos</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <select
+                                        value={perPage}
+                                        onChange={(e) => setPerPage(Number(e.target.value))}
+                                        className={inputClass}
+                                    >
+                                        <option value={10}>10 por página</option>
+                                        <option value={15}>15 por página</option>
+                                        <option value={25}>25 por página</option>
+                                        <option value={50}>50 por página</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            {/* Barra de acción inferior */}
+                            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 mt-3 border-t border-gray-100 dark:border-white/5">
+                                <div className="text-[11px] text-gray-500 dark:text-neutral-400">
+                                    {hasActiveFilters ? (
+                                        <span className="inline-flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 font-medium">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                                            Filtros activos aplicados
+                                        </span>
+                                    ) : (
+                                        <span>Filtre las instituciones según los criterios seleccionados</span>
+                                    )}
+                                </div>
+                                <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                                    {hasActiveFilters && (
+                                        <button
+                                            type="button"
+                                            onClick={clearFilters}
+                                            className="flex items-center gap-1.5 px-3 py-2 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-700 dark:text-neutral-300 rounded-xl text-[11px] font-medium transition-all border border-gray-300 dark:border-white/10 hover:border-gray-400 dark:hover:border-white/20"
+                                        >
+                                            <X className="w-3.5 h-3.5" />
+                                            Limpiar
+                                        </button>
+                                    )}
+                                    <button
+                                        type="button"
+                                        onClick={applyFilters}
+                                        className="flex items-center justify-center gap-1.5 px-5 py-2 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white rounded-xl text-[11px] font-medium transition-all shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 hover:scale-105 active:scale-95 cursor-pointer"
+                                    >
+                                        <Search className="w-3.5 h-3.5" />
+                                        Filtrar
                                     </button>
                                 </div>
                             </div>
@@ -510,6 +593,7 @@ export default function Institutions({
                                         <th className="px-4 py-3 font-semibold text-gray-500 dark:text-neutral-400 uppercase tracking-wider text-[11px]">Gestión</th>
                                         <th className="px-4 py-3 font-semibold text-gray-500 dark:text-neutral-400 uppercase tracking-wider text-[11px]">Distrito</th>
                                         <th className="px-4 py-3 font-semibold text-gray-500 dark:text-neutral-400 uppercase tracking-wider text-[11px]">Estado</th>
+                                        <th className="px-4 py-3 font-semibold text-gray-500 dark:text-neutral-400 uppercase tracking-wider text-[11px]">Asignación</th>
                                         <th className="px-4 py-3 font-semibold text-gray-500 dark:text-neutral-400 uppercase tracking-wider text-[11px] text-center">Acciones</th>
                                     </tr>
                                 </thead>
@@ -541,6 +625,27 @@ export default function Institutions({
                                                     }`}>
                                                         {institution.is_active ? 'Activo' : 'Inactivo'}
                                                     </span>
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    {institution.users && institution.users.length > 0 ? (
+                                                        <div className="flex flex-col gap-0.5">
+                                                            <span className="inline-flex items-center gap-1 rounded-full border border-blue-200 dark:border-blue-500/20 bg-blue-100 dark:bg-blue-500/15 px-2 py-0.5 text-[10px] font-medium text-blue-700 dark:text-blue-400 w-fit">
+                                                                <UserCheck className="w-3 h-3 flex-shrink-0" />
+                                                                Asignada
+                                                            </span>
+                                                            <span 
+                                                                className="text-[10px] text-gray-600 dark:text-neutral-300 font-medium truncate max-w-[150px]"
+                                                                title={institution.users.map(u => u.name).join(', ')}
+                                                            >
+                                                                {institution.users.map(u => u.name).join(', ')}
+                                                            </span>
+                                                        </div>
+                                                    ) : (
+                                                        <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 dark:border-amber-500/20 bg-amber-100 dark:bg-amber-500/15 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-400 w-fit">
+                                                            <AlertCircle className="w-3 h-3 flex-shrink-0" />
+                                                            Falta asignar
+                                                        </span>
+                                                    )}
                                                 </td>
                                                 <td className="px-4 py-3">
                                                     <div className="flex items-center justify-center gap-1.5">
@@ -580,7 +685,7 @@ export default function Institutions({
                                         ))
                                     ) : (
                                         <tr>
-                                            <td colSpan={8} className="py-16 text-center">
+                                            <td colSpan={9} className="py-16 text-center">
                                                 <div className="flex flex-col items-center gap-4">
                                                     <div className="p-6 bg-gray-100 dark:bg-white/5 rounded-full border border-gray-200 dark:border-white/10">
                                                         <Building2 className="w-16 h-16 text-gray-400 dark:text-neutral-600" />
