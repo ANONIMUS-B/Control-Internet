@@ -2,100 +2,116 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use App\Models\EducationalInstitution;
+use App\Models\User;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
 
 class UserController extends Controller
 {
     // app/Http/Controllers/UserController.php
 
-public function index(Request $request)
-{
-    // ✅ PROTECCIÓN - Solo admin, specialist, super_admin
-    $authUser = $request->user();
-    if (!in_array($authUser->role, ['admin', 'specialist', 'super_admin'])) {
-        return redirect()   ->route('dashboard')->with('error', 'No tienes permiso para acceder a esta sección.');
-    }
+    public function index(Request $request)
+    {
+        // ✅ PROTECCIÓN - Solo admin, specialist, super_admin
+        $authUser = $request->user();
+        if (! in_array($authUser->role, ['admin', 'specialist', 'super_admin'])) {
+            return redirect()->route('dashboard')->with('error', 'No tienes permiso para acceder a esta sección.');
+        }
 
-    $query = User::with('institutions');
+        $query = User::with('institutions');
 
-    // ✅ EXCLUIR SOLO SUPER_ADMIN (permitir admin, specialist, director, executive, etc)
-    $query->where('role', '!=', 'super_admin');
+        // ✅ EXCLUIR SOLO SUPER_ADMIN (permitir admin, specialist, director, executive, etc)
+        $query->where('role', '!=', 'super_admin');
 
-    // ✅ Buscar por nombre o email
-    if ($request->filled('search')) {
-        $search = $request->search;
-        $query->where(function ($q) use ($search) {
-            $q->where('name', 'LIKE', "%{$search}%")
-              ->orWhere('email', 'LIKE', "%{$search}%")
-              ->orWhere('dni', 'LIKE', "%{$search}%");
-        });
-    }
-
-    // ✅ Filtrar por rol
-    if ($request->filled('role')) {
-        $query->where('role', $request->role);
-    }
-
-    // ✅ Filtrar por institución asignada
-    if ($request->filled('institution_id')) {
-        $query->whereHas('institutions', function ($q) use ($request) {
-            $q->where('educational_institution_id', (int) $request->institution_id);
-        });
-    }
-
-    // ✅ Filtrar usuarios con/sin firma digital
-    if ($request->filled('has_signature')) {
-        if ($request->has_signature === 'true') {
-            $query->where('signature_active', true)
-                  ->whereNotNull('signature_path');
-        } else {
-            $query->where(function ($q) {
-                $q->where('signature_active', false)
-                  ->orWhereNull('signature_path');
+        // ✅ Buscar por nombre o email
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'LIKE', "%{$search}%")
+                    ->orWhere('email', 'LIKE', "%{$search}%")
+                    ->orWhere('dni', 'LIKE', "%{$search}%");
             });
         }
+
+        // ✅ Filtrar por rol
+        if ($request->filled('role')) {
+            $query->where('role', $request->role);
+        }
+
+        // ✅ Filtrar por institución asignada
+        if ($request->filled('institution_id')) {
+            $query->whereHas('institutions', function ($q) use ($request) {
+                $q->where('educational_institution_id', (int) $request->institution_id);
+            });
+        }
+
+        // ✅ Estadísticas calculadas sobre el total de usuarios (no solo la página actual)
+        $statsResult = (clone $query)
+            ->without('institutions')
+            ->selectRaw('
+            COUNT(*) as total,
+            SUM(CASE WHEN signature_active = 1 AND signature_path IS NOT NULL THEN 1 ELSE 0 END) as with_signature,
+            SUM(CASE WHEN signature_active = 0 OR signature_path IS NULL THEN 1 ELSE 0 END) as without_signature
+        ')
+            ->first();
+
+        $stats = [
+            'total' => (int) ($statsResult->total ?? 0),
+            'withSignature' => (int) ($statsResult->with_signature ?? 0),
+            'withoutSignature' => (int) ($statsResult->without_signature ?? 0),
+        ];
+
+        // ✅ Filtrar usuarios con/sin firma digital
+        if ($request->filled('has_signature')) {
+            if ($request->has_signature === 'true') {
+                $query->where('signature_active', true)
+                    ->whereNotNull('signature_path');
+            } else {
+                $query->where(function ($q) {
+                    $q->where('signature_active', false)
+                        ->orWhereNull('signature_path');
+                });
+            }
+        }
+
+        // ✅ Ordenar
+        $sortField = $request->input('sort', 'name');
+        $sortDirection = $request->input('direction', 'asc');
+        $query->orderBy($sortField, $sortDirection);
+
+        // ✅ PAGINACIÓN (10 por defecto)
+        $perPage = (int) $request->input('per_page', 10);
+        $users = $query->paginate($perPage)->withQueryString();
+
+        // ✅ Datos para filtros
+        $institutions = EducationalInstitution::orderBy('name')->get(['id', 'name', 'modular_code']);
+
+        // ✅ Roles disponibles (EXCLUYENDO super_admin)
+        $roles = [
+            'admin' => 'Administrador',
+            'specialist' => 'Especialista UPDI',
+            'supervisor' => 'Supervisor',
+            'director' => 'Director',
+            'executive' => 'Ejecutivo',
+        ];
+
+        return inertia('Admin/Users/Assign', [
+            'users' => $users,
+            'stats' => $stats,
+            'institutions' => $institutions,
+            'filters' => [
+                'search' => $request->input('search'),
+                'role' => $request->input('role'),
+                'institution_id' => $request->input('institution_id'),
+                'has_signature' => $request->input('has_signature'),
+                'sort' => $sortField,
+                'direction' => $sortDirection,
+                'per_page' => $perPage,
+            ],
+            'roles' => $roles,
+        ]);
     }
-
-    // ✅ Ordenar
-    $sortField = $request->input('sort', 'name');
-    $sortDirection = $request->input('direction', 'asc');
-    $query->orderBy($sortField, $sortDirection);
-
-    // ✅ PAGINACIÓN (10 por defecto)
-    $perPage = (int) $request->input('per_page', 10);
-    $users = $query->paginate($perPage)->withQueryString();
-
-    // ✅ Datos para filtros
-    $institutions = EducationalInstitution::orderBy('name')->get(['id', 'name', 'modular_code']);
-    
-    // ✅ Roles disponibles (EXCLUYENDO super_admin)
-    $roles = [
-        'admin' => 'Administrador',
-        'specialist' => 'Especialista UPDI',
-        'supervisor' => 'Supervisor',
-        'director' => 'Director',
-        'executive' => 'Ejecutivo',
-    ];
-
-    return inertia('Admin/Users/Assign', [
-        'users' => $users,
-        'institutions' => $institutions,
-        'filters' => [
-            'search' => $request->input('search'),
-            'role' => $request->input('role'),
-            'institution_id' => $request->input('institution_id'),
-            'has_signature' => $request->input('has_signature'),
-            'sort' => $sortField,
-            'direction' => $sortDirection,
-            'per_page' => $perPage,
-        ],
-        'roles' => $roles,
-    ]);
-}
 
     /**
      * Asignar instituciones a un usuario.
@@ -105,20 +121,20 @@ public function index(Request $request)
     {
         // ✅ PROTECCIÓN - Solo admin, specialist, super_admin
         $authUser = $request->user();
-        if (!in_array($authUser->role, ['admin', 'specialist', 'super_admin'])) {
+        if (! in_array($authUser->role, ['admin', 'specialist', 'super_admin'])) {
             return back()->with('error', 'No tienes permiso para asignar instituciones.');
         }
 
         // ✅ Validar que las instituciones existan
         $institutionIds = $request->input('institution_ids', []);
-        
-        if (!empty($institutionIds)) {
+
+        if (! empty($institutionIds)) {
             $validIds = EducationalInstitution::whereIn('id', $institutionIds)->pluck('id')->toArray();
             $user->institutions()->sync($validIds);
         } else {
             $user->institutions()->detach();
         }
-        
+
         return back()->with('success', 'Asignación actualizada correctamente.');
     }
 
@@ -130,7 +146,7 @@ public function index(Request $request)
     {
         // ✅ PROTECCIÓN - Solo admin y super_admin (specialist no puede cambiar roles)
         $authUser = $request->user();
-        if (!$authUser || !in_array($authUser->role, ['admin', 'super_admin'])) {
+        if (! $authUser || ! in_array($authUser->role, ['admin', 'super_admin'])) {
             return back()->with('error', 'No tienes permiso para cambiar roles. Solo los administradores pueden hacerlo.');
         }
 
@@ -151,7 +167,7 @@ public function index(Request $request)
     {
         // ✅ PROTECCIÓN - Solo admin y super_admin
         $authUser = $request->user();
-        if (!$authUser || !in_array($authUser->role, ['admin', 'super_admin'])) {
+        if (! $authUser || ! in_array($authUser->role, ['admin', 'super_admin'])) {
             return back()->with('error', 'No tienes permiso para realizar esta acción.');
         }
 
@@ -184,10 +200,10 @@ public function index(Request $request)
     {
         // ✅ PROTECCIÓN - Solo admin, specialist, super_admin
         $authUser = $request->user();
-        if (!in_array($authUser->role, ['admin', 'specialist', 'super_admin'])) {
+        if (! in_array($authUser->role, ['admin', 'specialist', 'super_admin'])) {
             return response()->json([
                 'success' => false,
-                'message' => 'No tienes permiso para ver esta información.'
+                'message' => 'No tienes permiso para ver esta información.',
             ], 403);
         }
 
@@ -202,10 +218,10 @@ public function index(Request $request)
     {
         // ✅ PROTECCIÓN - Solo admin y super_admin
         $authUser = $request->user();
-        if (!$authUser || !in_array($authUser->role, ['admin', 'super_admin'])) {
+        if (! $authUser || ! in_array($authUser->role, ['admin', 'super_admin'])) {
             return response()->json([
                 'success' => false,
-                'message' => 'No tienes permiso para ver esta información.'
+                'message' => 'No tienes permiso para ver esta información.',
             ], 403);
         }
 
@@ -220,7 +236,7 @@ public function index(Request $request)
 
         $withoutSignature = User::where(function ($q) {
             $q->where('signature_active', false)
-              ->orWhereNull('signature_path');
+                ->orWhereNull('signature_path');
         })->count();
 
         return response()->json([
@@ -230,7 +246,7 @@ public function index(Request $request)
                 'by_role' => $byRole,
                 'with_signature' => $withSignature,
                 'without_signature' => $withoutSignature,
-            ]
+            ],
         ]);
     }
 }

@@ -47,6 +47,21 @@ class InstitutionController extends Controller
             $query->where('district', $request->district);
         }
 
+        // ✅ Estadísticas calculadas sobre el total de instituciones (no solo la página actual)
+        $statsResult = (clone $query)
+            ->selectRaw('
+                COUNT(*) as total,
+                SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active,
+                SUM(CASE WHEN is_active = 0 THEN 1 ELSE 0 END) as inactive
+            ')
+            ->first();
+
+        $stats = [
+            'total' => (int) ($statsResult->total ?? 0),
+            'active' => (int) ($statsResult->active ?? 0),
+            'inactive' => (int) ($statsResult->inactive ?? 0),
+        ];
+
         if ($request->filled('is_active')) {
             $query->where('is_active', $request->is_active === 'true' ? 1 : 0);
         }
@@ -67,6 +82,7 @@ class InstitutionController extends Controller
 
         return Inertia::render('Admin/Institutions/Index', [
             'institutions' => $institutions,
+            'stats' => $stats,
             'filters' => [
                 'search' => $request->input('search'),
                 'level' => $request->input('level'),

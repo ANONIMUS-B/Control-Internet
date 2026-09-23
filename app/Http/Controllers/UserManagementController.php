@@ -2,14 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
-use App\Models\EducationalInstitution;
 use App\Imports\UsersImport;
+use App\Models\EducationalInstitution;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Inertia\Inertia;
-use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class UserManagementController extends Controller
 {
@@ -21,7 +24,7 @@ class UserManagementController extends Controller
     {
         // ✅ PROTECCIÓN - Solo admin y super_admin
         $authUser = $request->user();
-        if (!in_array($authUser->role, ['admin', 'super_admin'])) {
+        if (! in_array($authUser->role, ['admin', 'super_admin'])) {
             return redirect()->route('dashboard')->with('error', 'No tienes permiso para acceder a esta sección.');
         }
 
@@ -36,8 +39,8 @@ class UserManagementController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'LIKE', "%{$search}%")
-                  ->orWhere('email', 'LIKE', "%{$search}%")
-                  ->orWhere('dni', 'LIKE', "%{$search}%");
+                    ->orWhere('email', 'LIKE', "%{$search}%")
+                    ->orWhere('dni', 'LIKE', "%{$search}%");
             });
         }
 
@@ -54,6 +57,24 @@ class UserManagementController extends Controller
                 $q->where('educational_institution_id', (int) $request->institution_id);
             });
         }
+
+        // ✅ Estadísticas calculadas sobre el total de usuarios (no solo la página actual)
+        $statsResult = (clone $query)
+            ->without('institutions')
+            ->selectRaw('
+                COUNT(*) as total,
+                SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active,
+                SUM(CASE WHEN is_active = 0 THEN 1 ELSE 0 END) as inactive,
+                SUM(CASE WHEN signature_active = 1 AND signature_path IS NOT NULL THEN 1 ELSE 0 END) as with_signature
+            ')
+            ->first();
+
+        $stats = [
+            'total' => (int) ($statsResult->total ?? 0),
+            'active' => (int) ($statsResult->active ?? 0),
+            'inactive' => (int) ($statsResult->inactive ?? 0),
+            'withSignature' => (int) ($statsResult->with_signature ?? 0),
+        ];
 
         if ($request->filled('has_signature')) {
             if ($request->has_signature === 'true') {
@@ -77,7 +98,7 @@ class UserManagementController extends Controller
         $users = $query->paginate($perPage)->withQueryString();
 
         $institutions = EducationalInstitution::orderBy('name')->get(['id', 'name', 'modular_code']);
-        
+
         // ✅ Roles disponibles (sin executive)
         $roles = [
             'super_admin' => 'Super Administrador',
@@ -93,6 +114,7 @@ class UserManagementController extends Controller
 
         return inertia('Admin/Users/Index', [
             'users' => $users,
+            'stats' => $stats,
             'institutions' => $institutions,
             'filters' => [
                 'search' => $request->input('search'),
@@ -117,7 +139,7 @@ class UserManagementController extends Controller
     {
         // ✅ PROTECCIÓN - Solo admin y super_admin
         $authUser = $request->user();
-        if (!in_array($authUser->role, ['admin', 'super_admin'])) {
+        if (! in_array($authUser->role, ['admin', 'super_admin'])) {
             return redirect()->route('dashboard')->with('error', 'No tienes permiso para crear usuarios.');
         }
 
@@ -157,7 +179,7 @@ class UserManagementController extends Controller
     {
         // ✅ PROTECCIÓN - Solo admin y super_admin
         $authUser = $request->user();
-        if (!in_array($authUser->role, ['admin', 'super_admin'])) {
+        if (! in_array($authUser->role, ['admin', 'super_admin'])) {
             return redirect()->route('dashboard')->with('error', 'No tienes permiso para actualizar usuarios.');
         }
 
@@ -167,8 +189,8 @@ class UserManagementController extends Controller
 
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $user->id,
-            'dni' => 'nullable|string|max:8|unique:users,dni,' . $user->id,
+            'email' => 'required|email|unique:users,email,'.$user->id,
+            'dni' => 'nullable|string|max:8|unique:users,dni,'.$user->id,
             'role' => 'required|in:admin,specialist,supervisor,director',
         ]);
 
@@ -203,7 +225,7 @@ class UserManagementController extends Controller
     {
         // ✅ PROTECCIÓN - Solo admin y super_admin
         $authUser = $request->user();
-        if (!in_array($authUser->role, ['admin', 'super_admin'])) {
+        if (! in_array($authUser->role, ['admin', 'super_admin'])) {
             return redirect()->route('dashboard')->with('error', 'No tienes permiso para cambiar roles.');
         }
 
@@ -233,7 +255,7 @@ class UserManagementController extends Controller
     {
         // ✅ PROTECCIÓN - Solo admin y super_admin
         $authUser = $request->user();
-        if (!in_array($authUser->role, ['admin', 'super_admin'])) {
+        if (! in_array($authUser->role, ['admin', 'super_admin'])) {
             return redirect()->route('dashboard')->with('error', 'No tienes permiso para realizar esta acción.');
         }
 
@@ -241,9 +263,10 @@ class UserManagementController extends Controller
             return back()->with('error', 'No tienes permiso para desactivar un Super Administrador.');
         }
 
-        $user->update(['is_active' => !$user->is_active]);
-        
+        $user->update(['is_active' => ! $user->is_active]);
+
         $status = $user->is_active ? 'activado' : 'desactivado';
+
         return back()->with('success', "Usuario {$status} correctamente.");
     }
 
@@ -255,7 +278,7 @@ class UserManagementController extends Controller
     {
         // ✅ PROTECCIÓN - Solo admin y super_admin
         $authUser = $request->user();
-        if (!in_array($authUser->role, ['admin', 'super_admin'])) {
+        if (! in_array($authUser->role, ['admin', 'super_admin'])) {
             return redirect()->route('dashboard')->with('error', 'No tienes permiso para eliminar usuarios.');
         }
 
@@ -272,6 +295,7 @@ class UserManagementController extends Controller
         }
 
         $user->delete();
+
         return back()->with('success', 'Usuario eliminado correctamente.');
     }
 
@@ -283,7 +307,7 @@ class UserManagementController extends Controller
     {
         // ✅ PROTECCIÓN - Solo admin y super_admin
         $authUser = $request->user();
-        if (!in_array($authUser->role, ['admin', 'super_admin'])) {
+        if (! in_array($authUser->role, ['admin', 'super_admin'])) {
             return redirect()->route('dashboard')->with('error', 'No tienes permiso para realizar esta acción.');
         }
 
@@ -292,6 +316,7 @@ class UserManagementController extends Controller
         }
 
         $user->deleteSignature();
+
         return back()->with('success', 'Firma digital eliminada correctamente.');
     }
 
@@ -303,7 +328,7 @@ class UserManagementController extends Controller
     {
         // ✅ PROTECCIÓN - Solo admin y super_admin
         $authUser = $request->user();
-        if (!in_array($authUser->role, ['admin', 'super_admin'])) {
+        if (! in_array($authUser->role, ['admin', 'super_admin'])) {
             return redirect()->route('dashboard')->with('error', 'No tienes permiso para asignar instituciones.');
         }
 
@@ -312,14 +337,14 @@ class UserManagementController extends Controller
         }
 
         $institutionIds = $request->input('institution_ids', []);
-        
-        if (!empty($institutionIds)) {
+
+        if (! empty($institutionIds)) {
             $validIds = EducationalInstitution::whereIn('id', $institutionIds)->pluck('id')->toArray();
             $user->institutions()->sync($validIds);
         } else {
             $user->institutions()->detach();
         }
-        
+
         return back()->with('success', 'Instituciones asignadas correctamente.');
     }
 
@@ -336,7 +361,7 @@ class UserManagementController extends Controller
         }
 
         $institutions = EducationalInstitution::orderBy('name')->get(['id', 'name', 'modular_code']);
-        
+
         $roles = [
             'admin' => 'Administrador',
             'specialist' => 'Especialista UPDI',
@@ -369,7 +394,7 @@ class UserManagementController extends Controller
         ]);
 
         try {
-            $import = new UsersImport();
+            $import = new UsersImport;
             Excel::import($import, $request->file('file'));
 
             $imported = $import->getImportedCount();
@@ -382,14 +407,14 @@ class UserManagementController extends Controller
                 $message .= " {$skipped} filas fueron omitidas.";
             }
 
-            if (!empty($errors)) {
-                $message .= " Detalles: " . implode('; ', $errors);
+            if (! empty($errors)) {
+                $message .= ' Detalles: '.implode('; ', $errors);
             }
 
             return redirect()->route('admin.users.index')->with('success', $message);
 
         } catch (\Exception $e) {
-            return back()->with('error', '❌ Error al importar: ' . $e->getMessage());
+            return back()->with('error', '❌ Error al importar: '.$e->getMessage());
         }
     }
 
@@ -398,7 +423,7 @@ class UserManagementController extends Controller
      */
     public function downloadTemplate()
     {
-        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $spreadsheet = new Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet();
 
         // ✅ Encabezados EXACTOS (6 columnas)
@@ -408,7 +433,7 @@ class UserManagementController extends Controller
             'second_last_name',
             'first_name',
             'email',
-            'role'
+            'role',
         ];
 
         // ✅ Estilo para encabezados
@@ -419,15 +444,15 @@ class UserManagementController extends Controller
                 'size' => 11,
             ],
             'fill' => [
-                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'fillType' => Fill::FILL_SOLID,
                 'startColor' => ['rgb' => '7c3aed'],
             ],
             'alignment' => [
-                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
             ],
             'borders' => [
                 'allBorders' => [
-                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                    'borderStyle' => Border::BORDER_THIN,
                     'color' => ['rgb' => '000000'],
                 ],
             ],
@@ -436,7 +461,7 @@ class UserManagementController extends Controller
         // ✅ Estilo para columnas obligatorias (fondo amarillo)
         $requiredStyle = [
             'fill' => [
-                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'fillType' => Fill::FILL_SOLID,
                 'startColor' => ['rgb' => 'FFF3CD'],
             ],
         ];
@@ -455,7 +480,7 @@ class UserManagementController extends Controller
         // ✅ Aplicar fondo amarillo a columnas obligatorias (A, B, D, E, F)
         $requiredColumns = ['A', 'B', 'D', 'E', 'F']; // dni, last_name, first_name, email, role
         foreach ($requiredColumns as $colLetter) {
-            $sheet->getStyle($colLetter . '1')->applyFromArray($requiredStyle);
+            $sheet->getStyle($colLetter.'1')->applyFromArray($requiredStyle);
         }
 
         // ✅ Datos de ejemplo (fila 2)
@@ -474,11 +499,11 @@ class UserManagementController extends Controller
                 'size' => 10,
             ],
             'alignment' => [
-                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'horizontal' => Alignment::HORIZONTAL_LEFT,
             ],
             'borders' => [
                 'allBorders' => [
-                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                    'borderStyle' => Border::BORDER_THIN,
                     'color' => ['rgb' => 'CCCCCC'],
                 ],
             ],
@@ -499,11 +524,11 @@ class UserManagementController extends Controller
 
         $sheet->getStyle('A4')->getFont()->setBold(true)->setSize(11);
         $sheet->getStyle('A4:A13')->getFont()->setSize(10);
-        $sheet->getStyle('A4:A13')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+        $sheet->getStyle('A4:A13')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
 
         // ✅ Descargar archivo
-        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
-        
+        $writer = new Xlsx($spreadsheet);
+
         return response()->stream(
             function () use ($writer) {
                 $writer->save('php://output');
@@ -515,5 +540,4 @@ class UserManagementController extends Controller
             ]
         );
     }
-        
 }

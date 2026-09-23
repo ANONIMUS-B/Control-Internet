@@ -41,6 +41,12 @@ interface Filters {
     per_page?: number;
 }
 
+interface InstitutionStats {
+    total: number;
+    active: number;
+    inactive: number;
+}
+
 interface Props {
     institutions: {
         data: Institution[];
@@ -54,6 +60,7 @@ interface Props {
     districts: string[];
     levels: string[];
     typeManagements: string[];
+    stats?: InstitutionStats;
 }
 
 export default function Institutions({ 
@@ -61,7 +68,8 @@ export default function Institutions({
     filters, 
     districts, 
     levels, 
-    typeManagements 
+    typeManagements,
+    stats: serverStats,
 }: Props) {
     const [search, setSearch] = useState<string>(filters.search || "");
     const [selectedLevel, setSelectedLevel] = useState<string>(filters.level || "");
@@ -159,7 +167,7 @@ export default function Institutions({
         });
     };
 
-    const stats = {
+    const stats = serverStats ?? {
         total: institutions?.total || 0,
         active: institutions?.data?.filter(i => i.is_active).length || 0,
         inactive: institutions?.data?.filter(i => !i.is_active).length || 0,

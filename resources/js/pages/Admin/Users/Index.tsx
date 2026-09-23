@@ -44,6 +44,13 @@ interface Filters {
     per_page?: number;
 }
 
+interface UserStats {
+    total: number;
+    active: number;
+    inactive: number;
+    withSignature: number;
+}
+
 interface UserManagementProps {
     users: {
         data: User[];
@@ -56,9 +63,10 @@ interface UserManagementProps {
     institutions: Institution[];
     filters: Filters;
     roles: Record<string, string>;
+    stats?: UserStats;
 }
 
-export default function UserManagement({ users, institutions, filters, roles }: UserManagementProps) {
+export default function UserManagement({ users, institutions, filters, roles, stats: serverStats }: UserManagementProps) {
     const [search, setSearch] = useState<string>(filters.search || '');
     const [selectedRole, setSelectedRole] = useState<string>(filters.role || '');
     const [selectedInstitution, setSelectedInstitution] = useState<string>(filters.institution_id || '');
@@ -179,7 +187,7 @@ export default function UserManagement({ users, institutions, filters, roles }: 
         executive: 'bg-neutral-100 dark:bg-white/5 text-neutral-700 dark:text-neutral-400 border-neutral-200 dark:border-white/10',
     };
 
-    const stats = {
+    const stats = serverStats ?? {
         total: users?.total || 0,
         active: users?.data?.filter(u => u.is_active).length || 0,
         inactive: users?.data?.filter(u => !u.is_active).length || 0,
@@ -376,24 +384,38 @@ export default function UserManagement({ users, institutions, filters, roles }: 
                                                     </select>
                                                 </td>
                                                 <td className="p-3">
-                                                    <div className="flex flex-wrap gap-1">
+                                                    <div className="flex items-center gap-1.5 flex-wrap">
                                                         {user.institutions && user.institutions.length > 0 ? (
-                                                            user.institutions.slice(0, 2).map((inst) => (
-                                                                <span key={inst.id} className="px-2 py-0.5 bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 rounded-full text-[11px] border border-blue-200 dark:border-blue-500/20">
-                                                                    {inst.modular_code}
-                                                                </span>
-                                                            ))
+                                                            user.institutions.slice(0, 2).map((inst) => {
+                                                                const displayName = inst.name || inst.modular_code || 'IE sin nombre';
+                                                                return (
+                                                                    <span 
+                                                                        key={inst.id} 
+                                                                        className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 rounded-full text-[11px] border border-blue-200 dark:border-blue-500/20 max-w-[200px]"
+                                                                        title={inst.name ? `${inst.name}${inst.modular_code ? ` (${inst.modular_code})` : ''}` : (inst.modular_code || '')}
+                                                                    >
+                                                                        <Building2 className="w-3 h-3 flex-shrink-0 text-blue-600 dark:text-blue-400" />
+                                                                        <span className="truncate">{displayName}</span>
+                                                                        {inst.modular_code && inst.name && (
+                                                                            <span className="text-[9px] opacity-75 flex-shrink-0">({inst.modular_code})</span>
+                                                                        )}
+                                                                    </span>
+                                                                );
+                                                            })
                                                         ) : (
                                                             <span className="text-[11px] text-gray-400 dark:text-neutral-500">Sin asignar</span>
                                                         )}
                                                         {user.institutions && user.institutions.length > 2 && (
-                                                            <span className="px-2 py-0.5 bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-neutral-400 rounded-full text-[11px] border border-gray-200 dark:border-white/10">
+                                                            <span 
+                                                                className="px-2 py-0.5 bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-neutral-400 rounded-full text-[11px] border border-gray-200 dark:border-white/10 flex-shrink-0"
+                                                                title={user.institutions.slice(2).map(i => i.name || i.modular_code).join(', ')}
+                                                            >
                                                                 +{user.institutions.length - 2}
                                                             </span>
                                                         )}
                                                         <button
                                                             onClick={() => openAssignModal(user)}
-                                                            className="px-2 py-0.5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-full text-[11px] font-medium hover:scale-105 transition-all shadow-sm"
+                                                            className="flex-shrink-0 px-2 py-0.5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-full text-[11px] font-medium hover:scale-105 transition-all shadow-sm"
                                                         >
                                                             Asignar
                                                         </button>
@@ -809,8 +831,10 @@ function UserModal({
                                                 }}
                                                 className="rounded border-gray-300 dark:border-white/20 text-blue-600 focus:ring-blue-500"
                                             />
-                                            <span className="text-[11px] flex-1 text-gray-900 dark:text-white">{instName}</span>
-                                            <span className="text-[11px] text-gray-400 dark:text-neutral-500">({instCode})</span>
+                                            <span className="text-[11px] flex-1 min-w-0 break-words text-gray-900 dark:text-white">{instName}</span>
+                                            {inst.modular_code && (
+                                                <span className="text-[11px] text-gray-400 dark:text-neutral-500 shrink-0">({inst.modular_code})</span>
+                                            )}
                                             {data.institution_ids.includes(inst.id) && (
                                                 <CheckCircle className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                                             )}
@@ -941,9 +965,9 @@ function AssignModal({
                                         onChange={() => handleToggle(inst.id)}
                                         className="w-4 h-4 text-blue-600 rounded border-gray-300 dark:border-white/20 focus:ring-blue-500"
                                     />
-                                    <div className="flex-1">
-                                        <p className="text-[11px] font-medium text-gray-900 dark:text-white">{inst.name || 'Sin nombre'}</p>
-                                        <p className="text-[11px] text-gray-500 dark:text-neutral-400">Código: {inst.modular_code || 'N/A'}</p>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-[11px] font-medium text-gray-900 dark:text-white break-words">{inst.name || 'Sin nombre'}</p>
+                                        <p className="text-[11px] text-gray-500 dark:text-neutral-400">{inst.modular_code ? `Código: ${inst.modular_code}` : 'Sin código modular'}</p>
                                     </div>
                                     {isChecked && (
                                         <CheckCircle className="w-4 h-4 text-blue-600 dark:text-blue-400" />

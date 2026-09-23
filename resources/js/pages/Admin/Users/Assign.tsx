@@ -35,6 +35,12 @@ interface Filters {
     per_page?: number;
 }
 
+interface AssignStats {
+    total: number;
+    withSignature: number;
+    withoutSignature: number;
+}
+
 interface AssignProps {
     users: {
         data: User[];
@@ -47,9 +53,10 @@ interface AssignProps {
     institutions: Institution[];
     filters: Filters;
     roles: Record<string, string>;
+    stats?: AssignStats;
 }
 
-export default function Assign({ users, institutions, filters, roles }: AssignProps) {
+export default function Assign({ users, institutions, filters, roles, stats: serverStats }: AssignProps) {
     const [search, setSearch] = useState<string>(filters.search || '');
     const [selectedRole, setSelectedRole] = useState<string>(filters.role || '');
     const [selectedInstitution, setSelectedInstitution] = useState<string>(filters.institution_id || '');
@@ -121,7 +128,7 @@ export default function Assign({ users, institutions, filters, roles }: AssignPr
                modularCode.includes(searchTerm);
     });
 
-    const stats = {
+    const stats = serverStats ?? {
         total: users?.total || 0,
         withSignature: users?.data?.filter(u => u && u.signature_active).length || 0,
         withoutSignature: users?.data?.filter(u => u && !u.signature_active).length || 0,

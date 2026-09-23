@@ -726,7 +726,7 @@
     "isEntry": true
   },
   "resources/js/app.tsx": {
-    "file": "assets/app-DHnajgP4.js",
+    "file": "assets/app-D388Pj3n.js",
     "name": "app",
     "src": "resources/js/app.tsx",
     "isEntry": true,
@@ -853,7 +853,7 @@
     ]
   },
   "resources/js/pages/Admin/Institutions/Index.tsx": {
-    "file": "assets/Index-b6fZn9sI.js",
+    "file": "assets/Index-CGYqikfk.js",
     "name": "Index",
     "src": "resources/js/pages/Admin/Institutions/Index.tsx",
     "isDynamicEntry": true,
@@ -993,7 +993,7 @@
     ]
   },
   "resources/js/pages/Admin/Users/Assign.tsx": {
-    "file": "assets/Assign-BZrTAXkH.js",
+    "file": "assets/Assign-4ZIOkDPS.js",
     "name": "Assign",
     "src": "resources/js/pages/Admin/Users/Assign.tsx",
     "isDynamicEntry": true,
@@ -1033,7 +1033,7 @@
     ]
   },
   "resources/js/pages/Admin/Users/Index.tsx": {
-    "file": "assets/Index-DbWGX0or.js",
+    "file": "assets/Index-BiR6HFHO.js",
     "name": "Index",
     "src": "resources/js/pages/Admin/Users/Index.tsx",
     "isDynamicEntry": true,
