@@ -704,7 +704,7 @@ export default function Create({
                             {/* ===== N° OFICIO ===== */}
                             <div>
                                 <label className="block text-[11px] font-semibold text-gray-700 dark:text-neutral-300 mb-1 flex items-center gap-1.5">
-                                    <FileText className="w-3.5 h-3.5 text-blue-500" /> N° Oficio
+                  
                                     <FileText className="w-3.5 h-3.5 text-blue-500" /> N° Oficio <span className="text-gray-400 font-normal">(Solo números)</span>
                                 </label>
                                 <input
@@ -849,7 +849,7 @@ export default function Create({
                                     {processing || isUploading ? (
                                         <><Loader2 className="w-4 h-4 animate-spin" /> Guardando...</>
                                     ) : (
-                                        <><Save className="w-4 h-4" /> Guardar Reporte</>
+                                        <><Save className="w-4 h-4" /> Enviar Reporte</>
                                     )}
                                 </button>
                                 <button
