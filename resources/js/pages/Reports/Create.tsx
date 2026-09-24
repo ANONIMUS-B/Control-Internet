@@ -849,7 +849,7 @@ export default function Create({
                                     {processing || isUploading ? (
                                         <><Loader2 className="w-4 h-4 animate-spin" /> Guardando...</>
                                     ) : (
-                                        <><Save className="w-4 h-4" /> Enviar Reporte</>
+                                        <><Save className="w-4 h-4" /> Enviar Reporte a la Ugel</>
                                     )}
                                 </button>
                                 <button
