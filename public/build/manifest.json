@@ -724,7 +724,7 @@
     ]
   },
   "resources/css/app.css": {
-    "file": "assets/app-BSVZUoYp.css",
+    "file": "assets/app-CCfd-PVD.css",
     "name": "app",
     "names": [
       "app.css"
@@ -733,7 +733,7 @@
     "isEntry": true
   },
   "resources/js/app.tsx": {
-    "file": "assets/app-bbWXZVFI.js",
+    "file": "assets/app-C3-6iXXY.js",
     "name": "app",
     "src": "resources/js/app.tsx",
     "isEntry": true,
@@ -1137,7 +1137,7 @@
     ]
   },
   "resources/js/pages/Profile/Signature.tsx": {
-    "file": "assets/Signature-K1ED48l6.js",
+    "file": "assets/Signature-fCBrJuPY.js",
     "name": "Signature",
     "src": "resources/js/pages/Profile/Signature.tsx",
     "isDynamicEntry": true,
@@ -1152,6 +1152,7 @@
       "_eye-D6HrEYfc.js",
       "_file-pen-line-Brdxels2.js",
       "_info-eF826UXe.js",
+      "_refresh-cw-CWqL8lfp.js",
       "_trash-2-CUfyNe_-.js",
       "_upload-XnlAK7Ek.js",
       "_user-DLPNYWVD.js",

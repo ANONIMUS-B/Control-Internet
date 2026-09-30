@@ -248,7 +248,7 @@
             <td class="col-label">ASUNTO</td>
             <td class="col-colon">:</td>
             <td class="col-content">
-                Informe de conformidad sobre el servicio de internet en la Institución Educativa <strong>{{ $report->institution->name ?? '' }}</strong>
+                Informe de conformidad sobre el servicio de internet en la Institución Educativa <strong>{{ $report->institution->name ?? '' }}</strong>@if(!empty($report->institution->level)) - Nivel {{ $report->institution->level }}@endif
             </td>
         </tr>
         <tr>

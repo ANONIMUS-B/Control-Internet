@@ -11,7 +11,9 @@ import {
     Calendar,
     Info,
     Eye,
-    ArrowLeft
+    ArrowLeft,
+    RefreshCw,
+    Image as ImageIcon
 } from 'lucide-react';
 import { Link } from '@inertiajs/react';
 
@@ -23,6 +25,7 @@ interface SignatureProps {
         signature_path: string | null;
         signature_active: boolean;
         signature_url: string | null;
+        signature_base64?: string | null;
         signature_updated_at: string | null;
         has_signature: boolean;
         signature_status: string;
@@ -35,11 +38,16 @@ interface SignatureProps {
 }
 
 export default function Signature({ user, flash }: SignatureProps) {
-    const { data, setData, post, processing, errors } = useForm({
+    const { data, setData, post, processing, errors, reset } = useForm({
         signature: null as File | null,
     });
 
-    const [preview, setPreview] = useState<string | null>(user.signature_url || null);
+    // Fuente de la firma actualmente guardada en el servidor (prioriza base64 para evitar problemas de ruta/puerto)
+    const activeSignatureSrc = user.signature_base64 || user.signature_url;
+
+    // Estado para la vista previa del NUEVO archivo que el usuario selecciona
+    const [selectedFilePreview, setSelectedFilePreview] = useState<string | null>(null);
+    const [isChanging, setIsChanging] = useState<boolean>(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(flash?.error || null);
     const [successMessage, setSuccessMessage] = useState<string | null>(flash?.success || null);
     const [isDragging, setIsDragging] = useState(false);
@@ -75,7 +83,7 @@ export default function Signature({ user, flash }: SignatureProps) {
             setData('signature', file);
             const reader = new FileReader();
             reader.onload = (event) => {
-                setPreview(event.target?.result as string);
+                setSelectedFilePreview(event.target?.result as string);
             };
             reader.readAsDataURL(file);
             setErrorMessage(null);
@@ -111,12 +119,18 @@ export default function Signature({ user, flash }: SignatureProps) {
         }
 
         post('/firma/upload', {
+            preserveScroll: true,
             onSuccess: () => {
-                setSuccessMessage('✅ Firma digital actualizada correctamente.');
-                router.reload();
+                setSuccessMessage('✅ Firma digital subida y guardada correctamente.');
+                setData('signature', null);
+                setSelectedFilePreview(null);
+                setIsChanging(false);
+                if (fileInputRef.current) {
+                    fileInputRef.current.value = '';
+                }
             },
-            onError: (errors) => {
-                const errorMsg = errors.signature || 'Error al subir la firma.';
+            onError: (errs) => {
+                const errorMsg = errs.signature || 'Error al subir la firma.';
                 setErrorMessage(errorMsg);
             }
         });
@@ -128,10 +142,11 @@ export default function Signature({ user, flash }: SignatureProps) {
         }
 
         router.delete('/firma/eliminar', {
+            preserveScroll: true,
             onSuccess: () => {
-                setPreview(null);
+                setSelectedFilePreview(null);
+                setIsChanging(false);
                 setSuccessMessage('✅ Firma eliminada correctamente.');
-                router.reload();
             },
             onError: () => {
                 setErrorMessage('❌ Error al eliminar la firma.');
@@ -139,9 +154,9 @@ export default function Signature({ user, flash }: SignatureProps) {
         });
     };
 
-    const clearFile = () => {
+    const clearSelectedFile = () => {
         setData('signature', null);
-        setPreview(user.signature_url || null);
+        setSelectedFilePreview(null);
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
         }
@@ -165,6 +180,8 @@ export default function Signature({ user, flash }: SignatureProps) {
         return colors[status] || colors['Sin firma'];
     };
 
+    const hasSavedSignature = Boolean(user.has_signature && activeSignatureSrc);
+
     return (
         <>
             <Head title="Mi Firma Digital" />
@@ -182,7 +199,7 @@ export default function Signature({ user, flash }: SignatureProps) {
                                 <div>
                                     <h1 className="text-[11px] font-bold text-gray-900 dark:text-white">Mi Firma Digital</h1>
                                     <p className="text-[11px] text-gray-500 dark:text-neutral-400">
-                                        Sube tu firma digital para usar en los reportes de conformidad
+                                        Gestiona y visualiza la imagen de tu firma digital para los informes de conformidad en PDF
                                     </p>
                                 </div>
                             </div>
@@ -261,6 +278,26 @@ export default function Signature({ user, flash }: SignatureProps) {
                                 )}
                             </div>
 
+                            {/* Estado de Firma Activa con Miniatura */}
+                            {hasSavedSignature && (
+                                <div className="bg-emerald-50 dark:bg-emerald-950/30 rounded-2xl border border-emerald-200 dark:border-emerald-800 p-4 space-y-2.5">
+                                    <div className="flex items-center gap-3">
+                                        <Eye className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                                        <div>
+                                            <p className="text-[11px] font-medium text-emerald-700 dark:text-emerald-300">Firma guardada y activa</p>
+                                            <p className="text-[10px] text-emerald-600 dark:text-emerald-400">Se estampará automáticamente en tus reportes PDF</p>
+                                        </div>
+                                    </div>
+                                    <div className="bg-white dark:bg-slate-900 rounded-xl p-2.5 border border-emerald-200 dark:border-emerald-800/60 flex items-center justify-center">
+                                        <img 
+                                            src={activeSignatureSrc!} 
+                                            alt="Miniatura Firma" 
+                                            className="max-h-16 max-w-full object-contain"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Recomendaciones */}
                             <div className="bg-blue-50 dark:bg-blue-950/30 rounded-2xl border border-blue-200 dark:border-blue-800 p-4">
                                 <div className="flex items-start gap-3">
@@ -268,7 +305,7 @@ export default function Signature({ user, flash }: SignatureProps) {
                                     <div>
                                         <h4 className="text-[11px] font-semibold text-blue-800 dark:text-blue-300">Recomendaciones:</h4>
                                         <ul className="text-[11px] text-blue-700 dark:text-blue-400 mt-2 space-y-1.5 list-disc list-inside">
-                                            <li>Usa fondo blanco para la firma</li>
+                                            <li>Usa fondo blanco o transparente para la firma</li>
                                             <li>La imagen debe ser PNG, JPG o JPEG</li>
                                             <li>Tamaño máximo: 2MB</li>
                                             <li>Resolución recomendada: 300x100px</li>
@@ -277,140 +314,200 @@ export default function Signature({ user, flash }: SignatureProps) {
                                     </div>
                                 </div>
                             </div>
+                        </div>
 
-                            {/* Estado de Firma Activa */}
-                            {user.has_signature && (
-                                <div className="bg-emerald-50 dark:bg-emerald-950/30 rounded-2xl border border-emerald-200 dark:border-emerald-800 p-4">
-                                    <div className="flex items-center gap-3">
-                                        <Eye className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                                        <div>
-                                            <p className="text-[11px] font-medium text-emerald-700 dark:text-emerald-300">Firma activa</p>
-                                            <p className="text-[11px] text-emerald-600 dark:text-emerald-400">Aparecerá en tus reportes PDF</p>
+                        {/* ===== COLUMNA DERECHA - VISUALIZACIÓN Y SUBIDA ===== */}
+                        <div className="lg:col-span-3 space-y-4">
+                            
+                            {/* 1. SECCIÓN: FIRMA ACTUAL REGISTRADA (SI YA TIENE UNA) */}
+                            {hasSavedSignature && (
+                                <div className="bg-white dark:bg-slate-800/50 rounded-2xl border border-gray-200 dark:border-white/10 p-5 shadow-sm dark:shadow-2xl space-y-4">
+                                    <div className="flex items-center justify-between pb-3 border-b border-gray-200 dark:border-white/10">
+                                        <div className="flex items-center gap-2.5">
+                                            <div className="p-1.5 bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-lg">
+                                                <CheckCircle className="w-4 h-4" />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-[12px] font-bold text-gray-900 dark:text-white">
+                                                    Tu Firma Digital Registrada
+                                                </h3>
+                                                <p className="text-[10px] text-gray-500 dark:text-neutral-400">
+                                                    Esta es la imagen exacta de la firma que actualmente tienes guardada en el sistema
+                                                </p>
+                                            </div>
                                         </div>
+                                        <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-700/60 flex items-center gap-1.5">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                            Firma Visible
+                                        </span>
+                                    </div>
+
+                                    {/* Visualizador grande de la imagen */}
+                                    <div className="p-6 bg-slate-50 dark:bg-slate-900/80 rounded-xl border border-slate-200 dark:border-slate-700/60 flex flex-col items-center justify-center">
+                                        <div className="bg-white dark:bg-white p-4 rounded-xl shadow-xs border border-gray-200 flex items-center justify-center max-w-full">
+                                            <img 
+                                                src={activeSignatureSrc!} 
+                                                alt="Firma Digital Guardada" 
+                                                className="max-h-36 max-w-full object-contain"
+                                            />
+                                        </div>
+                                        <p className="text-[10px] text-gray-500 dark:text-neutral-400 mt-3 flex items-center gap-1.5">
+                                            <Eye className="w-3.5 h-3.5 text-blue-500" />
+                                            Esta imagen se incluye en el pie de página de tus informes de conformidad PDF
+                                        </p>
+                                    </div>
+
+                                    {/* Botones de acción para la firma guardada */}
+                                    <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-gray-100 dark:border-white/5">
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsChanging(!isChanging)}
+                                            className="flex items-center gap-1.5 px-4 py-2 bg-blue-50 dark:bg-blue-500/10 hover:bg-blue-100 dark:hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-xl text-[11px] font-medium transition-colors border border-blue-200 dark:border-blue-500/20"
+                                        >
+                                            <RefreshCw className="w-3.5 h-3.5" />
+                                            {isChanging ? 'Cerrar formulario de cambio' : 'Cambiar / Subir nueva imagen'}
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            onClick={deleteSignature}
+                                            className="flex items-center gap-1.5 px-4 py-2 bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 rounded-xl text-[11px] font-medium transition-colors border border-rose-200 dark:border-rose-500/20"
+                                        >
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                            Eliminar Firma
+                                        </button>
                                     </div>
                                 </div>
                             )}
-                        </div>
 
-                        {/* ===== COLUMNA DERECHA - ÁREA DE FIRMA ===== */}
-                        <div className="lg:col-span-3">
-                            <div className="bg-white dark:bg-slate-800/50 rounded-2xl border border-gray-200 dark:border-white/10 p-4 md:p-6 shadow-sm dark:shadow-2xl">
-                                <form onSubmit={submit} className="space-y-4">
-                                    
-                                    {/* Área de Drop/Upload */}
-                                    <div 
-                                        className={`relative rounded-xl border-2 border-dashed transition-all duration-300 ${
-                                            preview 
-                                                ? 'border-emerald-300 dark:border-emerald-700 bg-emerald-50/20 dark:bg-emerald-500/5' 
-                                                : isDragging
-                                                    ? 'border-blue-500 bg-blue-50/30 dark:bg-blue-500/10'
-                                                    : 'border-gray-300 dark:border-white/10 hover:border-blue-400 dark:hover:border-blue-500/40 hover:bg-blue-50/10 dark:hover:bg-blue-500/5'
-                                        }`}
-                                        onDragOver={handleDragOver}
-                                        onDragLeave={handleDragLeave}
-                                        onDrop={handleDrop}
-                                    >
-                                        <input
-                                            type="file"
-                                            ref={fileInputRef}
-                                            accept="image/png,image/jpeg,image/jpg"
-                                            onChange={handleFileChange}
-                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                                            disabled={processing}
-                                        />
+                            {/* 2. SECCIÓN: FORMULARIO DE SUBIDA (VISIBLE SI NO TIENE FIRMA O SI HACE CLIC EN CAMBIAR) */}
+                            {(!hasSavedSignature || isChanging) && (
+                                <div className="bg-white dark:bg-slate-800/50 rounded-2xl border border-gray-200 dark:border-white/10 p-4 md:p-6 shadow-sm dark:shadow-2xl">
+                                    <div className="mb-4 pb-3 border-b border-gray-200 dark:border-white/10">
+                                        <h3 className="text-[12px] font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                            <Upload className="w-4 h-4 text-blue-500" />
+                                            {hasSavedSignature ? 'Subir una nueva imagen para reemplazar la firma' : 'Subir Imagen de tu Firma Digital'}
+                                        </h3>
+                                        <p className="text-[10px] text-gray-500 dark:text-neutral-400 mt-0.5">
+                                            Selecciona o arrastra una imagen clara de tu firma
+                                        </p>
+                                    </div>
+
+                                    <form onSubmit={submit} className="space-y-4">
                                         
-                                        <div className="p-6 md:p-8 text-center">
-                                            {preview ? (
-                                                <div className="relative">
-                                                    <div className="flex justify-center">
-                                                        <img 
-                                                            src={preview} 
-                                                            alt="Firma digital" 
-                                                            className="max-h-32 object-contain"
-                                                        />
-                                                    </div>
-                                                    <button
-                                                        type="button"
-                                                        onClick={clearFile}
-                                                        className="absolute -top-2 -right-2 bg-rose-500 text-white p-1.5 rounded-full hover:bg-rose-600 transition-colors shadow-lg"
-                                                        title="Quitar imagen"
-                                                    >
-                                                        <X className="w-3.5 h-3.5" />
-                                                    </button>
-                                                    <p className="text-[11px] text-gray-400 dark:text-neutral-500 mt-2">Haz clic o arrastra para cambiar la imagen</p>
-                                                </div>
-                                            ) : (
-                                                <div className="flex flex-col items-center gap-3">
-                                                    <div className={`p-4 rounded-full transition-colors ${
-                                                        isDragging ? 'bg-blue-200 dark:bg-blue-800' : 'bg-blue-100 dark:bg-blue-500/20'
-                                                    }`}>
-                                                        <Upload className={`w-6 h-6 ${
-                                                            isDragging ? 'text-blue-700 dark:text-blue-300' : 'text-blue-600 dark:text-blue-400'
-                                                        }`} />
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-[11px] font-medium text-gray-700 dark:text-neutral-300">
-                                                            {isDragging ? 'Suelta tu imagen aquí' : 'Arrastra o haz clic para subir tu firma'}
-                                                        </p>
-                                                        <p className="text-[11px] text-gray-400 dark:text-neutral-500 mt-1">
-                                                            PNG, JPG (max 2MB)
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* Botones de Acción */}
-                                    <div className="flex flex-wrap gap-3">
-                                        <button
-                                            type="submit"
-                                            disabled={!data.signature || processing}
-                                            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-xl text-[11px] font-medium transition-all shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed"
+                                        {/* Área de Drop/Upload */}
+                                        <div 
+                                            className={`relative rounded-xl border-2 border-dashed transition-all duration-300 ${
+                                                selectedFilePreview 
+                                                    ? 'border-emerald-300 dark:border-emerald-700 bg-emerald-50/20 dark:bg-emerald-500/5' 
+                                                    : isDragging
+                                                        ? 'border-blue-500 bg-blue-50/30 dark:bg-blue-500/10'
+                                                        : 'border-gray-300 dark:border-white/10 hover:border-blue-400 dark:hover:border-blue-500/40 hover:bg-blue-50/10 dark:hover:bg-blue-500/5'
+                                            }`}
+                                            onDragOver={handleDragOver}
+                                            onDragLeave={handleDragLeave}
+                                            onDrop={handleDrop}
                                         >
-                                            {processing ? (
-                                                <>
-                                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                                    Subiendo...
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <Upload className="w-4 h-4" />
-                                                    Subir Firma
-                                                </>
-                                            )}
-                                        </button>
-
-                                        {user.has_signature && (
-                                            <button
-                                                type="button"
-                                                onClick={deleteSignature}
-                                                className="px-4 py-2.5 bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 rounded-xl transition-all border border-rose-200 dark:border-rose-500/20 flex items-center gap-2 text-[11px] font-medium"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                                Eliminar
-                                            </button>
-                                        )}
-                                    </div>
-
-                                    {/* Preview de cómo se verá en PDF */}
-                                    {preview && (
-                                        <div className="p-4 bg-emerald-50 dark:bg-emerald-950/30 rounded-xl border border-emerald-200 dark:border-emerald-800">
-                                            <div className="flex items-center gap-3">
-                                                <CheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                                                <div>
-                                                    <p className="text-[11px] font-medium text-emerald-700 dark:text-emerald-300">
-                                                        ✅ Firma lista para usar
-                                                    </p>
-                                                    <p className="text-[11px] text-emerald-600 dark:text-emerald-400">
-                                                        La firma aparecerá automáticamente en tus reportes PDF
-                                                    </p>
-                                                </div>
+                                            <input
+                                                type="file"
+                                                ref={fileInputRef}
+                                                accept="image/png,image/jpeg,image/jpg"
+                                                onChange={handleFileChange}
+                                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                                                disabled={processing}
+                                            />
+                                            
+                                            <div className="p-6 md:p-8 text-center">
+                                                {selectedFilePreview ? (
+                                                    <div className="relative">
+                                                        <div className="flex flex-col items-center gap-2">
+                                                            <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-200 flex items-center justify-center">
+                                                                <img 
+                                                                    src={selectedFilePreview} 
+                                                                    alt="Nueva firma seleccionada" 
+                                                                    className="max-h-32 object-contain"
+                                                                />
+                                                            </div>
+                                                            <p className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                                                                ✓ Imagen seleccionada lista para subir
+                                                            </p>
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={clearSelectedFile}
+                                                            className="absolute -top-2 -right-2 bg-rose-500 text-white p-1.5 rounded-full hover:bg-rose-600 transition-colors shadow-lg z-20"
+                                                            title="Quitar imagen seleccionada"
+                                                        >
+                                                            <X className="w-3.5 h-3.5" />
+                                                        </button>
+                                                        <p className="text-[10px] text-gray-400 dark:text-neutral-500 mt-1">Haz clic o arrastra para seleccionar otra imagen</p>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex flex-col items-center gap-3">
+                                                        <div className={`p-4 rounded-full transition-colors ${
+                                                            isDragging ? 'bg-blue-200 dark:bg-blue-800' : 'bg-blue-100 dark:bg-blue-500/20'
+                                                        }`}>
+                                                            <Upload className={`w-6 h-6 ${
+                                                                isDragging ? 'text-blue-700 dark:text-blue-300' : 'text-blue-600 dark:text-blue-400'
+                                                            }`} />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-[11px] font-medium text-gray-700 dark:text-neutral-300">
+                                                                {isDragging ? 'Suelta tu imagen aquí' : 'Arrastra o haz clic para seleccionar tu firma'}
+                                                            </p>
+                                                            <p className="text-[11px] text-gray-400 dark:text-neutral-500 mt-1">
+                                                                PNG, JPG o JPEG (máx. 2MB)
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
-                                    )}
-                                </form>
-                            </div>
+
+                                        {/* Botones de Acción */}
+                                        <div className="flex flex-wrap gap-3">
+                                            <button
+                                                type="submit"
+                                                disabled={!data.signature || processing}
+                                                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-xl text-[11px] font-medium transition-all shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed"
+                                            >
+                                                {processing ? (
+                                                    <>
+                                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                        Guardando firma...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Upload className="w-4 h-4" />
+                                                        {hasSavedSignature ? 'Guardar Nueva Firma' : 'Subir y Guardar Firma'}
+                                                    </>
+                                                )}
+                                            </button>
+
+                                            {hasSavedSignature && isChanging && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        clearSelectedFile();
+                                                        setIsChanging(false);
+                                                    }}
+                                                    className="px-4 py-2.5 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-700 dark:text-neutral-300 rounded-xl transition-all border border-gray-300 dark:border-white/10 text-[11px] font-medium"
+                                                >
+                                                    Cancelar
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        {/* Feedback visual si seleccionó un archivo nuevo */}
+                                        {selectedFilePreview && (
+                                            <div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 rounded-xl border border-emerald-200 dark:border-emerald-800 flex items-center gap-2 text-[11px] text-emerald-700 dark:text-emerald-300">
+                                                <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                                                <span>Haz clic en <strong>"{hasSavedSignature ? 'Guardar Nueva Firma' : 'Subir y Guardar Firma'}"</strong> para confirmar y registrar la imagen.</span>
+                                            </div>
+                                        )}
+                                    </form>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
