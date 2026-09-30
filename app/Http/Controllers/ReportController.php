@@ -700,6 +700,11 @@ class ReportController extends Controller
         $request->validate(['admin_comments' => 'required|string|min:5']);
 
         $report = MonthlyReport::findOrFail($id);
+
+        if ($report->status === 'approved' && $request->user()?->role !== 'super_admin') {
+            return back()->with('error', 'Solo el Super Administrador tiene autorización para observar un reporte previamente aprobado.');
+        }
+
         $oldStatus = $report->status;
 
         $report->update([

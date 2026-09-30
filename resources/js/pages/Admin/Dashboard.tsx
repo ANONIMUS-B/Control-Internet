@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { 
     CheckCircle2, AlertCircle, FileDown, Search, User, Building2, X, CalendarDays,
     Filter, Clock, FileText, Eye
@@ -61,6 +61,10 @@ export default function AdminDashboard({
     statuses,
     currentYear 
 }: AdminDashboardProps) {
+    const { props } = usePage();
+    const userRole = (props as any).auth?.user?.role;
+    const isSuperAdmin = userRole === 'super_admin';
+
     const [selectedMonth, setSelectedMonth] = useState<string>(filters.month || '');
     const [selectedYear, setSelectedYear] = useState<string>(filters.year || String(currentYear));
     const [selectedStatus, setSelectedStatus] = useState<string>(filters.status || '');
@@ -437,6 +441,16 @@ export default function AdminDashboard({
                                                                 <CheckCircle2 className="w-4 h-4" />
                                                             </button>
                                                         )}
+                                                        {/* ✅ Solo el super_admin puede observar un oficio ya aprobado */}
+                                                        {isSuperAdmin && report?.status === 'approved' && (
+                                                            <button
+                                                                onClick={() => setReportToObserve(report.id)}
+                                                                className="p-2 bg-amber-100 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-500/20 rounded-xl transition-all border border-amber-200 dark:border-amber-500/20 hover:scale-110 active:scale-95"
+                                                                title="Observar oficio aprobado (Reabrir para corrección)"
+                                                            >
+                                                                <AlertCircle className="w-4 h-4" />
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 </td>
                                             </tr>
@@ -490,6 +504,12 @@ export default function AdminDashboard({
                                 <X className="w-4 h-4 text-gray-400 dark:text-neutral-500" />
                             </button>
                         </div>
+                        {reports?.data?.find((r: any) => r.id === reportToObserve)?.status === 'approved' && (
+                            <div className="mb-3 p-2.5 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 text-amber-800 dark:text-amber-300 text-[11px] flex items-center gap-2">
+                                <AlertCircle className="w-4 h-4 flex-shrink-0 text-amber-600 dark:text-amber-400" />
+                                <span>Este oficio ya estaba aprobado. Al registrar la observación, su estado cambiará a <strong>Observado</strong> para que el director pueda corregirlo.</span>
+                            </div>
+                        )}
                         <textarea
                             autoFocus
                             value={comment}
