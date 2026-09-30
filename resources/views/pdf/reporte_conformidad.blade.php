@@ -223,7 +223,7 @@
 
     <!-- NUMERO DE INFORME -->
     <div class="informe-numero">
-        INFORME N° {{ $report->office_number ?? '000' }}-{{ $report->year }}-D.I.E. N° {{ $report->institution->local_code ?? '000' }}
+        OFICIO N° {{ $report->office_number ?? '000' }}-{{ $report->year }}-D. {{ $report->institution->name ?? '' }}
     </div>
 
     <!-- DATOS DEL ENCABEZADO TIPO INFORME -->
