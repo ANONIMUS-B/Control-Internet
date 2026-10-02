@@ -39,6 +39,9 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property string|null $remember_token
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
+ * @property-read string $last_name
+ * @property-read string $second_last_name
+ * @property-read string $first_name
  */
 #[Fillable([
     'name',
@@ -65,6 +68,17 @@ class User extends Authenticatable implements PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
+
+    /**
+     * The accessors to append to the model's array form.
+     *
+     * @var list<string>
+     */
+    protected $appends = [
+        'last_name',
+        'second_last_name',
+        'first_name',
+    ];
 
     /**
      * Get the attributes that should be cast.
@@ -240,6 +254,128 @@ class User extends Authenticatable implements PasskeyUser
         $expirationDate = $signatureDate->addYear();
 
         return now()->lessThanOrEqualTo($expirationDate);
+    }
+
+    /**
+     * Obtener el nombre del usuario limpio (sin delimitadores internos).
+     */
+    public function getNameAttribute(?string $value): string
+    {
+        if ($value === null) {
+            return '';
+        }
+
+        return trim(str_replace("\u{200B}", '', $value));
+    }
+
+    /**
+     * Obtener las partes desglosadas del nombre del usuario.
+     *
+     * @return array{last_name: string, second_last_name: string, first_name: string}
+     */
+    public function getNameParts(): array
+    {
+        $rawName = (string) ($this->attributes['name'] ?? '');
+
+        // 1. Si contiene el delimitador invisible \u{200B}
+        if (str_contains($rawName, "\u{200B}")) {
+            $parts = explode("\u{200B}", $rawName);
+
+            return [
+                'last_name' => trim($parts[0] ?? ''),
+                'second_last_name' => trim($parts[1] ?? ''),
+                'first_name' => trim(implode(' ', array_slice($parts, 2))),
+            ];
+        }
+
+        // 2. Si contiene coma (ej: "PEREZ GARCIA, JUAN CARLOS")
+        if (str_contains($rawName, ',')) {
+            [$surnames, $firstNames] = explode(',', $rawName, 2);
+            $sParts = array_values(array_filter(preg_split('/\s+/', trim($surnames)) ?: []));
+            if (count($sParts) <= 1) {
+                return [
+                    'last_name' => $sParts[0] ?? '',
+                    'second_last_name' => '',
+                    'first_name' => trim($firstNames),
+                ];
+            }
+
+            return [
+                'last_name' => $sParts[0],
+                'second_last_name' => implode(' ', array_slice($sParts, 1)),
+                'first_name' => trim($firstNames),
+            ];
+        }
+
+        // 3. Fallback para nombres legados sin delimitador
+        $words = array_values(array_filter(preg_split('/\s+/', trim($rawName)) ?: []));
+        $count = count($words);
+
+        if ($count === 0) {
+            return ['last_name' => '', 'second_last_name' => '', 'first_name' => ''];
+        }
+
+        if ($count === 1) {
+            return ['last_name' => $words[0], 'second_last_name' => '', 'first_name' => ''];
+        }
+
+        if ($count === 2) {
+            return ['last_name' => $words[0], 'second_last_name' => '', 'first_name' => $words[1]];
+        }
+
+        if ($count === 3) {
+            return ['last_name' => $words[0], 'second_last_name' => $words[1], 'first_name' => $words[2]];
+        }
+
+        return [
+            'last_name' => $words[0],
+            'second_last_name' => $words[1],
+            'first_name' => implode(' ', array_slice($words, 2)),
+        ];
+    }
+
+    /**
+     * Obtener el apellido paterno.
+     */
+    public function getLastNameAttribute(): string
+    {
+        return $this->getNameParts()['last_name'];
+    }
+
+    /**
+     * Obtener el apellido materno.
+     */
+    public function getSecondLastNameAttribute(): string
+    {
+        return $this->getNameParts()['second_last_name'];
+    }
+
+    /**
+     * Obtener los nombres.
+     */
+    public function getFirstNameAttribute(): string
+    {
+        return $this->getNameParts()['first_name'];
+    }
+
+    /**
+     * Construir el nombre completo estructurado con delimitadores invisibles.
+     */
+    public static function formatFullName(string $lastName, ?string $secondLastName, string $firstName): string
+    {
+        $lastName = trim($lastName);
+        $secondLastName = trim($secondLastName ?? '');
+        $firstName = trim($firstName);
+
+        if ($lastName === '' && $secondLastName === '') {
+            return $firstName;
+        }
+
+        if ($secondLastName !== '') {
+            return "{$lastName}\u{200B} {$secondLastName}\u{200B} {$firstName}";
+        }
+
+        return "{$lastName}\u{200B}\u{200B} {$firstName}";
     }
 
     /**

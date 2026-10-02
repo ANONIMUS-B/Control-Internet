@@ -177,8 +177,7 @@ class UsersImport implements ToCollection, WithHeadingRow
             try {
                 $password = 'Ugel'.$cleanDni.'*';
 
-                $fullName = trim($lastName.' '.$secondLastName.' '.$firstName);
-                $fullName = preg_replace('/\s+/', ' ', $fullName);
+                $fullName = User::formatFullName($lastName, $secondLastName, $firstName);
 
                 $user = User::create([
                     'name' => $fullName,

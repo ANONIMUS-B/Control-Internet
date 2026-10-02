@@ -657,6 +657,7 @@ export default function UserManagement({ users, institutions, filters, roles, st
             {/* ===== MODALES ===== */}
             {showCreateModal && (
                 <UserModal
+                    key="user-create"
                     type="create"
                     institutions={institutions}
                     roles={roles}
@@ -666,6 +667,7 @@ export default function UserManagement({ users, institutions, filters, roles, st
 
             {editingUser && (
                 <UserModal
+                    key={`user-edit-${editingUser.id}`}
                     type="edit"
                     user={editingUser}
                     institutions={institutions}
@@ -714,36 +716,79 @@ function UserModal({
 }) {
     const parseFullName = (fullName: string) => {
         if (!fullName) return { lastName: '', secondLastName: '', firstName: '' };
-        
-        const parts = fullName.trim().split(' ');
+
+        if (fullName.includes('\u200B')) {
+            const parts = fullName.split('\u200B');
+            return {
+                lastName: (parts[0] || '').trim(),
+                secondLastName: (parts[1] || '').trim(),
+                firstName: parts.slice(2).join(' ').trim(),
+            };
+        }
+
+        if (fullName.includes(',')) {
+            const [surnames, firstNames] = fullName.split(',');
+            const sParts = (surnames || '').trim().split(/\s+/).filter(Boolean);
+            if (sParts.length <= 1) {
+                return {
+                    lastName: sParts[0] || '',
+                    secondLastName: '',
+                    firstName: (firstNames || '').trim(),
+                };
+            }
+            return {
+                lastName: sParts[0],
+                secondLastName: sParts.slice(1).join(' '),
+                firstName: (firstNames || '').trim(),
+            };
+        }
+
+        const parts = fullName.trim().split(/\s+/).filter(Boolean);
         if (parts.length === 0) return { lastName: '', secondLastName: '', firstName: '' };
         if (parts.length === 1) return { lastName: parts[0], secondLastName: '', firstName: '' };
         if (parts.length === 2) return { lastName: parts[0], secondLastName: '', firstName: parts[1] };
-        
-        return { 
-            lastName: parts[0] || '', 
-            secondLastName: parts[1] || '', 
-            firstName: parts.slice(2).join(' ') || '' 
+        if (parts.length === 3) return { lastName: parts[0], secondLastName: parts[1], firstName: parts[2] };
+
+        return {
+            lastName: parts[0] || '',
+            secondLastName: parts[1] || '',
+            firstName: parts.slice(2).join(' ') || '',
         };
     };
 
     const getDefaultNameParts = () => {
         if (!user) return { lastName: '', secondLastName: '', firstName: '' };
-        
+
         if (user.last_name !== undefined && user.first_name !== undefined) {
             return {
                 lastName: user.last_name || '',
                 secondLastName: user.second_last_name || '',
-                firstName: user.first_name || ''
+                firstName: user.first_name || '',
             };
         }
-        
+
         return parseFullName(user.name || '');
     };
 
     const nameParts = getDefaultNameParts();
 
-    const { data, setData, post, put, processing, errors } = useForm({
+    const buildFullName = (lastName: string, secondLastName: string, firstName: string) => {
+        const lName = (lastName || '').trim();
+        const sName = (secondLastName || '').trim();
+        const fName = (firstName || '').trim();
+
+        if (lName === '' && sName === '') {
+            return fName;
+        }
+
+        if (sName !== '') {
+            return `${lName}\u200B ${sName}\u200B ${fName}`;
+        }
+
+        return `${lName}\u200B\u200B ${fName}`;
+    };
+
+    const { data, setData, post, put, transform, processing, errors } = useForm({
         name: user?.name || '',
         last_name: nameParts.lastName,
         second_last_name: nameParts.secondLastName,
@@ -756,22 +801,16 @@ function UserModal({
         institution_ids: user?.institutions ? user.institutions.map(i => i.id) : [],
     });
 
+    transform((formData) => ({
+        ...formData,
+        name: buildFullName(formData.last_name, formData.second_last_name, formData.first_name),
+    }));
+
     const [showPassword, setShowPassword] = useState(false);
     const [searchInstitutions, setSearchInstitutions] = useState('');
 
-    const buildFullName = (lastName: string, secondLastName: string, firstName: string) => {
-        const parts = [lastName, secondLastName, firstName].filter(Boolean);
-        return parts.join(' ').trim();
-    };
-
     const updateName = (field: 'last_name' | 'second_last_name' | 'first_name', value: string) => {
-        const newData = { ...data, [field]: value };
-        newData.name = buildFullName(
-            field === 'last_name' ? value : data.last_name,
-            field === 'second_last_name' ? value : data.second_last_name,
-            field === 'first_name' ? value : data.first_name
-        );
-        setData(newData);
+        setData(field, value);
     };
 
     // ✅ Filtrar instituciones con validación segura
@@ -785,12 +824,6 @@ function UserModal({
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
-
-        const finalData = {
-            ...data,
-            name: buildFullName(data.last_name, data.second_last_name, data.first_name)
-        };
-        setData(finalData);
 
         if (type === 'create') {
             post('/admin/usuarios', {

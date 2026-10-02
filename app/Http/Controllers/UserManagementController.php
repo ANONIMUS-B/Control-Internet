@@ -36,9 +36,10 @@ class UserManagementController extends Controller
         }
 
         if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'LIKE', "%{$search}%")
+            $search = trim((string) $request->search);
+            $searchWildcard = '%'.preg_replace('/\s+/', '%', $search).'%';
+            $query->where(function ($q) use ($search, $searchWildcard) {
+                $q->where('name', 'LIKE', $searchWildcard)
                     ->orWhere('email', 'LIKE', "%{$search}%")
                     ->orWhere('dni', 'LIKE', "%{$search}%");
             });
@@ -144,7 +145,10 @@ class UserManagementController extends Controller
         }
 
         $request->validate([
-            'name' => 'required|string|max:255',
+            'last_name' => 'nullable|string|max:100',
+            'second_last_name' => 'nullable|string|max:100',
+            'first_name' => 'nullable|string|max:100',
+            'name' => 'nullable|string|max:255',
             'email' => 'required|email|unique:users,email',
             'dni' => 'nullable|string|max:8|unique:users,dni',
             'role' => 'required|in:admin,specialist,supervisor,director',
@@ -155,8 +159,22 @@ class UserManagementController extends Controller
             return back()->with('error', 'No tienes permiso para crear un Super Administrador.');
         }
 
+        $fullName = User::formatFullName(
+            (string) $request->input('last_name', ''),
+            (string) $request->input('second_last_name', ''),
+            (string) $request->input('first_name', '')
+        );
+
+        if (empty(trim(str_replace("\u{200B}", '', $fullName)))) {
+            $fullName = trim((string) $request->input('name', ''));
+        }
+
+        if (empty($fullName)) {
+            return back()->withErrors(['last_name' => 'El apellido paterno y nombres son obligatorios.']);
+        }
+
         $user = User::create([
-            'name' => $request->name,
+            'name' => $fullName,
             'email' => $request->email,
             'dni' => $request->dni,
             'role' => $request->role,
@@ -188,7 +206,10 @@ class UserManagementController extends Controller
         }
 
         $request->validate([
-            'name' => 'required|string|max:255',
+            'last_name' => 'nullable|string|max:100',
+            'second_last_name' => 'nullable|string|max:100',
+            'first_name' => 'nullable|string|max:100',
+            'name' => 'nullable|string|max:255',
             'email' => 'required|email|unique:users,email,'.$user->id,
             'dni' => 'nullable|string|max:8|unique:users,dni,'.$user->id,
             'role' => 'required|in:admin,specialist,supervisor,director',
@@ -198,8 +219,22 @@ class UserManagementController extends Controller
             return back()->with('error', 'No tienes permiso para asignar el rol Super Administrador.');
         }
 
+        $fullName = User::formatFullName(
+            (string) $request->input('last_name', ''),
+            (string) $request->input('second_last_name', ''),
+            (string) $request->input('first_name', '')
+        );
+
+        if (empty(trim(str_replace("\u{200B}", '', $fullName)))) {
+            $fullName = trim((string) $request->input('name', ''));
+        }
+
+        if (empty($fullName)) {
+            return back()->withErrors(['last_name' => 'El apellido paterno y nombres son obligatorios.']);
+        }
+
         $user->update([
-            'name' => $request->name,
+            'name' => $fullName,
             'email' => $request->email,
             'dni' => $request->dni,
             'role' => $request->role,
