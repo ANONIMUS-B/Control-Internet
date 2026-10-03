@@ -725,7 +725,7 @@
     ]
   },
   "resources/css/app.css": {
-    "file": "assets/app-Bp09-NT8.css",
+    "file": "assets/app-CJMKKlKm.css",
     "name": "app",
     "names": [
       "app.css"
@@ -734,7 +734,7 @@
     "isEntry": true
   },
   "resources/js/app.tsx": {
-    "file": "assets/app-BV_lzrz8.js",
+    "file": "assets/app-1WnXSNnK.js",
     "name": "app",
     "src": "resources/js/app.tsx",
     "isEntry": true,
@@ -1539,7 +1539,7 @@
     ]
   },
   "resources/js/pages/welcome.tsx": {
-    "file": "assets/welcome-B1pLRgds.js",
+    "file": "assets/welcome-CBfmi3wj.js",
     "name": "welcome",
     "src": "resources/js/pages/welcome.tsx",
     "isDynamicEntry": true,
@@ -1547,14 +1547,13 @@
       "_createLucideIcon-CsrKEwpU.js",
       "_compiler-runtime-fgK8MdTJ.js",
       "_arrow-right-DpRkgbxp.js",
-      "_building-2-CxzMrZO0.js",
+      "_check-LLW9bFWF.js",
       "_circle-check-Bm3V4vug.js",
       "_file-pen-line-Brdxels2.js",
       "_file-text-Cn7gkaOP.js",
       "_lock-_fvlDZft.js",
       "_phone-CUzvibt0.js",
       "_shield-check-BqEMNQoq.js",
-      "_sparkles-D7WH7Cfx.js",
       "_wifi-BKo_D_Cq.js",
       "_routes-CYBO3Anv.js"
     ]

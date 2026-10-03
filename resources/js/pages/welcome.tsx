@@ -5,15 +5,14 @@ import {
     FileText,
     ShieldCheck,
     FileSignature,
-    Building2,
     LogIn,
     ArrowRight,
     CheckCircle2,
     Lock,
     Phone,
-    Sparkles,
-    BarChart3,
-    Activity,
+    Globe,
+    MousePointer2,
+    Check,
 } from 'lucide-react';
 
 export default function Welcome() {
@@ -21,59 +20,59 @@ export default function Welcome() {
 
     return (
         <>
-            <Head title="Bienvenido - Conformidad de Internet · UGEL Ambo" />
+            <Head title="Conformidad del Servicio de Internet - UGEL Ambo" />
 
-            <div className="relative flex min-h-screen w-full flex-col justify-between overflow-x-hidden bg-[#070b14] text-slate-100 selection:bg-blue-500 selection:text-white">
-                {/* Malla de fondo estilo IA (Micro-Grid Cyber) y Auroras sutiles */}
+            {/* Contenedor Principal: Paleta fiel al diseño de referencia (Lavanda pastel, ciruela profundo, azul rey y oro cálido) */}
+            <div className="relative flex min-h-screen w-full flex-col justify-between overflow-x-hidden bg-[#EFE5F4] text-[#341242] selection:bg-[#1E5CD9] selection:text-white lg:h-screen lg:max-h-screen lg:overflow-hidden">
+                {/* Elementos decorativos de fondo sutiles en lavanda suave */}
                 <div
                     aria-hidden="true"
                     className="pointer-events-none absolute inset-0 overflow-hidden"
                 >
-                    {/* Aurora superior */}
-                    <div className="absolute -top-40 left-1/2 h-[420px] w-[800px] -translate-x-1/2 rounded-full bg-gradient-to-b from-blue-600/25 via-indigo-600/15 to-transparent blur-3xl" />
+                    {/* Resplandor superior en lavanda luminosa */}
+                    <div className="absolute -top-32 left-1/2 h-[380px] w-[750px] -translate-x-1/2 rounded-full bg-gradient-to-b from-white/70 via-[#E4D0EC]/60 to-transparent blur-3xl" />
 
-                    {/* Luz ambiental esmeralda suave abajo a la izquierda */}
-                    <div className="absolute -bottom-20 -left-20 h-80 w-80 rounded-full bg-emerald-500/10 blur-3xl" />
-
-                    {/* Trama de micro-cuadrícula sutil moderna */}
-                    <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff06_1px,transparent_1px),linear-gradient(to_bottom,#ffffff06_1px,transparent_1px)] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_40%,#000_70%,transparent_100%)] bg-[size:32px_32px]" />
+                    {/* Resplandor lateral suave */}
+                    <div className="absolute top-1/3 -right-20 h-72 w-72 rounded-full bg-[#D8BCE4]/40 blur-3xl" />
+                    <div className="absolute bottom-24 -left-20 h-72 w-72 rounded-full bg-[#EBDCF0]/60 blur-3xl" />
                 </div>
 
-                <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-1 flex-col justify-between px-4 py-4 sm:px-6 sm:py-5 lg:px-8">
-                    {/* Header Estilo Cyber-Glass */}
+                {/* Contenido centrado y contenido dentro de la pantalla */}
+                <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-1 flex-col justify-between p-3 sm:p-5 lg:py-4">
+                    {/* Header Institucional */}
                     <header className="w-full">
-                        <nav className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-2.5 shadow-lg shadow-black/20 backdrop-blur-xl">
-                            {/* Identidad UGEL Ambo */}
+                        <nav className="flex items-center justify-between gap-4 rounded-2xl border border-[#D8C0E2] bg-white/85 px-4 py-2.5 shadow-sm backdrop-blur-md">
+                            {/* Identidad con Logo Circular Oficial */}
                             <div className="flex items-center gap-3">
                                 <div className="relative">
                                     <img
                                         src="/Logo-Circular.png"
                                         alt="Escudo UGEL Ambo"
-                                        className="h-9 w-9 rounded-full object-cover shadow-md ring-2 shadow-blue-500/20 ring-blue-500/40"
+                                        className="h-10 w-10 rounded-full object-cover shadow-sm ring-2 ring-[#1E5CD9]/50"
                                     />
-                                    <span className="absolute -right-0.5 -bottom-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#070b14] bg-emerald-400" />
+                                    <span className="absolute -right-0.5 -bottom-0.5 h-3 w-3 rounded-full border-2 border-white bg-emerald-500" />
                                 </div>
                                 <div>
                                     <div className="flex items-center gap-2">
-                                        <span className="text-sm font-bold tracking-tight text-white">
+                                        <span className="text-sm font-black tracking-tight text-[#341242]">
                                             UGEL Ambo
                                         </span>
-                                        <span className="rounded-full border border-blue-500/30 bg-blue-500/15 px-2 py-0.5 text-[10px] font-semibold text-blue-300">
-                                            v1.0 AI
+                                        <span className="rounded-full border border-[#D5B8DF] bg-[#F2E5F7] px-2 py-0.5 text-[10px] font-bold text-[#4D2757]">
+                                            UPDI
                                         </span>
                                     </div>
-                                    <p className="text-[11px] text-slate-400">
-                                        Conformidad de Internet
+                                    <p className="text-[11px] font-medium text-[#6B4B7A]">
+                                        Conectividad & Conformidad Digital
                                     </p>
                                 </div>
                             </div>
 
-                            {/* Botón de Iniciar Sesión en Navbar */}
-                            <div className="flex items-center gap-3">
+                            {/* Acceso Superior */}
+                            <div className="flex items-center gap-2">
                                 {auth.user ? (
                                     <Link
                                         href={dashboard()}
-                                        className="group inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-md shadow-blue-600/30 transition-all duration-200 hover:shadow-blue-500/50 hover:brightness-110 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none sm:text-sm"
+                                        className="group inline-flex items-center gap-2 rounded-xl bg-[#1E5CD9] px-4 py-2 text-xs font-bold text-white shadow-sm transition-all duration-200 hover:bg-[#1748B0] hover:shadow-md focus-visible:ring-2 focus-visible:ring-[#1E5CD9] focus-visible:outline-none sm:text-sm"
                                     >
                                         <span>Panel Principal</span>
                                         <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
@@ -81,258 +80,299 @@ export default function Welcome() {
                                 ) : (
                                     <Link
                                         href={login()}
-                                        className="group inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 py-2 text-xs font-semibold text-white shadow-sm backdrop-blur-md transition-all duration-200 hover:border-blue-400/50 hover:bg-white/15 hover:shadow-md hover:shadow-blue-500/10 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none sm:text-sm"
+                                        className="group inline-flex items-center gap-2 rounded-xl border border-[#D8C0E2] bg-white px-3.5 py-1.5 text-xs font-bold text-[#1E5CD9] shadow-xs transition-all duration-200 hover:border-[#1E5CD9] hover:bg-[#F0F5FF] focus-visible:ring-2 focus-visible:ring-[#1E5CD9] focus-visible:outline-none sm:text-sm"
                                     >
-                                        <LogIn className="h-4 w-4 text-blue-400 transition-transform group-hover:scale-110" />
-                                        <span>Iniciar Sesión</span>
+                                        <LogIn className="h-4 w-4 transition-transform group-hover:scale-110" />
+                                        <span>Acceder</span>
                                     </Link>
                                 )}
                             </div>
                         </nav>
                     </header>
 
-                    {/* Contenido Principal en dos columnas */}
-                    <main className="my-auto grid items-center gap-6 py-4 lg:grid-cols-12 lg:gap-10">
-                        {/* Lado izquierdo: Presentación y Acción Principal */}
-                        <div className="space-y-4 lg:col-span-7">
-                            {/* Badge Inteligente de Estado */}
-                            <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-500/10 px-3.5 py-1 text-xs font-medium text-blue-300 shadow-sm shadow-blue-500/10 backdrop-blur-md">
-                                <Sparkles className="h-3.5 w-3.5 animate-pulse text-blue-400" />
-                                <span>
-                                    UGEL Ambo · Sistema Inteligente de
-                                    Conectividad
+                    {/* Cuerpo Principal en Dos Columnas */}
+                    <main className="my-auto grid items-center gap-6 py-3 lg:grid-cols-12 lg:gap-8">
+                        {/* Lado Izquierdo: Titular, Información y Botón Estilo "Clik Aquí" */}
+                        <div className="space-y-3.5 lg:col-span-7">
+                            {/* Chip Institucional Superior */}
+                            <div className="inline-flex items-center gap-2 rounded-full border border-[#D5B8DF] bg-white/90 px-3.5 py-1 text-xs font-semibold text-[#4D2757] shadow-xs backdrop-blur-sm">
+                                <span className="relative flex h-2 w-2">
+                                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                                    <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
                                 </span>
-                                <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                                <span>
+                                    UGEL Ambo · Sistema Oficial de Conectividad
+                                </span>
                             </div>
 
-                            {/* Título Principal de Alto Impacto */}
-                            <div className="space-y-2">
-                                <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl lg:text-[42px] lg:leading-[1.14]">
-                                    Control Digital de{' '}
-                                    <span className="bg-gradient-to-r from-blue-400 via-indigo-300 to-cyan-300 bg-clip-text text-transparent">
-                                        Internet Educativo
+                            {/* Titular Idéntico al Banner de Referencia */}
+                            <div className="space-y-1.5">
+                                <h1 className="text-3xl font-black tracking-tight text-[#341242] italic sm:text-4xl lg:text-[40px] lg:leading-[1.12]">
+                                    CONFORMIDAD DEL <br />
+                                    <span className="font-black text-[#1E5CD9] not-italic drop-shadow-xs">
+                                        SERVICIO DE INTERNET
                                     </span>
                                 </h1>
-                                <p className="max-w-xl text-xs leading-relaxed text-slate-300 sm:text-sm">
-                                    Plataforma automatizada para la emisión de
-                                    reportes mensuales, validación técnica de
-                                    ancho de banda UPDI y firma digital para
-                                    instituciones educativas de Ambo.
+                                <p className="max-w-xl text-xs leading-relaxed font-medium text-[#5C3D6A] sm:text-[13px]">
+                                    Plataforma oficial para la emisión,
+                                    validación técnica UPDI y suscripción
+                                    digital mensual del servicio de internet de
+                                    las Instituciones Educativas de la provincia
+                                    de Ambo.
                                 </p>
                             </div>
 
-                            {/* DESTACADO: Botón principal de Iniciar Sesión con Efecto Shimmer */}
-                            <div className="flex flex-col gap-2.5 pt-1 sm:flex-row sm:items-center">
+                            {/* EL BOTÓN ESTRELLA: Inspirado en la insignia "Clik Aquí" de la imagen de referencia */}
+                            <div className="flex flex-wrap items-center gap-3 pt-1">
                                 {auth.user ? (
                                     <Link
                                         href={dashboard()}
-                                        className="group relative inline-flex items-center justify-center gap-3 overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 px-7 py-3.5 text-sm font-bold text-white shadow-xl shadow-blue-600/30 transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/50 hover:brightness-110 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none active:scale-[0.98]"
+                                        className="group relative inline-flex items-center gap-3 rounded-full bg-gradient-to-r from-[#1E5CD9] via-[#2563EB] to-[#1D4ED8] p-1.5 pr-6 text-white shadow-lg shadow-blue-600/30 transition-all duration-200 hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-600/40 active:scale-[0.98]"
                                     >
-                                        <span>Acceder al Panel Principal</span>
-                                        <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                                        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#1E5CD9] shadow-sm">
+                                            <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5" />
+                                        </div>
+                                        <div className="flex flex-col text-left">
+                                            <span className="text-[10px] font-bold tracking-wider text-blue-100 uppercase">
+                                                Sesión Iniciada
+                                            </span>
+                                            <span className="text-sm font-black text-white">
+                                                Ir al Panel Principal
+                                            </span>
+                                        </div>
+                                        <span className="ml-2 rounded-full bg-[#FEC93B] px-3.5 py-1 text-xs font-black text-[#1E3A8A] shadow-xs">
+                                            Ingresar
+                                        </span>
                                     </Link>
                                 ) : (
                                     <Link
                                         href={login()}
-                                        className="group relative inline-flex items-center justify-center gap-3 overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 px-7 py-3.5 text-sm font-bold text-white shadow-xl shadow-blue-600/35 transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/50 hover:brightness-110 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none active:scale-[0.98]"
+                                        className="group relative inline-flex items-center gap-3 rounded-full bg-gradient-to-r from-[#1E5CD9] via-[#2563EB] to-[#1748B0] p-1.5 pr-5 text-white shadow-xl ring-4 shadow-blue-600/30 ring-white/90 transition-all duration-300 hover:scale-[1.03] hover:shadow-2xl hover:shadow-blue-600/45 active:scale-[0.98]"
                                     >
-                                        {/* Efecto de destello (Shimmer beam) */}
-                                        <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-1000 group-hover:translate-x-full" />
-
-                                        <div className="flex h-5 w-5 items-center justify-center rounded-lg bg-white/20 shadow-inner transition-transform group-hover:scale-110">
-                                            <LogIn className="h-3.5 w-3.5 text-white" />
+                                        {/* Ícono de Acceso Circular */}
+                                        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#1E5CD9] shadow-md transition-transform group-hover:rotate-[-6deg]">
+                                            <LogIn className="h-5 w-5 stroke-[2.5]" />
                                         </div>
-                                        <span className="tracking-wide">
-                                            Iniciar Sesión en la Plataforma
-                                        </span>
-                                        <ArrowRight className="h-4 w-4 text-blue-200 transition-transform group-hover:translate-x-1" />
+
+                                        {/* Texto Iniciar Sesión */}
+                                        <div className="flex flex-col text-left">
+                                            <span className="text-[10px] font-bold tracking-wider text-blue-100 uppercase">
+                                                Acceso Seguro
+                                            </span>
+                                            <span className="text-sm font-black tracking-tight text-white sm:text-base">
+                                                Iniciar Sesión
+                                            </span>
+                                        </div>
+
+                                        {/* Insignia Dorada 'Clik Aquí' con Puntero */}
+                                        <div className="relative ml-1 flex items-center gap-1.5 rounded-full bg-gradient-to-b from-[#FFE270] to-[#FEC93B] px-3.5 py-1.5 text-xs font-black text-[#1E3A8A] shadow-sm transition-transform group-hover:scale-105">
+                                            <span>Clik Aquí</span>
+                                            <MousePointer2 className="h-3.5 w-3.5 fill-[#1E3A8A] text-[#1E3A8A] transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                                        </div>
                                     </Link>
                                 )}
 
-                                <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2 text-xs text-slate-300 backdrop-blur-md sm:max-w-xs">
-                                    <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-400" />
+                                {/* Etiqueta de confianza */}
+                                <div className="flex items-center gap-2 rounded-full border border-[#D5B8DF] bg-white/70 px-3.5 py-2 text-xs font-semibold text-[#4D2757] shadow-xs backdrop-blur-xs">
+                                    <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-600" />
                                     <span>
-                                        Acceso seguro para Directores y Personal
-                                        UPDI
+                                        Directores IE y Especialistas UPDI
                                     </span>
                                 </div>
                             </div>
 
-                            {/* Métricas HUD Estilo Cyber */}
+                            {/* 3 Módulos de Procesos Rápidos */}
                             <div className="grid grid-cols-3 gap-2.5 pt-1">
-                                <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-center shadow-inner backdrop-blur-md transition-all hover:border-blue-500/30">
-                                    <div className="text-lg font-bold text-white sm:text-xl">
-                                        100+
+                                <div className="rounded-xl border border-[#D8C0E2] bg-white/80 p-3 shadow-xs transition-all hover:bg-white">
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-[#1E5CD9]">
+                                            <FileText className="h-4 w-4" />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-bold text-[#341242]">
+                                                Reporte
+                                            </p>
+                                            <p className="text-[10px] text-[#6B4B7A]">
+                                                Mensual
+                                            </p>
+                                        </div>
                                     </div>
-                                    <p className="mt-0.5 text-[11px] font-medium text-slate-400">
-                                        Instituciones
-                                    </p>
                                 </div>
-                                <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-center shadow-inner backdrop-blur-md transition-all hover:border-blue-500/30">
-                                    <div className="text-lg font-bold text-white sm:text-xl">
-                                        12
-                                    </div>
-                                    <p className="mt-0.5 text-[11px] font-medium text-slate-400">
-                                        Meses de gestión
-                                    </p>
-                                </div>
-                                <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-center shadow-inner backdrop-blur-md transition-all hover:border-blue-500/30">
-                                    <div className="text-lg font-bold text-emerald-400 sm:text-xl">
-                                        100%
-                                    </div>
-                                    <p className="mt-0.5 text-[11px] font-medium text-slate-400">
-                                        Validación digital
-                                    </p>
-                                </div>
-                            </div>
 
-                            {/* 4 Módulos Centrales */}
-                            <div className="grid grid-cols-2 gap-2 pt-1 sm:grid-cols-4">
-                                <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.02] p-2 transition-colors hover:border-blue-500/30">
-                                    <FileText className="h-4 w-4 shrink-0 text-blue-400" />
-                                    <span className="text-xs font-medium text-slate-300">
-                                        Reportes
-                                    </span>
+                                <div className="rounded-xl border border-[#D8C0E2] bg-white/80 p-3 shadow-xs transition-all hover:bg-white">
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                                            <CheckCircle2 className="h-4 w-4" />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-bold text-[#341242]">
+                                                Validación
+                                            </p>
+                                            <p className="text-[10px] text-[#6B4B7A]">
+                                                UPDI Ambo
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.02] p-2 transition-colors hover:border-blue-500/30">
-                                    <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-400" />
-                                    <span className="text-xs font-medium text-slate-300">
-                                        Validación UPDI
-                                    </span>
-                                </div>
-                                <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.02] p-2 transition-colors hover:border-blue-500/30">
-                                    <FileSignature className="h-4 w-4 shrink-0 text-indigo-400" />
-                                    <span className="text-xs font-medium text-slate-300">
-                                        Firma Digital
-                                    </span>
-                                </div>
-                                <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.02] p-2 transition-colors hover:border-blue-500/30">
-                                    <Building2 className="h-4 w-4 shrink-0 text-amber-400" />
-                                    <span className="text-xs font-medium text-slate-300">
-                                        Directorio IE
-                                    </span>
+
+                                <div className="rounded-xl border border-[#D8C0E2] bg-white/80 p-3 shadow-xs transition-all hover:bg-white">
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-purple-50 text-[#4D2757]">
+                                            <FileSignature className="h-4 w-4" />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-bold text-[#341242]">
+                                                Firma
+                                            </p>
+                                            <p className="text-[10px] text-[#6B4B7A]">
+                                                Digital
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Lado derecho: Consola de Monitoreo HUD Estilo IA */}
+                        {/* Lado Derecho: Composición 3D interactiva inspirada en la ventana, checklist y router de la imagen */}
                         <div className="lg:col-span-5">
-                            <div className="relative overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-b from-slate-900/80 to-[#0c1222]/90 p-5 shadow-2xl shadow-blue-950/60 backdrop-blur-2xl sm:p-6">
-                                {/* Resplandor de esquina decorativo */}
-                                <div className="pointer-events-none absolute -top-12 -right-12 h-32 w-32 rounded-full bg-blue-500/20 blur-2xl" />
+                            <div className="relative space-y-3">
+                                {/* 1. Ventana de Navegador estilo la imagen de referencia */}
+                                <div className="overflow-hidden rounded-2xl border border-[#D5B8DF] bg-white shadow-xl shadow-[#4D2757]/10">
+                                    {/* Barra de cabecera azul rey con 3 botones de control */}
+                                    <div className="flex items-center justify-between bg-[#1E5CD9] px-4 py-2.5 text-white">
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="h-2.5 w-2.5 rounded-full bg-[#FF5F56]" />
+                                            <span className="h-2.5 w-2.5 rounded-full bg-[#FFBD2E]" />
+                                            <span className="h-2.5 w-2.5 rounded-full bg-[#27C93F]" />
+                                        </div>
+                                        <div className="flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-0.5 text-[10px] font-medium text-white">
+                                            <Lock className="h-3 w-3" />
+                                            <span>
+                                                internet.ugelambo.edu.pe
+                                            </span>
+                                        </div>
+                                        <div className="w-10" />
+                                    </div>
 
-                                {/* Cabecera de la Consola */}
-                                <div className="flex items-center justify-between border-b border-white/10 pb-3.5">
+                                    {/* Cuerpo del documento con Checklist */}
+                                    <div className="space-y-3 p-4">
+                                        {/* Encabezado con Globo Terráqueo y Sello de Validación */}
+                                        <div className="flex items-center justify-between border-b border-purple-100 pb-2.5">
+                                            <div className="flex items-center gap-2.5">
+                                                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-[#1E5CD9]">
+                                                    <Globe className="h-5 w-5 stroke-[2]" />
+                                                </div>
+                                                <div>
+                                                    <h3 className="text-xs font-bold text-[#341242]">
+                                                        Auditoría de Red y
+                                                        Conectividad
+                                                    </h3>
+                                                    <p className="text-[10px] text-[#6B4B7A]">
+                                                        UGEL Ambo · Región
+                                                        Huánuco
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                                                <Check className="h-3 w-3" />
+                                                Verificado
+                                            </span>
+                                        </div>
+
+                                        {/* Lista de Comprobación como en la imagen */}
+                                        <div className="space-y-2">
+                                            <div className="flex items-center gap-2.5 rounded-lg bg-[#FAF5FC] p-2 text-xs">
+                                                <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#1E5CD9] text-white">
+                                                    <Check className="h-3 w-3 stroke-[3]" />
+                                                </div>
+                                                <span className="font-semibold text-[#341242]">
+                                                    Acta mensual emitida y
+                                                    firmada por Dirección IE
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center gap-2.5 rounded-lg bg-[#FAF5FC] p-2 text-xs">
+                                                <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#1E5CD9] text-white">
+                                                    <Check className="h-3 w-3 stroke-[3]" />
+                                                </div>
+                                                <span className="font-semibold text-[#341242]">
+                                                    Velocidad de internet y
+                                                    latencia verificadas
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center gap-2.5 rounded-lg bg-[#FAF5FC] p-2 text-xs">
+                                                <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#1E5CD9] text-white">
+                                                    <Check className="h-3 w-3 stroke-[3]" />
+                                                </div>
+                                                <span className="font-semibold text-[#341242]">
+                                                    Visto Bueno y Conformidad
+                                                    técnica UPDI aprobada
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* 2. Router Institucional como en el gráfico de referencia */}
+                                <div className="flex items-center justify-between rounded-xl border border-slate-700/60 bg-[#1C2237] p-3 text-white shadow-lg">
                                     <div className="flex items-center gap-3">
-                                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/10 ring-1 ring-blue-500/30">
-                                            <Wifi className="h-5 w-5 text-blue-400" />
+                                        <div className="relative flex h-9 w-9 items-center justify-center rounded-lg bg-[#252E4B] text-cyan-400">
+                                            <Wifi className="h-5 w-5 animate-pulse" />
+                                            {/* LED verde de encendido */}
+                                            <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-emerald-400 shadow-xs shadow-emerald-400" />
                                         </div>
                                         <div>
-                                            <h2 className="text-sm font-bold tracking-wide text-white">
-                                                Consola de Conformidad
-                                            </h2>
-                                            <p className="text-xs text-slate-400">
-                                                Nodo UPDI UGEL Ambo
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs font-bold text-white">
+                                                    Router Institucional
+                                                </span>
+                                                <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-400">
+                                                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                                                    En línea
+                                                </span>
+                                            </div>
+                                            <p className="text-[10px] text-slate-300">
+                                                Fibra Óptica · Ancho de Banda
+                                                Garantizado
                                             </p>
                                         </div>
                                     </div>
-                                    <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-400">
-                                        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
-                                        En Vivo
-                                    </span>
-                                </div>
 
-                                {/* Cuerpo interactivo: Telemetría de Red y Acceso */}
-                                <div className="space-y-3 py-3.5">
-                                    <div className="rounded-xl border border-white/10 bg-black/30 p-3.5">
-                                        <div className="mb-2 flex items-center justify-between text-xs text-slate-400">
-                                            <span className="flex items-center gap-1.5 font-medium text-slate-300">
-                                                <Activity className="h-3.5 w-3.5 text-blue-400" />
-                                                Telemetría de Red Activa
-                                            </span>
-                                            <span className="rounded bg-white/10 px-1.5 py-0.5 font-mono text-[10px] text-blue-300">
-                                                PING 9.4 ms
-                                            </span>
-                                        </div>
-                                        <div className="space-y-1.5 font-mono text-xs">
-                                            <div className="flex items-center justify-between text-slate-300">
-                                                <span className="font-sans text-slate-400">
-                                                    Speedtest Integrado
-                                                </span>
-                                                <span className="font-semibold text-emerald-400">
-                                                    100 Mbps Simétrico
-                                                </span>
-                                            </div>
-                                            <div className="flex items-center justify-between text-slate-300">
-                                                <span className="font-sans text-slate-400">
-                                                    Cifrado de Firma
-                                                </span>
-                                                <span className="font-semibold text-blue-400">
-                                                    SHA-256 Validado
-                                                </span>
-                                            </div>
-                                        </div>
+                                    <div className="text-right">
+                                        <span className="rounded bg-[#283252] px-2 py-0.5 font-mono text-[11px] font-bold text-emerald-400">
+                                            100 Mbps
+                                        </span>
+                                        <p className="mt-0.5 text-[9px] text-slate-400">
+                                            Simétrico
+                                        </p>
                                     </div>
-
-                                    {/* Botón de acceso directo secundario en la tarjeta */}
-                                    {auth.user ? (
-                                        <Link
-                                            href={dashboard()}
-                                            className="group flex w-full items-center justify-between rounded-xl border border-blue-500/30 bg-blue-500/10 p-2.5 text-xs font-semibold text-blue-300 transition-all hover:bg-blue-500/20"
-                                        >
-                                            <div className="flex items-center gap-2">
-                                                <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                                                <span>
-                                                    Sesión activa como{' '}
-                                                    {auth.user.name}
-                                                </span>
-                                            </div>
-                                            <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-                                        </Link>
-                                    ) : (
-                                        <Link
-                                            href={login()}
-                                            className="group flex w-full items-center justify-between rounded-xl border border-white/10 bg-white/[0.04] p-2.5 text-xs font-semibold text-slate-200 transition-all hover:border-blue-500/40 hover:bg-white/[0.08]"
-                                        >
-                                            <div className="flex items-center gap-2">
-                                                <Lock className="h-4 w-4 text-blue-400" />
-                                                <span>
-                                                    Acceso institucional o
-                                                    Passkey
-                                                </span>
-                                            </div>
-                                            <span className="flex items-center gap-1 font-medium text-blue-400">
-                                                Ingresar
-                                                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-                                            </span>
-                                        </Link>
-                                    )}
                                 </div>
 
-                                {/* Pie de la consola */}
-                                <div className="flex items-center justify-between border-t border-white/10 pt-3 text-[11px] text-slate-400">
-                                    <span className="flex items-center gap-1">
-                                        <Phone className="h-3 w-3 text-slate-500" />
-                                        Mesa de Ayuda UPDI: 925523419
+                                {/* 3. Mesa de ayuda y contacto */}
+                                <div className="flex items-center justify-between rounded-xl border border-[#FDE68A] bg-[#FFFBEB] px-3.5 py-2 text-xs font-semibold text-[#92400E] shadow-xs">
+                                    <span className="flex items-center gap-1.5">
+                                        <Phone className="h-3.5 w-3.5 text-[#D97706]" />
+                                        Mesa de Ayuda UPDI: 925 523 419
                                     </span>
-                                    <span className="font-mono text-[10px] text-slate-400">
-                                        TLS 1.3 SECURED
+                                    <span className="rounded-full bg-[#FEF3C7] px-2 py-0.5 text-[10px] font-bold text-[#B45309]">
+                                        Lun - Vie
                                     </span>
                                 </div>
                             </div>
                         </div>
                     </main>
 
-                    {/* Footer Institucional Compacto */}
-                    <footer className="w-full border-t border-white/10 pt-3">
-                        <div className="flex flex-col items-center justify-between gap-1 text-xs text-slate-400 sm:flex-row">
-                            <p>
-                                © {new Date().getFullYear()} UGEL Ambo · Jordan
-                                Brandon Ayala Romero
+                    {/* Footer Estilo Onda Ciruela Idéntico al Banner Inferior de la Imagen */}
+                    <footer className="w-full pt-1">
+                        <div className="flex flex-col items-center justify-between gap-1.5 rounded-2xl border border-[#582E63] bg-gradient-to-r from-[#3C164D] via-[#4D2757] to-[#361345] px-5 py-2.5 text-white shadow-md sm:flex-row">
+                            <p className="text-xs font-medium text-purple-100">
+                                © {new Date().getFullYear()} UGEL Ambo ·{' '}
+                                <span className="font-bold text-white">
+                                    Jordan Brandon Ayala Romero
+                                </span>
                             </p>
-                            <p className="text-[11px] text-slate-500">
-                                Sistema Inteligente de Gestión y Conformidad de
-                                Internet
+                            <p className="text-[11px] text-purple-200">
+                                Unidad de Gestión Educativa Local · Sistema de
+                                Conformidad de Internet
                             </p>
                         </div>
                     </footer>
