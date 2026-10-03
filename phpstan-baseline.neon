@@ -1,0 +1,1711 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Class App\\Exports\\InstitutionsWithoutReportSheet implements generic interface Maatwebsite\\Excel\\Concerns\\WithMapping but does not specify its types\: RowType$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Exports/AdminStatisticsExport.php
+
+		-
+			message: '#^Class App\\Exports\\PendingReportsSheet implements generic interface Maatwebsite\\Excel\\Concerns\\WithMapping but does not specify its types\: RowType$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Exports/AdminStatisticsExport.php
+
+		-
+			message: '#^Method App\\Exports\\AdminStatisticsExport\:\:sheets\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Exports/AdminStatisticsExport.php
+
+		-
+			message: '#^Method App\\Exports\\InstitutionsWithoutReportSheet\:\:collection\(\) return type with generic class Illuminate\\Support\\Collection does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Exports/AdminStatisticsExport.php
+
+		-
+			message: '#^Method App\\Exports\\InstitutionsWithoutReportSheet\:\:headings\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Exports/AdminStatisticsExport.php
+
+		-
+			message: '#^Method App\\Exports\\InstitutionsWithoutReportSheet\:\:map\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Exports/AdminStatisticsExport.php
+
+		-
+			message: '#^Method App\\Exports\\InstitutionsWithoutReportSheet\:\:styles\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Exports/AdminStatisticsExport.php
+
+		-
+			message: '#^Method App\\Exports\\PendingReportsSheet\:\:collection\(\) return type with generic class Illuminate\\Support\\Collection does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Exports/AdminStatisticsExport.php
+
+		-
+			message: '#^Method App\\Exports\\PendingReportsSheet\:\:headings\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Exports/AdminStatisticsExport.php
+
+		-
+			message: '#^Method App\\Exports\\PendingReportsSheet\:\:map\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Exports/AdminStatisticsExport.php
+
+		-
+			message: '#^Method App\\Exports\\PendingReportsSheet\:\:styles\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Exports/AdminStatisticsExport.php
+
+		-
+			message: '#^Method App\\Exports\\StatisticsSummarySheet\:\:array\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Exports/AdminStatisticsExport.php
+
+		-
+			message: '#^Method App\\Exports\\StatisticsSummarySheet\:\:styles\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Exports/AdminStatisticsExport.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>district" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Exports/AdminStatisticsExport.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>dni" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Exports/AdminStatisticsExport.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>level" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Exports/AdminStatisticsExport.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>modular_code" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Exports/AdminStatisticsExport.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 3
+			path: app/Exports/AdminStatisticsExport.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>phone" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Exports/AdminStatisticsExport.php
+
+		-
+			message: '#^Class App\\Exports\\ReportsExport implements generic interface Maatwebsite\\Excel\\Concerns\\WithMapping but does not specify its types\: RowType$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Exports/ReportsExport.php
+
+		-
+			message: '#^Method App\\Exports\\ReportsExport\:\:__construct\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Exports/ReportsExport.php
+
+		-
+			message: '#^Method App\\Exports\\ReportsExport\:\:headings\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Exports/ReportsExport.php
+
+		-
+			message: '#^Method App\\Exports\\ReportsExport\:\:map\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Exports/ReportsExport.php
+
+		-
+			message: '#^Method App\\Exports\\ReportsExport\:\:query\(\) has invalid return type Laravel\\Scout\\Builder\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Exports/ReportsExport.php
+
+		-
+			message: '#^Method App\\Exports\\ReportsExport\:\:query\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Exports/ReportsExport.php
+
+		-
+			message: '#^Method App\\Exports\\ReportsExport\:\:query\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\Relation does not specify its types\: TRelatedModel, TDeclaringModel, TResult$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Exports/ReportsExport.php
+
+		-
+			message: '#^Method App\\Exports\\ReportsExport\:\:styles\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Exports/ReportsExport.php
+
+		-
+			message: '#^Property App\\Exports\\ReportsExport\:\:\$filters has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Exports/ReportsExport.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>district" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Exports/ReportsExport.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>dni" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Exports/ReportsExport.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>level" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Exports/ReportsExport.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>local_code" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Exports/ReportsExport.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>modular_code" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Exports/ReportsExport.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Exports/ReportsExport.php
+
+		-
+			message: '#^Method App\\Helpers\\ReportHelper\:\:getNotifications\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Helpers/ReportHelper.php
+
+		-
+			message: '#^Method App\\Helpers\\ReportHelper\:\:getReportHistory\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Helpers/ReportHelper.php
+
+		-
+			message: '#^Method App\\Helpers\\ReportHelper\:\:getUnreadNotifications\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Helpers/ReportHelper.php
+
+		-
+			message: '#^Method App\\Helpers\\ReportHelper\:\:logHistory\(\) has parameter \$changes with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Helpers/ReportHelper.php
+
+		-
+			message: '#^Method App\\Helpers\\ReportHelper\:\:notify\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Helpers/ReportHelper.php
+
+		-
+			message: '#^Method App\\Helpers\\ReportHelper\:\:notifyAdmins\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Helpers/ReportHelper.php
+
+		-
+			message: '#^Method App\\Helpers\\ReportHelper\:\:notifyDirectors\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Helpers/ReportHelper.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\EducationalInstitution\:\:\$count\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/AdminStatisticsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\MonthlyReport\:\:\$approved\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/AdminStatisticsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\MonthlyReport\:\:\$observed\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/AdminStatisticsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\MonthlyReport\:\:\$pending\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/AdminStatisticsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\MonthlyReport\:\:\$total\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Http/Controllers/AdminStatisticsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$count\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/AdminStatisticsController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\AdminStatisticsController\:\:export\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/AdminStatisticsController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\AdminStatisticsController\:\:index\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/AdminStatisticsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\MonthlyReport\:\:\$month_name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/BulkExportController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$file_path\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/BulkExportController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$signature_path\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/BulkExportController.php
+
+		-
+			message: '#^Argument of an invalid type list\<string\>\|false supplied for foreach, only iterables are supported\.$#'
+			identifier: foreach.nonIterable
+			count: 1
+			path: app/Http/Controllers/BulkExportController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:hasSignature\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/BulkExportController.php
+
+		-
+			message: '#^Left side of && is always true\.$#'
+			identifier: booleanAnd.leftAlwaysTrue
+			count: 1
+			path: app/Http/Controllers/BulkExportController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\BulkExportController\:\:export\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/BulkExportController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\BulkExportController\:\:index\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/BulkExportController.php
+
+		-
+			message: '#^Parameter \#1 \$string of function base64_encode expects string, string\|false given\.$#'
+			identifier: argument.type
+			count: 4
+			path: app/Http/Controllers/BulkExportController.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between ''admin''\|''specialist''\|''super_admin'' and ''director'' will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Http/Controllers/BulkExportController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\ExportController\:\:export\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/ExportController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\ExportController\:\:exportAll\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/ExportController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\ExportController\:\:index\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/ExportController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\InstitutionController\:\:destroy\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/InstitutionController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\InstitutionController\:\:downloadTemplate\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/InstitutionController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\InstitutionController\:\:export\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/InstitutionController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\InstitutionController\:\:import\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/InstitutionController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\InstitutionController\:\:importIndex\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/InstitutionController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\InstitutionController\:\:index\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/InstitutionController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\InstitutionController\:\:list\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/InstitutionController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\InstitutionController\:\:show\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/InstitutionController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\InstitutionController\:\:store\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/InstitutionController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\InstitutionController\:\:toggle\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/InstitutionController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\InstitutionController\:\:update\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/InstitutionController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\InternetTestController\:\:measureDownload\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/InternetTestController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\InternetTestController\:\:measurePing\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/InternetTestController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\InternetTestController\:\:measureUpload\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/InternetTestController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\InternetTestController\:\:measureUpload\(\) has parameter \$download with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Http/Controllers/InternetTestController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\InternetTestController\:\:test\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/InternetTestController.php
+
+		-
+			message: '#^Parameter \#1 \$string of function strlen expects string, string\|true given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/InternetTestController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\MaintenanceController\:\:disable\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/MaintenanceController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\MaintenanceController\:\:enable\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/MaintenanceController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\MaintenanceController\:\:index\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/MaintenanceController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\MaintenanceController\:\:status\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/MaintenanceController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\NetworkEquipmentController\:\:destroy\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/NetworkEquipmentController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\NetworkEquipmentController\:\:downloadTemplate\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/NetworkEquipmentController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\NetworkEquipmentController\:\:export\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/NetworkEquipmentController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\NetworkEquipmentController\:\:getByInstitution\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/NetworkEquipmentController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\NetworkEquipmentController\:\:getByInstitution\(\) has parameter \$localCode with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Http/Controllers/NetworkEquipmentController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\NetworkEquipmentController\:\:import\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/NetworkEquipmentController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\NetworkEquipmentController\:\:importIndex\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/NetworkEquipmentController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\NetworkEquipmentController\:\:index\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/NetworkEquipmentController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\NetworkEquipmentController\:\:show\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/NetworkEquipmentController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\NetworkEquipmentController\:\:update\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/NetworkEquipmentController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\NotificationController\:\:delete\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/NotificationController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\NotificationController\:\:delete\(\) has parameter \$id with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Http/Controllers/NotificationController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\NotificationController\:\:deleteAll\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/NotificationController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\NotificationController\:\:index\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/NotificationController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\NotificationController\:\:markAllAsRead\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/NotificationController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\NotificationController\:\:markAsRead\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/NotificationController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\NotificationController\:\:markAsRead\(\) has parameter \$id with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Http/Controllers/NotificationController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\EducationalInstitution\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\EducationalInstitution\>\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/ReportController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\MonthlyReport\:\:\$month_name\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/ReportController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\MonthlyReport\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\MonthlyReport\>\:\:\$evidences\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/ReportController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$file_path\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/ReportController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 5
+			path: app/Http/Controllers/ReportController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$modular_code\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/ReportController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/ReportController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$signature_path\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/ReportController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/ReportController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$user_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/ReportController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:evidences\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/ReportController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:hasSignature\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/ReportController.php
+
+		-
+			message: '#^Call to function method_exists\(\) with App\\Models\\User and ''hasSignature'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Http/Controllers/ReportController.php
+
+		-
+			message: '#^Call to function method_exists\(\) with App\\Models\\User and ''institutions'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Http/Controllers/ReportController.php
+
+		-
+			message: '#^Left side of && is always true\.$#'
+			identifier: booleanAnd.leftAlwaysTrue
+			count: 1
+			path: app/Http/Controllers/ReportController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\ReportController\:\:adminIndex\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/ReportController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\ReportController\:\:create\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/ReportController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\ReportController\:\:downloadPdf\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/ReportController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\ReportController\:\:index\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/ReportController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\ReportController\:\:previewPdf\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/ReportController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\ReportController\:\:store\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/ReportController.php
+
+		-
+			message: '#^Parameter \#1 \$report of static method App\\Helpers\\ReportHelper\:\:logHistory\(\) expects App\\Models\\MonthlyReport, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/ReportController.php
+
+		-
+			message: '#^Parameter \#1 \$string of function base64_encode expects string, string\|false given\.$#'
+			identifier: argument.type
+			count: 6
+			path: app/Http/Controllers/ReportController.php
+
+		-
+			message: '#^Parameter \#2 \$timestamp of function date expects int\|null, int\|false given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/ReportController.php
+
+		-
+			message: '#^Right side of && is always true\.$#'
+			identifier: booleanAnd.rightAlwaysTrue
+			count: 1
+			path: app/Http/Controllers/ReportController.php
+
+		-
+			message: '#^Ternary operator condition is always true\.$#'
+			identifier: ternary.alwaysTrue
+			count: 4
+			path: app/Http/Controllers/ReportController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\ReportPeriodConfigController\:\:getPeriodConfig\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Controllers/ReportPeriodConfigController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\ReportPeriodConfigController\:\:index\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/ReportPeriodConfigController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\ReportPeriodConfigController\:\:saveConfigFile\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/ReportPeriodConfigController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\ReportPeriodConfigController\:\:saveConfigFile\(\) has parameter \$config with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Controllers/ReportPeriodConfigController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\ReportPeriodConfigController\:\:update\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/ReportPeriodConfigController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\ReportPeriodController\:\:create\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/ReportPeriodController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\ReportPeriodController\:\:destroy\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/ReportPeriodController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\ReportPeriodController\:\:edit\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/ReportPeriodController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\ReportPeriodController\:\:getPeriod\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/ReportPeriodController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\ReportPeriodController\:\:getPeriod\(\) has parameter \$month with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Http/Controllers/ReportPeriodController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\ReportPeriodController\:\:getPeriod\(\) has parameter \$year with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Http/Controllers/ReportPeriodController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\ReportPeriodController\:\:index\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/ReportPeriodController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\ReportPeriodController\:\:store\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/ReportPeriodController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\ReportPeriodController\:\:update\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/ReportPeriodController.php
+
+		-
+			message: '#^Cannot call method format\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 4
+			path: app/Http/Controllers/SignatureController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\SimpleSpeedtestController\:\:getIspInfo\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/SimpleSpeedtestController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\SimpleSpeedtestController\:\:measureDownload\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/SimpleSpeedtestController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\SimpleSpeedtestController\:\:measurePing\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/SimpleSpeedtestController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\SimpleSpeedtestController\:\:test\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/SimpleSpeedtestController.php
+
+		-
+			message: '#^Parameter \#1 \$json of function json_decode expects string, string\|false given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/SimpleSpeedtestController.php
+
+		-
+			message: '#^Parameter \#1 \$string of function strlen expects string, bool\|string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/SimpleSpeedtestController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\SpeedtestCaptureController\:\:capture\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/SpeedtestCaptureController.php
+
+		-
+			message: '#^Parameter \#1 \$json of function json_decode expects string, string\|false given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/SpeedtestCaptureController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\SpeedtestCliController\:\:extractValue\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/SpeedtestCliController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\SpeedtestCliController\:\:extractValue\(\) has parameter \$key with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Http/Controllers/SpeedtestCliController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\SpeedtestCliController\:\:extractValue\(\) has parameter \$output with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Http/Controllers/SpeedtestCliController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\SpeedtestCliController\:\:test\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/SpeedtestCliController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\SpeedtestCliController\:\:getIspInfo\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/SpeedtestController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\SpeedtestCliController\:\:parseSpeedtestOutput\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/SpeedtestController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\SpeedtestCliController\:\:parseSpeedtestOutput\(\) has parameter \$output with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Http/Controllers/SpeedtestController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\SpeedtestCliController\:\:test\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/SpeedtestController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\SpeedtestCliController\:\:version\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/SpeedtestController.php
+
+		-
+			message: '#^Parameter \#1 \$json of function json_decode expects string, bool\|string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/SpeedtestController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\SpeedtestOoklaController\:\:fallbackTest\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/SpeedtestOoklaController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\SpeedtestOoklaController\:\:measureDownload\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/SpeedtestOoklaController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\SpeedtestOoklaController\:\:measurePing\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/SpeedtestOoklaController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\SpeedtestOoklaController\:\:measureUpload\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/SpeedtestOoklaController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\SpeedtestOoklaController\:\:queryOoklaAPI\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/SpeedtestOoklaController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\SpeedtestOoklaController\:\:queryOoklaAPI\(\) has parameter \$ip with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Http/Controllers/SpeedtestOoklaController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\SpeedtestOoklaController\:\:queryOoklaAPI\(\) has parameter \$port with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Http/Controllers/SpeedtestOoklaController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\SpeedtestOoklaController\:\:test\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/SpeedtestOoklaController.php
+
+		-
+			message: '#^Parameter \#1 \$string of function strlen expects string, bool\|string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/SpeedtestOoklaController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\SpeedtestRealController\:\:fallbackTest\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/SpeedtestRealController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\SpeedtestRealController\:\:getBestServer\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/SpeedtestRealController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\SpeedtestRealController\:\:measureDownload\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/SpeedtestRealController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\SpeedtestRealController\:\:measurePing\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/SpeedtestRealController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\SpeedtestRealController\:\:measurePingToHost\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/SpeedtestRealController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\SpeedtestRealController\:\:measurePingToHost\(\) has parameter \$host with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Http/Controllers/SpeedtestRealController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\SpeedtestRealController\:\:measureUpload\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/SpeedtestRealController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\SpeedtestRealController\:\:test\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/SpeedtestRealController.php
+
+		-
+			message: '#^Offset 0 on non\-empty\-list\<array\{name\: ''Cloudflare Speedtest'', location\: ''Global'', host\: ''speed\.cloudflare\.com'', isp\: ''Cloudflare'', latency\: 0\}\|array\{name\: ''Hetzner Speedtest'', location\: ''Alemania'', host\: ''speed\.hetzner\.de'', isp\: ''Hetzner'', latency\: 0\}\|array\{name\: ''Tele2 Speedtest'', location\: ''Suecia'', host\: ''speedtest\.tele2\.net'', isp\: ''Tele2'', latency\: 0\}\> on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Http/Controllers/SpeedtestRealController.php
+
+		-
+			message: '#^Parameter \#1 \$string of function strlen expects string, bool\|string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/SpeedtestRealController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\TutorialController\:\:index\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/TutorialController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\UserController\:\:assign\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/UserController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\UserController\:\:changeRole\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/UserController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\UserController\:\:getUserInstitutions\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/UserController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\UserController\:\:index\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/UserController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\UserController\:\:list\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/UserController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\UserController\:\:resetSignature\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/UserController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\UserController\:\:stats\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/UserController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\UserManagementController\:\:assignInstitutions\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/UserManagementController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\UserManagementController\:\:changeRole\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/UserManagementController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\UserManagementController\:\:destroy\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/UserManagementController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\UserManagementController\:\:downloadTemplate\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/UserManagementController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\UserManagementController\:\:import\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/UserManagementController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\UserManagementController\:\:importIndex\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/UserManagementController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\UserManagementController\:\:index\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/UserManagementController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\UserManagementController\:\:resetSignature\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/UserManagementController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\UserManagementController\:\:store\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/UserManagementController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\UserManagementController\:\:toggleActive\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/UserManagementController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\UserManagementController\:\:update\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/UserManagementController.php
+
+		-
+			message: '#^Method App\\Http\\Middleware\\CheckAuthSession\:\:handle\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Middleware/CheckAuthSession.php
+
+		-
+			message: '#^Method App\\Http\\Middleware\\ForceSessionRefresh\:\:handle\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Middleware/ForceSessionRefresh.php
+
+		-
+			message: '#^Call to function method_exists\(\) with App\\Models\\User and ''hasSignature'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Http/Middleware/HandleInertiaRequests.php
+
+		-
+			message: '#^Method App\\Http\\Middleware\\MaintenanceMode\:\:handle\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Middleware/MaintenanceMode.php
+
+		-
+			message: '#^Method App\\Imports\\InstitutionsImport\:\:collection\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Imports/InstitutionsImport.php
+
+		-
+			message: '#^Method App\\Imports\\InstitutionsImport\:\:collection\(\) has parameter \$collection with generic class Illuminate\\Support\\Collection but does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Imports/InstitutionsImport.php
+
+		-
+			message: '#^Method App\\Imports\\InstitutionsImport\:\:getErrors\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Imports/InstitutionsImport.php
+
+		-
+			message: '#^Method App\\Imports\\InstitutionsImport\:\:getValue\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Imports/InstitutionsImport.php
+
+		-
+			message: '#^Method App\\Imports\\InstitutionsImport\:\:getValue\(\) has parameter \$row with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Imports/InstitutionsImport.php
+
+		-
+			message: '#^Method App\\Imports\\InstitutionsImport\:\:isEmptyRow\(\) has parameter \$row with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Imports/InstitutionsImport.php
+
+		-
+			message: '#^Property App\\Imports\\InstitutionsImport\:\:\$errors has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Imports/InstitutionsImport.php
+
+		-
+			message: '#^Property App\\Imports\\InstitutionsImport\:\:\$imported has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Imports/InstitutionsImport.php
+
+		-
+			message: '#^Property App\\Imports\\InstitutionsImport\:\:\$skipped has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Imports/InstitutionsImport.php
+
+		-
+			message: '#^Method App\\Imports\\NetworkEquipmentsImport\:\:collection\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Imports/NetworkEquipmentsImport.php
+
+		-
+			message: '#^Method App\\Imports\\NetworkEquipmentsImport\:\:collection\(\) has parameter \$collection with generic class Illuminate\\Support\\Collection but does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Imports/NetworkEquipmentsImport.php
+
+		-
+			message: '#^Method App\\Imports\\NetworkEquipmentsImport\:\:getErrors\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Imports/NetworkEquipmentsImport.php
+
+		-
+			message: '#^Method App\\Imports\\NetworkEquipmentsImport\:\:getInstitutionByLocalCode\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Imports/NetworkEquipmentsImport.php
+
+		-
+			message: '#^Method App\\Imports\\NetworkEquipmentsImport\:\:getInstitutionByLocalCode\(\) has parameter \$localCode with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Imports/NetworkEquipmentsImport.php
+
+		-
+			message: '#^Method App\\Imports\\NetworkEquipmentsImport\:\:getValue\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Imports/NetworkEquipmentsImport.php
+
+		-
+			message: '#^Method App\\Imports\\NetworkEquipmentsImport\:\:getValue\(\) has parameter \$keys with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Imports/NetworkEquipmentsImport.php
+
+		-
+			message: '#^Method App\\Imports\\NetworkEquipmentsImport\:\:getValue\(\) has parameter \$row with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Imports/NetworkEquipmentsImport.php
+
+		-
+			message: '#^Property App\\Imports\\NetworkEquipmentsImport\:\:\$errors has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Imports/NetworkEquipmentsImport.php
+
+		-
+			message: '#^Property App\\Imports\\NetworkEquipmentsImport\:\:\$importedCount has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Imports/NetworkEquipmentsImport.php
+
+		-
+			message: '#^Property App\\Imports\\NetworkEquipmentsImport\:\:\$institutionCache has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Imports/NetworkEquipmentsImport.php
+
+		-
+			message: '#^Property App\\Imports\\NetworkEquipmentsImport\:\:\$skippedCount has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Imports/NetworkEquipmentsImport.php
+
+		-
+			message: '#^Call to function is_null\(\) with mixed will always evaluate to false\.$#'
+			identifier: function.impossibleType
+			count: 1
+			path: app/Imports/UsersImport.php
+
+		-
+			message: '#^Cannot call method toArray\(\) on class\-string\|object\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Imports/UsersImport.php
+
+		-
+			message: '#^Method App\\Imports\\UsersImport\:\:collection\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Imports/UsersImport.php
+
+		-
+			message: '#^Method App\\Imports\\UsersImport\:\:collection\(\) has parameter \$collection with generic class Illuminate\\Support\\Collection but does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Imports/UsersImport.php
+
+		-
+			message: '#^Method App\\Imports\\UsersImport\:\:getErrors\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Imports/UsersImport.php
+
+		-
+			message: '#^Method App\\Imports\\UsersImport\:\:getRepeatedUsers\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Imports/UsersImport.php
+
+		-
+			message: '#^Property App\\Imports\\UsersImport\:\:\$alreadyExistingCount has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Imports/UsersImport.php
+
+		-
+			message: '#^Property App\\Imports\\UsersImport\:\:\$errors has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Imports/UsersImport.php
+
+		-
+			message: '#^Property App\\Imports\\UsersImport\:\:\$imported has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Imports/UsersImport.php
+
+		-
+			message: '#^Property App\\Imports\\UsersImport\:\:\$processedDnis has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Imports/UsersImport.php
+
+		-
+			message: '#^Property App\\Imports\\UsersImport\:\:\$repeatedUsers has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Imports/UsersImport.php
+
+		-
+			message: '#^Property App\\Imports\\UsersImport\:\:\$roleMap has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Imports/UsersImport.php
+
+		-
+			message: '#^Property App\\Imports\\UsersImport\:\:\$skipped has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Imports/UsersImport.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" in empty\(\) is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Imports/UsersImport.php
+
+		-
+			message: '#^Method App\\Models\\EducationalInstitution\:\:currentProvider\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/EducationalInstitution.php
+
+		-
+			message: '#^Method App\\Models\\EducationalInstitution\:\:monthlyReports\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/EducationalInstitution.php
+
+		-
+			message: '#^Method App\\Models\\EducationalInstitution\:\:users\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany does not specify its types\: TRelatedModel, TDeclaringModel, TPivotModel, TAccessor \(2\-4 required\)$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/EducationalInstitution.php
+
+		-
+			message: '#^Method App\\Models\\MonthlyReport\:\:evidences\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/MonthlyReport.php
+
+		-
+			message: '#^Method App\\Models\\MonthlyReport\:\:history\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/MonthlyReport.php
+
+		-
+			message: '#^Method App\\Models\\MonthlyReport\:\:institution\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/MonthlyReport.php
+
+		-
+			message: '#^Method App\\Models\\MonthlyReport\:\:user\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/MonthlyReport.php
+
+		-
+			message: '#^Method App\\Models\\NetworkEquipment\:\:institution\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/NetworkEquipment.php
+
+		-
+			message: '#^Method App\\Models\\NetworkEquipment\:\:scopeActive\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Models/NetworkEquipment.php
+
+		-
+			message: '#^Method App\\Models\\NetworkEquipment\:\:scopeActive\(\) has parameter \$query with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Models/NetworkEquipment.php
+
+		-
+			message: '#^Method App\\Models\\NetworkEquipment\:\:scopeOperative\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Models/NetworkEquipment.php
+
+		-
+			message: '#^Method App\\Models\\NetworkEquipment\:\:scopeOperative\(\) has parameter \$query with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Models/NetworkEquipment.php
+
+		-
+			message: '#^Method App\\Models\\Notification\:\:report\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Notification.php
+
+		-
+			message: '#^Method App\\Models\\Notification\:\:scopeUnread\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Models/Notification.php
+
+		-
+			message: '#^Method App\\Models\\Notification\:\:scopeUnread\(\) has parameter \$query with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Models/Notification.php
+
+		-
+			message: '#^Method App\\Models\\Notification\:\:user\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Notification.php
+
+		-
+			message: '#^Method App\\Models\\Provider\:\:educationalInstitutions\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Provider.php
+
+		-
+			message: '#^Method App\\Models\\ReportEvidence\:\:institution\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasOneThrough does not specify its types\: TRelatedModel, TIntermediateModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/ReportEvidence.php
+
+		-
+			message: '#^Method App\\Models\\ReportEvidence\:\:institutionSimplified\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasOneThrough does not specify its types\: TRelatedModel, TIntermediateModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/ReportEvidence.php
+
+		-
+			message: '#^Method App\\Models\\ReportEvidence\:\:report\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/ReportEvidence.php
+
+		-
+			message: '#^Method App\\Models\\ReportEvidence\:\:scopeForReport\(\) has parameter \$query with generic class Illuminate\\Database\\Eloquent\\Builder but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/ReportEvidence.php
+
+		-
+			message: '#^Method App\\Models\\ReportEvidence\:\:scopeForReport\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/ReportEvidence.php
+
+		-
+			message: '#^PHPDoc type array\<int, string\> of property App\\Models\\ReportEvidence\:\:\$fillable is not covariant with PHPDoc type list\<string\> of overridden property Illuminate\\Database\\Eloquent\\Model\:\:\$fillable\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Models/ReportEvidence.php
+
+		-
+			message: '#^Method App\\Models\\ReportHistory\:\:report\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/ReportHistory.php
+
+		-
+			message: '#^Method App\\Models\\ReportHistory\:\:user\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/ReportHistory.php
+
+		-
+			message: '#^Method App\\Models\\ReportPeriod\:\:createdBy\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/ReportPeriod.php
+
+		-
+			message: '#^Method App\\Models\\ReportPeriod\:\:isDateWithinPeriod\(\) has parameter \$date with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Models/ReportPeriod.php
+
+		-
+			message: '#^Method App\\Models\\ReportPeriod\:\:scopeCurrent\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Models/ReportPeriod.php
+
+		-
+			message: '#^Method App\\Models\\ReportPeriod\:\:scopeCurrent\(\) has parameter \$date with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Models/ReportPeriod.php
+
+		-
+			message: '#^Method App\\Models\\ReportPeriod\:\:scopeCurrent\(\) has parameter \$query with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Models/ReportPeriod.php
+
+		-
+			message: '#^Method App\\Models\\ReportPeriod\:\:updatedBy\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/ReportPeriod.php
+
+		-
+			message: '#^Cannot access property \$timestamp on string\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Instanceof between string and Illuminate\\Support\\Carbon will always evaluate to false\.$#'
+			identifier: instanceof.alwaysFalse
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Method App\\Models\\User\:\:institutions\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany does not specify its types\: TRelatedModel, TDeclaringModel, TPivotModel, TAccessor \(2\-4 required\)$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Method App\\Models\\User\:\:reports\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Method App\\Models\\User\:\:scopeActive\(\) has parameter \$query with generic class Illuminate\\Database\\Eloquent\\Builder but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Method App\\Models\\User\:\:scopeActive\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Method App\\Models\\User\:\:scopeInactive\(\) has parameter \$query with generic class Illuminate\\Database\\Eloquent\\Builder but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Method App\\Models\\User\:\:scopeInactive\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Method App\\Models\\User\:\:scopeWithActiveSignature\(\) has parameter \$query with generic class Illuminate\\Database\\Eloquent\\Builder but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Method App\\Models\\User\:\:scopeWithActiveSignature\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Method App\\Models\\User\:\:scopeWithoutSignature\(\) has parameter \$query with generic class Illuminate\\Database\\Eloquent\\Builder but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Method App\\Models\\User\:\:scopeWithoutSignature\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Offset 0 on non\-empty\-list\<string\> on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Parameter \#1 \$string of function base64_encode expects string, string\|false given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>timestamp" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Anonymous function has an unused use \$notes\.$#'
+			identifier: closure.unusedUse
+			count: 1
+			path: app/Services/ReportService.php
+
+		-
+			message: '#^Method App\\Services\\ReportService\:\:storeReport\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/ReportService.php
+
+		-
+			message: '#^Method App\\Services\\ReportService\:\:updateReport\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/ReportService.php
