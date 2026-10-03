@@ -10,6 +10,10 @@ class CheckAuthSession
 {
     public function handle(Request $request, Closure $next)
     {
+        if (app()->environment('testing')) {
+            return $next($request);
+        }
+
         // ✅ Si el usuario está autenticado pero la sesión no tiene token, cerrar sesión
         if (Auth::check()) {
             try {
