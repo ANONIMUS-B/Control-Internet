@@ -1,6 +1,6 @@
 // resources/js/hooks/use-session-check.ts
-import { useEffect } from 'react';
 import { usePage } from '@inertiajs/react';
+import { useEffect } from 'react';
 
 export function useSessionCheck() {
     const { props } = usePage();
@@ -17,10 +17,12 @@ export function useSessionCheck() {
 
         // ✅ Escuchar errores de carga
         const handleError = (e: ErrorEvent) => {
-            if (e.message?.includes('session') || 
-                e.message?.includes('csrf') || 
+            if (
+                e.message?.includes('session') ||
+                e.message?.includes('csrf') ||
                 e.message?.includes('token') ||
-                e.message?.includes('startTime')) {
+                e.message?.includes('startTime')
+            ) {
                 console.log('🔄 Error de sesión detectado, recargando...');
                 window.location.reload();
             }
@@ -37,12 +39,18 @@ export function useSessionCheck() {
         const timeoutId = setTimeout(checkSessionError, 500);
 
         window.addEventListener('error', handleError);
-        window.addEventListener('inertia:error', handleInertiaError as EventListener);
+        window.addEventListener(
+            'inertia:error',
+            handleInertiaError as EventListener,
+        );
 
         return () => {
             clearTimeout(timeoutId);
             window.removeEventListener('error', handleError);
-            window.removeEventListener('inertia:error', handleInertiaError as EventListener);
+            window.removeEventListener(
+                'inertia:error',
+                handleInertiaError as EventListener,
+            );
         };
     }, [user]);
 }

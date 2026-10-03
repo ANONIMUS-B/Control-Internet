@@ -1,4 +1,5 @@
 import { Form, Head } from '@inertiajs/react';
+import { Wifi, Mail, Lock } from 'lucide-react';
 import InputError from '@/components/input-error';
 import PasskeyVerify from '@/components/passkey-verify';
 import PasswordInput from '@/components/password-input';
@@ -11,7 +12,6 @@ import { Spinner } from '@/components/ui/spinner';
 import { register } from '@/routes';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
-import { Wifi, Mail, Lock } from 'lucide-react';
 
 type Props = {
     status?: string;
@@ -37,11 +37,14 @@ export default function Login({ status, canResetPassword }: Props) {
                     <>
                         <div className="grid gap-6">
                             <div className="grid gap-2">
-                                <Label htmlFor="email" className="text-neutral-700 dark:text-neutral-300">
+                                <Label
+                                    htmlFor="email"
+                                    className="text-neutral-700 dark:text-neutral-300"
+                                >
                                     Correo electrónico
                                 </Label>
                                 <div className="relative">
-                                    <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+                                    <Mail className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-neutral-400" />
                                     <Input
                                         id="email"
                                         type="email"
@@ -51,7 +54,7 @@ export default function Login({ status, canResetPassword }: Props) {
                                         tabIndex={1}
                                         autoComplete="email"
                                         placeholder="ejemplo@ugelambo.gob.pe"
-                                        className="pl-10 border-purple-200/50 focus:border-purple-500 focus:ring-purple-500/20 dark:border-purple-800/50"
+                                        className="border-purple-200/50 pl-10 focus:border-purple-500 focus:ring-purple-500/20 dark:border-purple-800/50"
                                     />
                                 </div>
                                 <InputError message={errors.email} />
@@ -59,7 +62,10 @@ export default function Login({ status, canResetPassword }: Props) {
 
                             <div className="grid gap-2">
                                 <div className="flex items-center">
-                                    <Label htmlFor="password" className="text-neutral-700 dark:text-neutral-300">
+                                    <Label
+                                        htmlFor="password"
+                                        className="text-neutral-700 dark:text-neutral-300"
+                                    >
                                         Contraseña
                                     </Label>
                                     {canResetPassword && (
@@ -73,7 +79,7 @@ export default function Login({ status, canResetPassword }: Props) {
                                     )}
                                 </div>
                                 <div className="relative">
-                                    <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+                                    <Lock className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-neutral-400" />
                                     <PasswordInput
                                         id="password"
                                         name="password"
@@ -81,7 +87,7 @@ export default function Login({ status, canResetPassword }: Props) {
                                         tabIndex={2}
                                         autoComplete="current-password"
                                         placeholder="••••••••"
-                                        className="pl-10 border-purple-200/50 focus:border-purple-500 focus:ring-purple-500/20 dark:border-purple-800/50"
+                                        className="border-purple-200/50 pl-10 focus:border-purple-500 focus:ring-purple-500/20 dark:border-purple-800/50"
                                     />
                                 </div>
                                 <InputError message={errors.password} />
@@ -92,16 +98,19 @@ export default function Login({ status, canResetPassword }: Props) {
                                     id="remember"
                                     name="remember"
                                     tabIndex={3}
-                                    className="border-purple-300 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
+                                    className="border-purple-300 data-[state=checked]:border-purple-600 data-[state=checked]:bg-purple-600"
                                 />
-                                <Label htmlFor="remember" className="text-sm text-neutral-600 dark:text-neutral-400">
+                                <Label
+                                    htmlFor="remember"
+                                    className="text-sm text-neutral-600 dark:text-neutral-400"
+                                >
                                     Recordarme
                                 </Label>
                             </div>
 
                             <Button
                                 type="submit"
-                                className="mt-4 w-full bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-700 hover:via-purple-700 hover:to-pink-700 text-white font-medium rounded-xl py-2.5 shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-all duration-300"
+                                className="mt-4 w-full rounded-xl bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 py-2.5 font-medium text-white shadow-lg shadow-purple-500/25 transition-all duration-300 hover:from-blue-700 hover:via-purple-700 hover:to-pink-700 hover:shadow-purple-500/40"
                                 tabIndex={4}
                                 disabled={processing}
                                 data-test="login-button"
@@ -112,19 +121,18 @@ export default function Login({ status, canResetPassword }: Props) {
                         </div>
 
                         <div className="text-center text-sm text-neutral-600 dark:text-neutral-400">
-                            ¿No tienes una cuenta?{' '}
-                            - Comunicate con 925523419
+                            ¿No tienes una cuenta? - Comunicate con 925523419
                             {/* <TextLink href={register()} tabIndex={5} className="font-medium text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300">
                                 Regístrate
                             </TextLink> */}
                         </div>
 
                         {/* Footer */}
-                        <div className="mt-2 pt-4 border-t border-purple-200/30 dark:border-purple-800/30">
+                        <div className="mt-2 border-t border-purple-200/30 pt-4 dark:border-purple-800/30">
                             <p className="text-center text-xs text-neutral-400 dark:text-neutral-500">
                                 UGEL Ambo · Sistema de Conformidad de Internet
                             </p>
-                            <p className="text-center text-[10px] text-neutral-400/60 dark:text-neutral-500/60 mt-0.5">
+                            <p className="mt-0.5 text-center text-[10px] text-neutral-400/60 dark:text-neutral-500/60">
                                 v1.0 · {new Date().getFullYear()}
                             </p>
                         </div>

@@ -1,8 +1,17 @@
 // resources/js/components/Notifications.tsx
 
-import { useState, useEffect, useRef } from 'react';
 import { router } from '@inertiajs/react';
-import { Bell, X, CheckCircle, AlertCircle, Info, AlertTriangle, Check, Trash2 } from 'lucide-react';
+import {
+    Bell,
+    X,
+    CheckCircle,
+    AlertCircle,
+    Info,
+    AlertTriangle,
+    Check,
+    Trash2,
+} from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
 
 interface Notification {
     id: number;
@@ -21,7 +30,10 @@ interface NotificationsProps {
     unreadCount: number;
 }
 
-export default function Notifications({ notifications, unreadCount }: NotificationsProps) {
+export default function Notifications({
+    notifications,
+    unreadCount,
+}: NotificationsProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [items, setItems] = useState<Notification[]>(notifications);
     const [count, setCount] = useState(unreadCount);
@@ -44,8 +56,9 @@ export default function Notifications({ notifications, unreadCount }: Notificati
             const spaceBelow = window.innerHeight - rect.bottom;
             const spaceRight = window.innerWidth - rect.right;
             const spaceLeft = rect.left;
-            
+
             let leftPosition = 0;
+
             if (spaceRight > panelWidth) {
                 leftPosition = rect.right + 8;
             } else if (spaceLeft > panelWidth) {
@@ -53,16 +66,20 @@ export default function Notifications({ notifications, unreadCount }: Notificati
             } else {
                 leftPosition = Math.max(8, window.innerWidth - panelWidth - 8);
             }
-            
+
             let topPosition = 0;
+
             if (spaceBelow > panelHeight || spaceBelow > spaceAbove) {
                 topPosition = rect.top;
             } else {
                 topPosition = rect.bottom - panelHeight;
             }
-            
-            topPosition = Math.max(8, Math.min(window.innerHeight - panelHeight - 8, topPosition));
-            
+
+            topPosition = Math.max(
+                8,
+                Math.min(window.innerHeight - panelHeight - 8, topPosition),
+            );
+
             setPosition({
                 top: topPosition,
                 left: leftPosition,
@@ -72,74 +89,99 @@ export default function Notifications({ notifications, unreadCount }: Notificati
 
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
-            if (panelRef.current && !panelRef.current.contains(e.target as Node) && 
-                buttonRef.current && !buttonRef.current.contains(e.target as Node)) {
+            if (
+                panelRef.current &&
+                !panelRef.current.contains(e.target as Node) &&
+                buttonRef.current &&
+                !buttonRef.current.contains(e.target as Node)
+            ) {
                 setIsOpen(false);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
+
+        return () =>
+            document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
     const getTypeIcon = (type: string) => {
         const icons = {
-            info: <Info className="w-5 h-5 text-blue-500" />,
-            success: <CheckCircle className="w-5 h-5 text-emerald-500" />,
-            warning: <AlertTriangle className="w-5 h-5 text-amber-500" />,
-            error: <AlertCircle className="w-5 h-5 text-rose-500" />,
+            info: <Info className="h-5 w-5 text-blue-500" />,
+            success: <CheckCircle className="h-5 w-5 text-emerald-500" />,
+            warning: <AlertTriangle className="h-5 w-5 text-amber-500" />,
+            error: <AlertCircle className="h-5 w-5 text-rose-500" />,
         };
+
         return icons[type as keyof typeof icons] || icons.info;
     };
 
     const markAsRead = (id: number) => {
-        router.post(`/notificaciones/${id}/leer`, {}, {
-            preserveScroll: true,
-            onSuccess: () => {
-                setItems(items.map(item => 
-                    item.id === id ? { ...item, is_read: true } : item
-                ));
-                setCount(prev => Math.max(0, prev - 1));
-            }
-        });
+        router.post(
+            `/notificaciones/${id}/leer`,
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setItems(
+                        items.map((item) =>
+                            item.id === id ? { ...item, is_read: true } : item,
+                        ),
+                    );
+                    setCount((prev) => Math.max(0, prev - 1));
+                },
+            },
+        );
     };
 
     const markAllAsRead = () => {
-        if (count === 0) return;
+        if (count === 0) {
+            return;
+        }
 
-        router.post('/notificaciones/leer-todas', {}, {
-            preserveScroll: true,
-            onSuccess: () => {
-                setItems(items.map(item => ({ ...item, is_read: true })));
-                setCount(0);
-            }
-        });
+        router.post(
+            '/notificaciones/leer-todas',
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setItems(items.map((item) => ({ ...item, is_read: true })));
+                    setCount(0);
+                },
+            },
+        );
     };
 
     // ✅ ELIMINAR UNA NOTIFICACIÓN CON router.visit
     const deleteNotification = (id: number, e: React.MouseEvent) => {
         e.stopPropagation();
-        
+
         router.visit(`/notificaciones/${id}`, {
             method: 'delete',
             preserveScroll: true,
             onSuccess: () => {
-                setItems(items.filter(item => item.id !== id));
-                const deletedItem = items.find(item => item.id === id);
+                setItems(items.filter((item) => item.id !== id));
+                const deletedItem = items.find((item) => item.id === id);
+
                 if (deletedItem && !deletedItem.is_read) {
-                    setCount(prev => Math.max(0, prev - 1));
+                    setCount((prev) => Math.max(0, prev - 1));
                 }
             },
             onError: (errors) => {
                 console.error('Error al eliminar notificación:', errors);
                 alert('Error al eliminar la notificación.');
-            }
+            },
         });
     };
 
     // ✅ ELIMINAR TODAS LAS NOTIFICACIONES CON router.visit
     const deleteAllNotifications = () => {
-        if (items.length === 0) return;
-        if (!confirm('¿Eliminar todas las notificaciones?')) return;
+        if (items.length === 0) {
+            return;
+        }
+
+        if (!confirm('¿Eliminar todas las notificaciones?')) {
+            return;
+        }
 
         router.visit('/notificaciones/eliminar-todas', {
             method: 'delete',
@@ -152,39 +194,51 @@ export default function Notifications({ notifications, unreadCount }: Notificati
             onError: (errors) => {
                 console.error('Error al eliminar notificaciones:', errors);
                 alert('Error al eliminar las notificaciones.');
-            }
+            },
         });
     };
 
     // ✅ MANEJO DE CLIC EN NOTIFICACIÓN
     const handleNotificationClick = (notification: Notification) => {
-        if (isLoading) return;
-        
+        if (isLoading) {
+            return;
+        }
+
         if (notification.is_read) {
             setIsOpen(false);
+
             return;
         }
 
         setIsLoading(true);
-        
-        router.post(`/notificaciones/${notification.id}/leer`, {}, {
-            preserveScroll: true,
-            onSuccess: () => {
-                setItems(items.map(item => 
-                    item.id === notification.id ? { ...item, is_read: true } : item
-                ));
-                setCount(prev => Math.max(0, prev - 1));
-                
-                if (notification.link) {
-                    router.get(notification.link);
-                }
-                setIsOpen(false);
-                setIsLoading(false);
+
+        router.post(
+            `/notificaciones/${notification.id}/leer`,
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setItems(
+                        items.map((item) =>
+                            item.id === notification.id
+                                ? { ...item, is_read: true }
+                                : item,
+                        ),
+                    );
+                    setCount((prev) => Math.max(0, prev - 1));
+
+                    if (notification.link) {
+                        router.get(notification.link);
+                    }
+
+                    setIsOpen(false);
+                    setIsLoading(false);
+                },
+                onError: () => {
+                    setIsLoading(false);
+                },
             },
-            onError: () => {
-                setIsLoading(false);
-            }
-        });
+        );
     };
 
     return (
@@ -192,31 +246,31 @@ export default function Notifications({ notifications, unreadCount }: Notificati
             <button
                 ref={buttonRef}
                 onClick={() => setIsOpen(!isOpen)}
-                className="relative p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors"
+                className="relative rounded-lg p-2 transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800"
             >
-                <Bell className="w-5 h-5 text-neutral-600 dark:text-neutral-400" />
+                <Bell className="h-5 w-5 text-neutral-600 dark:text-neutral-400" />
                 {count > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
+                    <span className="absolute -top-1 -right-1 flex h-5 w-5 animate-pulse items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
                         {count > 9 ? '9+' : count}
                     </span>
                 )}
             </button>
 
             {isOpen && (
-                <div 
+                <div
                     ref={panelRef}
-                    className="fixed w-80 sm:w-96 max-h-[450px] overflow-hidden bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl border border-neutral-200 dark:border-neutral-800 z-[99999]"
-                    style={{ 
+                    className="fixed z-[99999] max-h-[450px] w-80 overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-2xl sm:w-96 dark:border-neutral-800 dark:bg-neutral-900"
+                    style={{
                         top: `${position.top}px`,
                         left: `${position.left}px`,
                         animation: 'slideIn 0.15s ease-out',
                     }}
                 >
-                    <div className="flex items-center justify-between p-4 border-b border-neutral-200 dark:border-neutral-800">
-                        <h3 className="font-bold text-neutral-800 dark:text-white flex items-center gap-2">
+                    <div className="flex items-center justify-between border-b border-neutral-200 p-4 dark:border-neutral-800">
+                        <h3 className="flex items-center gap-2 font-bold text-neutral-800 dark:text-white">
                             Notificaciones
                             {items.length > 0 && (
-                                <span className="text-xs bg-neutral-200 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300 px-2 py-0.5 rounded-full">
+                                <span className="rounded-full bg-neutral-200 px-2 py-0.5 text-xs text-neutral-600 dark:bg-neutral-700 dark:text-neutral-300">
                                     {items.length}
                                 </span>
                             )}
@@ -225,63 +279,74 @@ export default function Notifications({ notifications, unreadCount }: Notificati
                             {count > 0 && (
                                 <button
                                     onClick={markAllAsRead}
-                                    className="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 flex items-center gap-1 px-2 py-1 hover:bg-blue-50 dark:hover:bg-blue-950/30 rounded-lg transition-colors"
+                                    className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-700 dark:text-blue-400 dark:hover:bg-blue-950/30 dark:hover:text-blue-300"
                                     title="Marcar todas como leídas"
                                 >
-                                    <Check className="w-3 h-3" />
+                                    <Check className="h-3 w-3" />
                                     Leer todas
                                 </button>
                             )}
-                           
+
                             <button
                                 onClick={() => setIsOpen(false)}
-                                className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors"
+                                className="rounded-lg p-1 transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800"
                             >
-                                <X className="w-4 h-4 text-neutral-500" />
+                                <X className="h-4 w-4 text-neutral-500" />
                             </button>
                         </div>
                     </div>
 
-                    <div className="overflow-y-auto max-h-[350px]">
+                    <div className="max-h-[350px] overflow-y-auto">
                         {items.length === 0 ? (
                             <div className="p-8 text-center text-neutral-500 dark:text-neutral-400">
-                                <Bell className="w-12 h-12 mx-auto mb-3 text-neutral-300 dark:text-neutral-600" />
+                                <Bell className="mx-auto mb-3 h-12 w-12 text-neutral-300 dark:text-neutral-600" />
                                 <p>No tienes notificaciones</p>
                             </div>
                         ) : (
                             items.map((notification) => (
                                 <div
                                     key={notification.id}
-                                    className={`group p-4 border-b border-neutral-100 dark:border-neutral-800 transition-colors cursor-pointer ${
-                                        !notification.is_read ? 'bg-blue-50/50 dark:bg-blue-950/20 hover:bg-blue-100/50 dark:hover:bg-blue-950/40' : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/50'
+                                    className={`group cursor-pointer border-b border-neutral-100 p-4 transition-colors dark:border-neutral-800 ${
+                                        !notification.is_read
+                                            ? 'bg-blue-50/50 hover:bg-blue-100/50 dark:bg-blue-950/20 dark:hover:bg-blue-950/40'
+                                            : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/50'
                                     }`}
-                                    onClick={() => handleNotificationClick(notification)}
+                                    onClick={() =>
+                                        handleNotificationClick(notification)
+                                    }
                                 >
                                     <div className="flex gap-3">
-                                        <div className="flex-shrink-0 mt-1">
+                                        <div className="mt-1 flex-shrink-0">
                                             {getTypeIcon(notification.type)}
                                         </div>
-                                        <div className="flex-1 min-w-0">
+                                        <div className="min-w-0 flex-1">
                                             <p className="text-sm font-medium text-neutral-800 dark:text-white">
                                                 {notification.title}
                                             </p>
-                                            <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-1">
+                                            <p className="mt-1 text-xs text-neutral-600 dark:text-neutral-400">
                                                 {notification.message}
                                             </p>
-                                            <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-1">
-                                                {new Date(notification.created_at).toLocaleString('es-ES')}
+                                            <p className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">
+                                                {new Date(
+                                                    notification.created_at,
+                                                ).toLocaleString('es-ES')}
                                             </p>
                                         </div>
-                                        <div className="flex-shrink-0 flex items-start gap-1">
+                                        <div className="flex flex-shrink-0 items-start gap-1">
                                             {!notification.is_read && (
-                                                <span className="w-2 h-2 bg-blue-500 rounded-full inline-block mt-1.5"></span>
+                                                <span className="mt-1.5 inline-block h-2 w-2 rounded-full bg-blue-500"></span>
                                             )}
                                             <button
-                                                onClick={(e) => deleteNotification(notification.id, e)}
-                                                className="opacity-0 group-hover:opacity-100 p-1 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-lg transition-all text-neutral-400 hover:text-rose-500"
+                                                onClick={(e) =>
+                                                    deleteNotification(
+                                                        notification.id,
+                                                        e,
+                                                    )
+                                                }
+                                                className="rounded-lg p-1 text-neutral-400 opacity-0 transition-all group-hover:opacity-100 hover:bg-neutral-200 hover:text-rose-500 dark:hover:bg-neutral-700"
                                                 title="Eliminar"
                                             >
-                                                <X className="w-3 h-3" />
+                                                <X className="h-3 w-3" />
                                             </button>
                                         </div>
                                     </div>

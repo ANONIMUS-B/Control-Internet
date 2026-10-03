@@ -165,25 +165,24 @@
 }
 
 /* Scrollbar específico para el Sidebar (ultra delgado y natural) */
-[data-slot="sidebar-content"] {
+[data-slot='sidebar-content'] {
     scrollbar-width: thin;
     scrollbar-color: rgba(156, 163, 175, 0.2) transparent;
 }
 
-[data-slot="sidebar-content"]::-webkit-scrollbar {
+[data-slot='sidebar-content']::-webkit-scrollbar {
     width: 4px;
 }
 
-[data-slot="sidebar-content"]::-webkit-scrollbar-track {
+[data-slot='sidebar-content']::-webkit-scrollbar-track {
     background: transparent;
 }
 
-[data-slot="sidebar-content"]::-webkit-scrollbar-thumb {
+[data-slot='sidebar-content']::-webkit-scrollbar-thumb {
     background: rgba(156, 163, 175, 0.2);
     border-radius: 9999px;
 }
 
-[data-slot="sidebar-content"]:hover::-webkit-scrollbar-thumb {
+[data-slot='sidebar-content']:hover::-webkit-scrollbar-thumb {
     background: rgba(156, 163, 175, 0.4);
 }
-

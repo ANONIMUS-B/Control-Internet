@@ -1,5 +1,4 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { dashboard, login } from '@/routes';
 import {
     Wifi,
     FileText,
@@ -14,6 +13,7 @@ import {
     MousePointer2,
     Check,
 } from 'lucide-react';
+import { dashboard, login } from '@/routes';
 
 export default function Welcome() {
     const { auth } = usePage().props;

@@ -1,14 +1,12 @@
 // Edit.tsx - Versión definitiva con 2 opciones
 
 import { Head, useForm, Link, router } from '@inertiajs/react';
-import { FormEvent, useState, useEffect, useRef } from 'react';
-import { dashboard } from '@/routes';
-import { 
-    ArrowLeft, 
-    Save, 
-    AlertCircle, 
-    Trash2, 
-    Upload, 
+import {
+    ArrowLeft,
+    Save,
+    AlertCircle,
+    Trash2,
+    Upload,
     X,
     CheckCircle,
     Loader2,
@@ -28,10 +26,13 @@ import {
     Camera,
     Signal,
     WifiOff,
-    Eye
+    Eye,
 } from 'lucide-react';
-import ReportHistory from '@/components/ReportHistory';
+import type { FormEvent } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { PdfViewerModal } from '@/components/pdf-viewer-modal';
+import ReportHistory from '@/components/ReportHistory';
+import { dashboard } from '@/routes';
 
 // ✅ DEFINIR EL TIPO PARA EL ESTADO DEL SERVICIO
 type ServiceState = 'operative' | 'intermittent';
@@ -97,15 +98,22 @@ interface ServiceOption {
 export default function Edit({ report, flash, months = {} }: EditReportProps) {
     const { data, setData, post, processing } = useForm({
         _method: 'PUT',
-        service_state: report.service_state === 'no_service' ? 'operative' : (report.service_state || 'operative'),
+        service_state:
+            report.service_state === 'no_service'
+                ? 'operative'
+                : report.service_state || 'operative',
         office_number: report.office_number || '',
         notes: report.notes || '',
         evidences: [] as File[],
     });
 
     const [previews, setPreviews] = useState<string[]>([]);
-    const [errorMessage, setErrorMessage] = useState<string | null>(flash?.error || null);
-    const [successMessage, setSuccessMessage] = useState<string | null>(flash?.success || null);
+    const [errorMessage, setErrorMessage] = useState<string | null>(
+        flash?.error || null,
+    );
+    const [successMessage, setSuccessMessage] = useState<string | null>(
+        flash?.success || null,
+    );
     const [uploadProgress, setUploadProgress] = useState(0);
     const [isUploading, setIsUploading] = useState(false);
     const [dragActive, setDragActive] = useState(false);
@@ -125,34 +133,43 @@ export default function Edit({ report, flash, months = {} }: EditReportProps) {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const monthsList = months || {
-        1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril',
-        5: 'Mayo', 6: 'Junio', 7: 'Julio', 8: 'Agosto',
-        9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre'
+        1: 'Enero',
+        2: 'Febrero',
+        3: 'Marzo',
+        4: 'Abril',
+        5: 'Mayo',
+        6: 'Junio',
+        7: 'Julio',
+        8: 'Agosto',
+        9: 'Septiembre',
+        10: 'Octubre',
+        11: 'Noviembre',
+        12: 'Diciembre',
     };
 
     // ✅ SOLO 2 OPCIONES: OPERATIVO E INTERMITENTE (tipadas correctamente)
     const serviceOptions: ServiceOption[] = [
-        { 
-            id: 'operative', 
-            label: 'Operativo', 
+        {
+            id: 'operative',
+            label: 'Operativo',
             description: 'El servicio funciona correctamente',
             icon: Wifi,
             bgColor: 'bg-emerald-50 dark:bg-emerald-500/10',
             borderColor: 'border-emerald-200 dark:border-emerald-500/20',
             textColor: 'text-emerald-700 dark:text-emerald-300',
             iconColor: 'text-emerald-600 dark:text-emerald-400',
-            selectedRing: 'ring-emerald-500/50'
+            selectedRing: 'ring-emerald-500/50',
         },
-        { 
-            id: 'intermittent', 
-            label: 'Intermitente', 
+        {
+            id: 'intermittent',
+            label: 'Intermitente',
             description: 'El servicio presenta fallas ocasionales',
             icon: Signal,
             bgColor: 'bg-amber-50 dark:bg-amber-500/10',
             borderColor: 'border-amber-200 dark:border-amber-500/20',
             textColor: 'text-amber-700 dark:text-amber-300',
             iconColor: 'text-amber-600 dark:text-amber-400',
-            selectedRing: 'ring-amber-500/50'
+            selectedRing: 'ring-amber-500/50',
         },
     ];
 
@@ -165,11 +182,12 @@ export default function Edit({ report, flash, months = {} }: EditReportProps) {
     const processPastedImage = (file: File) => {
         if (file.size > 10 * 1024 * 1024) {
             setErrorMessage('La imagen no debe pesar más de 10MB.');
+
             return false;
         }
 
         setData('evidences', [...data.evidences, file]);
-        
+
         const reader = new FileReader();
         reader.onload = (event) => {
             if (event.target?.result) {
@@ -178,25 +196,31 @@ export default function Edit({ report, flash, months = {} }: EditReportProps) {
         };
         reader.readAsDataURL(file);
         setErrorMessage(null);
+
         return true;
     };
 
     // ✅ MANEJADOR GLOBAL DE PEGADO (Ctrl+V)
     const handleGlobalPaste = (e: ClipboardEvent) => {
         const items = e.clipboardData?.items;
-        if (!items) return;
+
+        if (!items) {
+            return;
+        }
 
         let hasImage = false;
-        
+
         for (const item of items) {
             if (item.type.startsWith('image/')) {
                 const file = item.getAsFile();
+
                 if (file) {
                     processPastedImage(file);
                     hasImage = true;
                     setIsPasteActive(true);
                     setTimeout(() => setIsPasteActive(false), 2000);
                 }
+
                 break;
             }
         }
@@ -209,6 +233,7 @@ export default function Edit({ report, flash, months = {} }: EditReportProps) {
     // ✅ REGISTRAR Y DESREGISTRAR EL EVENTO GLOBAL
     useEffect(() => {
         document.addEventListener('paste', handleGlobalPaste);
+
         return () => {
             document.removeEventListener('paste', handleGlobalPaste);
         };
@@ -218,37 +243,45 @@ export default function Edit({ report, flash, months = {} }: EditReportProps) {
         if (e.target.files) {
             const filesArray = Array.from(e.target.files);
             setData('evidences', [...data.evidences, ...filesArray]);
-            const newPreviews = filesArray.map(file => URL.createObjectURL(file));
+            const newPreviews = filesArray.map((file) =>
+                URL.createObjectURL(file),
+            );
             setPreviews([...previews, ...newPreviews]);
         }
     };
 
     const deleteEvidence = (evidenceId: number) => {
-        if (!confirm('¿Eliminar esta evidencia?')) return;
+        if (!confirm('¿Eliminar esta evidencia?')) {
+            return;
+        }
 
         router.delete(`/evidencias/${evidenceId}`, {
             onSuccess: (page) => {
-                const flashData = page.props.flash as { success?: string; error?: string } | undefined;
+                const flashData = page.props.flash as
+                    { success?: string; error?: string } | undefined;
+
                 if (flashData?.success) {
                     setSuccessMessage(flashData.success);
                     setTimeout(() => setSuccessMessage(null), 5000);
                 }
+
                 router.reload();
             },
             onError: (errors) => {
                 const errorMessages = Object.values(errors).join(', ');
                 setErrorMessage(errorMessages);
                 setTimeout(() => setErrorMessage(null), 5000);
-            }
+            },
         });
     };
 
     const handleDrag = (e: React.DragEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        if (e.type === "dragenter" || e.type === "dragover") {
+
+        if (e.type === 'dragenter' || e.type === 'dragover') {
             setDragActive(true);
-        } else if (e.type === "dragleave") {
+        } else if (e.type === 'dragleave') {
             setDragActive(false);
         }
     };
@@ -257,10 +290,13 @@ export default function Edit({ report, flash, months = {} }: EditReportProps) {
         e.preventDefault();
         e.stopPropagation();
         setDragActive(false);
+
         if (e.dataTransfer.files && e.dataTransfer.files[0]) {
             const filesArray = Array.from(e.dataTransfer.files);
             setData('evidences', [...data.evidences, ...filesArray]);
-            const newPreviews = filesArray.map(file => URL.createObjectURL(file));
+            const newPreviews = filesArray.map((file) =>
+                URL.createObjectURL(file),
+            );
             setPreviews([...previews, ...newPreviews]);
         }
     };
@@ -282,7 +318,11 @@ export default function Edit({ report, flash, months = {} }: EditReportProps) {
 
     // ✅ PREVISUALIZAR PDF ANTES DE GUARDAR
     const handlePreviewPdf = () => {
-        const instId = report.educational_institution_id || report.institution?.id || report.institution_id || '';
+        const instId =
+            report.educational_institution_id ||
+            report.institution?.id ||
+            report.institution_id ||
+            '';
         const params = new URLSearchParams({
             report_id: String(report.id),
             educational_institution_id: String(instId),
@@ -305,7 +345,7 @@ export default function Edit({ report, flash, months = {} }: EditReportProps) {
 
     const submit = (e: FormEvent) => {
         e.preventDefault();
-        
+
         /*
         if (data.evidences.length === 0 && report.evidences.length === 0) {
             setErrorMessage('Debes agregar al menos una evidencia.');
@@ -317,11 +357,13 @@ export default function Edit({ report, flash, months = {} }: EditReportProps) {
         setUploadProgress(0);
 
         const interval = setInterval(() => {
-            setUploadProgress(prev => {
+            setUploadProgress((prev) => {
                 if (prev >= 90) {
                     clearInterval(interval);
+
                     return 90;
                 }
+
                 return prev + 10;
             });
         }, 300);
@@ -333,7 +375,9 @@ export default function Edit({ report, flash, months = {} }: EditReportProps) {
                 setTimeout(() => {
                     setIsUploading(false);
                     setUploadProgress(0);
-                    const flashData = page.props.flash as { success?: string; error?: string } | undefined;
+                    const flashData = page.props.flash as
+                        { success?: string; error?: string } | undefined;
+
                     if (flashData?.success) {
                         setSuccessMessage(flashData.success);
                         setShowSuccess(true);
@@ -341,6 +385,7 @@ export default function Edit({ report, flash, months = {} }: EditReportProps) {
                         setSuccessMessage('✅ Reporte actualizado');
                         setShowSuccess(true);
                     }
+
                     setTimeout(() => {
                         setSuccessMessage(null);
                         setShowSuccess(false);
@@ -354,17 +399,21 @@ export default function Edit({ report, flash, months = {} }: EditReportProps) {
                 const errorMessages = Object.values(errors).join(', ');
                 setErrorMessage(errorMessages);
                 setTimeout(() => setErrorMessage(null), 5000);
-            }
+            },
         });
     };
 
     const canEdit = report.status === 'pending' || report.status === 'observed';
 
     const statusColors: Record<string, string> = {
-        pending: 'bg-blue-100 dark:bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/25',
-        observed: 'bg-amber-100 dark:bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/25',
-        approved: 'bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/25',
-        rejected: 'bg-rose-100 dark:bg-rose-500/15 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-500/25',
+        pending:
+            'bg-blue-100 dark:bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/25',
+        observed:
+            'bg-amber-100 dark:bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/25',
+        approved:
+            'bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/25',
+        rejected:
+            'bg-rose-100 dark:bg-rose-500/15 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-500/25',
     };
 
     const statusLabels: Record<string, string> = {
@@ -379,15 +428,22 @@ export default function Edit({ report, flash, months = {} }: EditReportProps) {
             <>
                 <Head title="Corregir Reporte" />
                 <div className="p-4 md:p-6" style={{ fontSize: '11px' }}>
-                    <div className="max-w-4xl mx-auto w-full">
-                        <div className="bg-white dark:bg-slate-800/50 rounded-2xl border border-gray-200 dark:border-white/10 p-8 text-center shadow-sm dark:shadow-2xl">
-                            <AlertCircle className="w-16 h-16 text-amber-500 mx-auto mb-4" />
-                            <h2 className="text-[11px] font-bold text-gray-900 dark:text-white">No se puede editar</h2>
-                            <p className="text-[11px] text-gray-500 dark:text-neutral-400 mt-2">
-                                Este reporte ya está {statusLabels[report.status]?.toLowerCase()} y no puede ser modificado.
+                    <div className="mx-auto w-full max-w-4xl">
+                        <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm dark:border-white/10 dark:bg-slate-800/50 dark:shadow-2xl">
+                            <AlertCircle className="mx-auto mb-4 h-16 w-16 text-amber-500" />
+                            <h2 className="text-[11px] font-bold text-gray-900 dark:text-white">
+                                No se puede editar
+                            </h2>
+                            <p className="mt-2 text-[11px] text-gray-500 dark:text-neutral-400">
+                                Este reporte ya está{' '}
+                                {statusLabels[report.status]?.toLowerCase()} y
+                                no puede ser modificado.
                             </p>
-                            <Link href="/reportes" className="inline-flex items-center gap-2 mt-4 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-xl text-[11px] font-medium transition-all shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 hover:scale-105 active:scale-95">
-                                <ArrowLeft className="w-4 h-4" /> Volver
+                            <Link
+                                href="/reportes"
+                                className="mt-4 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 px-4 py-2.5 text-[11px] font-medium text-white shadow-lg shadow-blue-500/20 transition-all hover:scale-105 hover:from-blue-600 hover:to-indigo-700 hover:shadow-blue-500/40 active:scale-95"
+                            >
+                                <ArrowLeft className="h-4 w-4" /> Volver
                             </Link>
                         </div>
                     </div>
@@ -401,29 +457,37 @@ export default function Edit({ report, flash, months = {} }: EditReportProps) {
             <Head title="Corregir Reporte" />
 
             <div className="p-4 md:p-6" style={{ fontSize: '11px' }}>
-                <div className="max-w-4xl mx-auto w-full space-y-4">
-                    
+                <div className="mx-auto w-full max-w-4xl space-y-4">
                     {/* ===== HEADER ===== */}
-                    <div className="bg-white dark:bg-slate-800/50 rounded-2xl border border-gray-200 dark:border-white/10 p-4 md:p-6 shadow-sm dark:shadow-2xl">
-                        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                    <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm md:p-6 dark:border-white/10 dark:bg-slate-800/50 dark:shadow-2xl">
+                        <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
                             <div className="flex items-center gap-3">
-                                <div className="p-2 bg-blue-100 dark:bg-blue-500/20 rounded-xl border border-blue-200 dark:border-blue-500/20">
-                                    <Pencil className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                                <div className="rounded-xl border border-blue-200 bg-blue-100 p-2 dark:border-blue-500/20 dark:bg-blue-500/20">
+                                    <Pencil className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                                 </div>
                                 <div>
-                                    <h2 className="text-[11px] font-bold text-gray-900 dark:text-white">Corregir Reporte</h2>
+                                    <h2 className="text-[11px] font-bold text-gray-900 dark:text-white">
+                                        Corregir Reporte
+                                    </h2>
                                     <div className="flex flex-wrap items-center gap-2 text-[11px] text-gray-500 dark:text-neutral-400">
                                         <span className="flex items-center gap-1">
-                                            <Building2 className="w-3.5 h-3.5" />
-                                            {report.institution?.name || 'Sin IE'}
+                                            <Building2 className="h-3.5 w-3.5" />
+                                            {report.institution?.name ||
+                                                'Sin IE'}
                                         </span>
-                                        <span className="w-1 h-1 bg-gray-300 dark:bg-neutral-600 rounded-full"></span>
+                                        <span className="h-1 w-1 rounded-full bg-gray-300 dark:bg-neutral-600"></span>
                                         <span className="flex items-center gap-1">
-                                            <Calendar className="w-3.5 h-3.5" />
-                                            {report.month ? monthsList[report.month] : ''} {report.year}
+                                            <Calendar className="h-3.5 w-3.5" />
+                                            {report.month
+                                                ? monthsList[report.month]
+                                                : ''}{' '}
+                                            {report.year}
                                         </span>
-                                        <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium border ${statusColors[report.status]}`}>
-                                            {statusLabels[report.status] || report.status}
+                                        <span
+                                            className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${statusColors[report.status]}`}
+                                        >
+                                            {statusLabels[report.status] ||
+                                                report.status}
                                         </span>
                                     </div>
                                 </div>
@@ -443,14 +507,17 @@ export default function Edit({ report, flash, months = {} }: EditReportProps) {
                                 <button
                                     type="button"
                                     onClick={handlePreviewPdf}
-                                    className="flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white rounded-xl text-[11px] font-medium transition-all shadow-md shadow-emerald-500/20 hover:shadow-emerald-500/40 hover:scale-105 active:scale-95"
+                                    className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-600 px-3 py-2 text-[11px] font-medium text-white shadow-md shadow-emerald-500/20 transition-all hover:scale-105 hover:from-teal-600 hover:to-emerald-700 hover:shadow-emerald-500/40 active:scale-95"
                                     title="Previsualizar cómo quedará el oficio en PDF"
                                 >
-                                    <Eye className="w-3.5 h-3.5" />
+                                    <Eye className="h-3.5 w-3.5" />
                                     <span>Previsualizar Oficio</span>
                                 </button>
-                                <Link href="/reportes" className="flex items-center gap-1.5 px-3 py-2 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-700 dark:text-neutral-300 rounded-xl text-[11px] font-medium transition-all border border-gray-300 dark:border-white/10 hover:border-gray-400 dark:hover:border-white/20">
-                                    <ArrowLeft className="w-3.5 h-3.5" /> Volver
+                                <Link
+                                    href="/reportes"
+                                    className="flex items-center gap-1.5 rounded-xl border border-gray-300 bg-gray-100 px-3 py-2 text-[11px] font-medium text-gray-700 transition-all hover:border-gray-400 hover:bg-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-neutral-300 dark:hover:border-white/20 dark:hover:bg-white/10"
+                                >
+                                    <ArrowLeft className="h-3.5 w-3.5" /> Volver
                                 </Link>
                             </div>
                         </div>
@@ -458,10 +525,10 @@ export default function Edit({ report, flash, months = {} }: EditReportProps) {
 
                     {/* ===== ALERTA DE PEGADO ===== */}
                     {isPasteActive && (
-                        <div className="p-3 bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800 rounded-2xl animate-in slide-in-from-top duration-200">
+                        <div className="animate-in rounded-2xl border border-purple-200 bg-purple-50 p-3 duration-200 slide-in-from-top dark:border-purple-800 dark:bg-purple-950/30">
                             <div className="flex items-center gap-2">
-                                <ClipboardPaste className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                                <span className="text-[11px] text-purple-700 dark:text-purple-300 font-medium">
+                                <ClipboardPaste className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                                <span className="text-[11px] font-medium text-purple-700 dark:text-purple-300">
                                     ✅ Imagen pegada correctamente
                                 </span>
                             </div>
@@ -470,96 +537,133 @@ export default function Edit({ report, flash, months = {} }: EditReportProps) {
 
                     {/* ===== MENSAJES ===== */}
                     {successMessage && (
-                        <div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-2xl flex items-center gap-2 text-[11px] animate-in">
-                            <CheckCircle className="w-4 h-4 text-emerald-500" />
-                            <p className="text-emerald-700 dark:text-emerald-400">{successMessage}</p>
-                            <button onClick={() => setSuccessMessage(null)} className="ml-auto text-emerald-500 hover:text-emerald-700">
-                                <X className="w-3.5 h-3.5" />
+                        <div className="flex animate-in items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 p-3 text-[11px] dark:border-emerald-800 dark:bg-emerald-950/30">
+                            <CheckCircle className="h-4 w-4 text-emerald-500" />
+                            <p className="text-emerald-700 dark:text-emerald-400">
+                                {successMessage}
+                            </p>
+                            <button
+                                onClick={() => setSuccessMessage(null)}
+                                className="ml-auto text-emerald-500 hover:text-emerald-700"
+                            >
+                                <X className="h-3.5 w-3.5" />
                             </button>
                         </div>
                     )}
 
                     {errorMessage && (
-                        <div className="p-3 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded-2xl flex items-center gap-2 text-[11px] animate-in">
-                            <AlertCircle className="w-4 h-4 text-rose-500" />
-                            <p className="text-rose-700 dark:text-rose-400">{errorMessage}</p>
-                            <button onClick={() => setErrorMessage(null)} className="ml-auto text-rose-500 hover:text-rose-700">
-                                <X className="w-3.5 h-3.5" />
+                        <div className="flex animate-in items-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 p-3 text-[11px] dark:border-rose-800 dark:bg-rose-950/30">
+                            <AlertCircle className="h-4 w-4 text-rose-500" />
+                            <p className="text-rose-700 dark:text-rose-400">
+                                {errorMessage}
+                            </p>
+                            <button
+                                onClick={() => setErrorMessage(null)}
+                                className="ml-auto text-rose-500 hover:text-rose-700"
+                            >
+                                <X className="h-3.5 w-3.5" />
                             </button>
                         </div>
                     )}
 
                     {/* ===== OBSERVACIÓN UPDI ===== */}
                     {report.admin_comments && (
-                        <div className="p-4 bg-amber-50 dark:bg-amber-950/30 border-l-4 border-amber-500 rounded-2xl flex gap-3 border border-amber-200 dark:border-amber-800">
-                            <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                        <div className="flex gap-3 rounded-2xl border border-l-4 border-amber-200 border-amber-500 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/30">
+                            <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-500" />
                             <div>
-                                <p className="text-[11px] font-bold text-amber-800 dark:text-amber-300">Observación:</p>
-                                <p className="text-[11px] text-amber-700 dark:text-amber-400">{report.admin_comments}</p>
+                                <p className="text-[11px] font-bold text-amber-800 dark:text-amber-300">
+                                    Observación:
+                                </p>
+                                <p className="text-[11px] text-amber-700 dark:text-amber-400">
+                                    {report.admin_comments}
+                                </p>
                             </div>
                         </div>
                     )}
 
                     {/* ===== FORMULARIO ===== */}
-                    <div className="bg-white dark:bg-slate-800/50 rounded-2xl border border-gray-200 dark:border-white/10 p-4 md:p-6 shadow-sm dark:shadow-2xl">
+                    <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm md:p-6 dark:border-white/10 dark:bg-slate-800/50 dark:shadow-2xl">
                         <form onSubmit={submit} className="space-y-4">
-                            
                             {/* ===== INSTITUCIÓN (solo lectura) ===== */}
                             <div>
-                                <label htmlFor="institution" className="block text-[11px] font-semibold text-gray-700 dark:text-neutral-300 mb-1.5 flex items-center gap-1.5">
-                                    <School className="w-3.5 h-3.5 text-blue-500" /> IE
-                                </label>
-                                <div 
-                                    id="institution"
-                                    className="w-full rounded-xl border-2 border-gray-200 dark:border-white/10 py-2 px-3 text-[11px] bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-white"
+                                <label
+                                    htmlFor="institution"
+                                    className="mb-1.5 block flex items-center gap-1.5 text-[11px] font-semibold text-gray-700 dark:text-neutral-300"
                                 >
-                                    {report.institution?.name || 'Sin IE'} 
-                                    {report.institution?.modular_code && ` (${report.institution.modular_code})`}
+                                    <School className="h-3.5 w-3.5 text-blue-500" />{' '}
+                                    IE
+                                </label>
+                                <div
+                                    id="institution"
+                                    className="w-full rounded-xl border-2 border-gray-200 bg-gray-50 px-3 py-2 text-[11px] text-gray-900 dark:border-white/10 dark:bg-slate-800 dark:text-white"
+                                >
+                                    {report.institution?.name || 'Sin IE'}
+                                    {report.institution?.modular_code &&
+                                        ` (${report.institution.modular_code})`}
                                 </div>
                             </div>
 
                             {/* ===== MES (solo lectura) ===== */}
                             <div>
-                                <label htmlFor="month" className="block text-[11px] font-semibold text-gray-700 dark:text-neutral-300 mb-1.5 flex items-center gap-1.5">
-                                    <Calendar className="w-3.5 h-3.5 text-blue-500" /> Mes
-                                </label>
-                                <div 
-                                    id="month"
-                                    className="w-full rounded-xl border-2 border-gray-200 dark:border-white/10 py-2 px-3 text-[11px] font-medium bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-white"
+                                <label
+                                    htmlFor="month"
+                                    className="mb-1.5 block flex items-center gap-1.5 text-[11px] font-semibold text-gray-700 dark:text-neutral-300"
                                 >
-                                    {report.month ? monthsList[report.month] : ''} {report.year}
+                                    <Calendar className="h-3.5 w-3.5 text-blue-500" />{' '}
+                                    Mes
+                                </label>
+                                <div
+                                    id="month"
+                                    className="w-full rounded-xl border-2 border-gray-200 bg-gray-50 px-3 py-2 text-[11px] font-medium text-gray-900 dark:border-white/10 dark:bg-slate-800 dark:text-white"
+                                >
+                                    {report.month
+                                        ? monthsList[report.month]
+                                        : ''}{' '}
+                                    {report.year}
                                 </div>
                             </div>
 
                             {/* ===== ESTADO DEL SERVICIO - 2 OPCIONES ===== */}
                             <div>
-                                <label className="block text-[11px] font-semibold text-gray-700 dark:text-neutral-300 mb-2 flex items-center gap-1.5">
-                                    <Shield className="w-3.5 h-3.5 text-blue-500" /> 
-                                    Estado del Servicio <span className="text-rose-500">*</span>
+                                <label className="mb-2 block flex items-center gap-1.5 text-[11px] font-semibold text-gray-700 dark:text-neutral-300">
+                                    <Shield className="h-3.5 w-3.5 text-blue-500" />
+                                    Estado del Servicio{' '}
+                                    <span className="text-rose-500">*</span>
                                 </label>
-                                
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                     {serviceOptions.map((option) => {
                                         const Icon = option.icon;
-                                        const isSelected = data.service_state === option.id;
-                                        
+                                        const isSelected =
+                                            data.service_state === option.id;
+
                                         return (
                                             <button
                                                 key={option.id}
                                                 type="button"
-                                                onClick={() => handleServiceStateChange(option.id)}
-                                                className={`relative p-4 rounded-xl border-2 transition-all text-left ${
+                                                onClick={() =>
+                                                    handleServiceStateChange(
+                                                        option.id,
+                                                    )
+                                                }
+                                                className={`relative rounded-xl border-2 p-4 text-left transition-all ${
                                                     isSelected
                                                         ? `${option.bgColor} ${option.borderColor} ring-2 ring-offset-2 ${option.selectedRing}`
-                                                        : 'bg-white dark:bg-slate-900 border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20'
+                                                        : 'border-gray-200 bg-white hover:border-gray-300 dark:border-white/10 dark:bg-slate-900 dark:hover:border-white/20'
                                                 }`}
                                             >
                                                 <div className="flex items-start gap-3">
-                                                    <div className={`p-2 rounded-lg ${isSelected ? option.bgColor : 'bg-gray-100 dark:bg-white/5'}`}>
-                                                        <Icon className={`w-5 h-5 ${isSelected ? option.iconColor : 'text-gray-400 dark:text-neutral-500'}`} />
+                                                    <div
+                                                        className={`rounded-lg p-2 ${isSelected ? option.bgColor : 'bg-gray-100 dark:bg-white/5'}`}
+                                                    >
+                                                        <Icon
+                                                            className={`h-5 w-5 ${isSelected ? option.iconColor : 'text-gray-400 dark:text-neutral-500'}`}
+                                                        />
                                                     </div>
                                                     <div className="flex-1">
-                                                        <p className={`text-[11px] font-semibold ${isSelected ? option.textColor : 'text-gray-700 dark:text-neutral-300'}`}>
+                                                        <p
+                                                            className={`text-[11px] font-semibold ${isSelected ? option.textColor : 'text-gray-700 dark:text-neutral-300'}`}
+                                                        >
                                                             {option.label}
                                                         </p>
                                                         <p className="text-[10px] text-gray-500 dark:text-neutral-400">
@@ -568,7 +672,9 @@ export default function Edit({ report, flash, months = {} }: EditReportProps) {
                                                     </div>
                                                     {isSelected && (
                                                         <div className="flex-shrink-0">
-                                                            <CheckCircle className={`w-4 h-4 ${option.iconColor}`} />
+                                                            <CheckCircle
+                                                                className={`h-4 w-4 ${option.iconColor}`}
+                                                            />
                                                         </div>
                                                     )}
                                                 </div>
@@ -580,21 +686,29 @@ export default function Edit({ report, flash, months = {} }: EditReportProps) {
 
                             {/* ===== N° OFICIO ===== */}
                             <div>
-                                <label htmlFor="office_number" className="block text-[11px] font-semibold text-gray-700 dark:text-neutral-300 mb-1.5 flex items-center gap-1.5">
-                                    <FileText className="w-3.5 h-3.5 text-blue-500" /> N° Oficio <span className="text-gray-400 font-normal">(Solo números)</span>
+                                <label
+                                    htmlFor="office_number"
+                                    className="mb-1.5 block flex items-center gap-1.5 text-[11px] font-semibold text-gray-700 dark:text-neutral-300"
+                                >
+                                    <FileText className="h-3.5 w-3.5 text-blue-500" />{' '}
+                                    N° Oficio{' '}
+                                    <span className="font-normal text-gray-400">
+                                        (Solo números)
+                                    </span>
                                 </label>
-                                <input 
+                                <input
                                     id="office_number"
                                     name="office_number"
-                                    type="text" 
+                                    type="text"
                                     inputMode="numeric"
                                     pattern="[0-9]*"
                                     value={data.office_number || ''}
                                     onChange={(e) => {
-                                        const numericValue = e.target.value.replace(/\D/g, '');
+                                        const numericValue =
+                                            e.target.value.replace(/\D/g, '');
                                         setData('office_number', numericValue);
-                                    }} 
-                                    className="w-full rounded-xl border-2 border-gray-200 dark:border-white/10 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all py-2 px-3 text-[11px] bg-white dark:bg-slate-900 text-gray-900 dark:text-white outline-none placeholder:text-gray-400 dark:placeholder:text-neutral-500"
+                                    }}
+                                    className="w-full rounded-xl border-2 border-gray-200 bg-white px-3 py-2 text-[11px] text-gray-900 transition-all outline-none placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-white/10 dark:bg-slate-900 dark:text-white dark:placeholder:text-neutral-500"
                                     placeholder="Ej. 039"
                                     maxLength={10}
                                     autoComplete="off"
@@ -738,7 +852,7 @@ export default function Edit({ report, flash, months = {} }: EditReportProps) {
                             ===== FIN APARTADO DE EVIDENCIAS ===== */}
 
                             {/* ===== BOTONES ===== */}
-                            <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-200 dark:border-white/10">
+                            <div className="flex flex-wrap gap-2 border-t border-gray-200 pt-3 dark:border-white/10">
                                 {/* ✅ BOTÓN TEST DE VELOCIDAD EN EL FORMULARIO (COMENTADO)
                                 <button
                                     type="button"
@@ -750,25 +864,31 @@ export default function Edit({ report, flash, months = {} }: EditReportProps) {
                                     <ExternalLink className="w-3 h-3" />
                                 </button>
                                 */}
-                                
+
                                 <button
                                     type="button"
                                     onClick={handlePreviewPdf}
-                                    className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white rounded-xl text-[11px] font-medium transition-all shadow-md shadow-emerald-500/20 hover:shadow-emerald-500/40 hover:scale-105 active:scale-95"
+                                    className="flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-600 px-4 py-2.5 text-[11px] font-medium text-white shadow-md shadow-emerald-500/20 transition-all hover:scale-105 hover:from-teal-600 hover:to-emerald-700 hover:shadow-emerald-500/40 active:scale-95"
                                 >
-                                    <Eye className="w-4 h-4" />
+                                    <Eye className="h-4 w-4" />
                                     Previsualizar Oficio
                                 </button>
-                                
-                                <button 
-                                    type="submit" 
-                                    disabled={processing || isUploading} 
-                                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-xl text-[11px] font-medium transition-all shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
+
+                                <button
+                                    type="submit"
+                                    disabled={processing || isUploading}
+                                    className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 px-4 py-2.5 text-[11px] font-medium text-white shadow-lg shadow-blue-500/20 transition-all hover:scale-105 hover:from-blue-600 hover:to-indigo-700 hover:shadow-blue-500/40 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
                                 >
                                     {processing || isUploading ? (
-                                        <><Loader2 className="w-4 h-4 animate-spin" /> Guardando...</>
+                                        <>
+                                            <Loader2 className="h-4 w-4 animate-spin" />{' '}
+                                            Guardando...
+                                        </>
                                     ) : (
-                                        <><Save className="w-4 h-4" /> Guardar Correcciones</>
+                                        <>
+                                            <Save className="h-4 w-4" /> Guardar
+                                            Correcciones
+                                        </>
                                     )}
                                 </button>
                             </div>
@@ -777,10 +897,12 @@ export default function Edit({ report, flash, months = {} }: EditReportProps) {
 
                     {/* ===== HISTORIAL ===== */}
                     {report.history && report.history.length > 0 && (
-                        <div className="bg-white dark:bg-slate-800/50 rounded-2xl border border-gray-200 dark:border-white/10 p-4 md:p-6 shadow-sm dark:shadow-2xl">
-                            <div className="flex items-center gap-2 mb-3">
-                                <History className="w-4 h-4 text-gray-500 dark:text-neutral-400" />
-                                <h3 className="text-[11px] font-semibold text-gray-700 dark:text-neutral-300">Historial</h3>
+                        <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm md:p-6 dark:border-white/10 dark:bg-slate-800/50 dark:shadow-2xl">
+                            <div className="mb-3 flex items-center gap-2">
+                                <History className="h-4 w-4 text-gray-500 dark:text-neutral-400" />
+                                <h3 className="text-[11px] font-semibold text-gray-700 dark:text-neutral-300">
+                                    Historial
+                                </h3>
                             </div>
                             <ReportHistory history={report.history} />
                         </div>
@@ -788,16 +910,23 @@ export default function Edit({ report, flash, months = {} }: EditReportProps) {
 
                     {/* ===== NOTIFICACIÓN DE ÉXITO ===== */}
                     {showSuccess && (
-                        <div className="fixed bottom-4 right-4 bg-white dark:bg-slate-800 border border-gray-200 dark:border-white/10 p-4 rounded-2xl shadow-2xl flex items-center gap-3 text-[11px] animate-in slide-in-from-right">
-                            <div className="p-2 bg-emerald-100 dark:bg-emerald-500/20 rounded-xl border border-emerald-200 dark:border-emerald-500/20">
-                                <CheckCircle className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                        <div className="fixed right-4 bottom-4 flex animate-in items-center gap-3 rounded-2xl border border-gray-200 bg-white p-4 text-[11px] shadow-2xl slide-in-from-right dark:border-white/10 dark:bg-slate-800">
+                            <div className="rounded-xl border border-emerald-200 bg-emerald-100 p-2 dark:border-emerald-500/20 dark:bg-emerald-500/20">
+                                <CheckCircle className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                             </div>
                             <div>
-                                <p className="font-medium text-gray-900 dark:text-white">¡Reporte actualizado!</p>
-                                <p className="text-gray-500 dark:text-neutral-400">Las correcciones han sido guardadas.</p>
+                                <p className="font-medium text-gray-900 dark:text-white">
+                                    ¡Reporte actualizado!
+                                </p>
+                                <p className="text-gray-500 dark:text-neutral-400">
+                                    Las correcciones han sido guardadas.
+                                </p>
                             </div>
-                            <button onClick={() => setShowSuccess(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors">
-                                <X className="w-4 h-4" />
+                            <button
+                                onClick={() => setShowSuccess(false)}
+                                className="text-gray-400 transition-colors hover:text-gray-600 dark:hover:text-white"
+                            >
+                                <X className="h-4 w-4" />
                             </button>
                         </div>
                     )}
@@ -807,7 +936,9 @@ export default function Edit({ report, flash, months = {} }: EditReportProps) {
             {/* ===== MODAL DE PREVISUALIZACIÓN DE PDF ===== */}
             <PdfViewerModal
                 isOpen={previewPdfModal.isOpen}
-                onClose={() => setPreviewPdfModal(prev => ({ ...prev, isOpen: false }))}
+                onClose={() =>
+                    setPreviewPdfModal((prev) => ({ ...prev, isOpen: false }))
+                }
                 pdfUrl={previewPdfModal.url}
                 title={previewPdfModal.title}
                 subtitle={previewPdfModal.subtitle}
@@ -818,5 +949,8 @@ export default function Edit({ report, flash, months = {} }: EditReportProps) {
 }
 
 Edit.layout = {
-    breadcrumbs: [{ title: 'Dashboard', href: dashboard() }, { title: 'Corregir Reporte', href: '#' }],
+    breadcrumbs: [
+        { title: 'Dashboard', href: dashboard() },
+        { title: 'Corregir Reporte', href: '#' },
+    ],
 };

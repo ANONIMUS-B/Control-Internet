@@ -59,7 +59,8 @@ export default function PasskeyRegistration({ onSuccess }: Props) {
     if (!isSupported) {
         return (
             <div className="text-sm text-muted-foreground">
-                Las llaves de acceso (passkeys) no son compatibles con este navegador.
+                Las llaves de acceso (passkeys) no son compatibles con este
+                navegador.
             </div>
         );
     }
@@ -89,7 +90,8 @@ export default function PasskeyRegistration({ onSuccess }: Props) {
                     autoFocus
                 />
                 <p className="text-xs text-muted-foreground">
-                    El nombre te ayuda a identificar este dispositivo más adelante.
+                    El nombre te ayuda a identificar este dispositivo más
+                    adelante.
                 </p>
             </div>
 

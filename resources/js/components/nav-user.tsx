@@ -28,10 +28,12 @@ export function NavUser() {
     }
 
     return (
-        <div className={`flex ${isCollapsed ? 'flex-col items-center justify-center gap-2 w-full' : 'items-center gap-2 w-full'}`}>
+        <div
+            className={`flex ${isCollapsed ? 'w-full flex-col items-center justify-center gap-2' : 'w-full items-center gap-2'}`}
+        >
             {/* NOTIFICACIONES */}
-            <div className={isCollapsed ? 'flex justify-center w-full' : ''}>
-                <Notifications 
+            <div className={isCollapsed ? 'flex w-full justify-center' : ''}>
+                <Notifications
                     notifications={notifications || []}
                     unreadCount={unreadCount || 0}
                 />
@@ -39,12 +41,14 @@ export function NavUser() {
 
             {/* MENÚ DE USUARIO */}
             <SidebarMenu className={isCollapsed ? 'w-auto' : 'flex-1'}>
-                <SidebarMenuItem className={isCollapsed ? 'flex justify-center' : ''}>
+                <SidebarMenuItem
+                    className={isCollapsed ? 'flex justify-center' : ''}
+                >
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <SidebarMenuButton
                                 size="lg"
-                                className="group text-sidebar-accent-foreground data-[state=open]:bg-sidebar-accent group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-0! group-data-[collapsible=icon]:justify-center"
+                                className="group text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0! data-[state=open]:bg-sidebar-accent"
                                 data-test="sidebar-menu-button"
                             >
                                 <UserInfo user={auth.user} />

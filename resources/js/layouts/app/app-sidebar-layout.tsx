@@ -11,11 +11,12 @@ export default function AppSidebarLayout({
     return (
         <AppShell variant="sidebar">
             <AppSidebar />
-            <AppContent variant="sidebar" className="overflow-x-hidden text-[11px]">
+            <AppContent
+                variant="sidebar"
+                className="overflow-x-hidden text-[11px]"
+            >
                 <AppSidebarHeader breadcrumbs={breadcrumbs} />
-                <div className="text-[11px]">
-                    {children}
-                </div>
+                <div className="text-[11px]">{children}</div>
             </AppContent>
         </AppShell>
     );

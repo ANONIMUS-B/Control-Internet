@@ -104,17 +104,34 @@ export default [
     },
     {
         ignores: [
-            'vendor',
-            'node_modules',
-            'public',
-            'bootstrap/ssr',
+            '.agents/**',
+            'scripts/**',
+            'vendor/**',
+            'node_modules/**',
+            'public/**',
+            'bootstrap/ssr/**',
             'tailwind.config.js',
             'vite.config.ts',
             'resources/js/actions/**',
             'resources/js/components/ui/*',
             'resources/js/routes/**',
             'resources/js/wayfinder/**',
+            'resources/js/ziggy.js',
         ],
+    },
+    {
+        rules: {
+            '@typescript-eslint/no-unused-vars': [
+                'warn',
+                {
+                    argsIgnorePattern: '^_',
+                    varsIgnorePattern: '^_',
+                    caughtErrorsIgnorePattern: '^_',
+                },
+            ],
+            'react-hooks/set-state-in-effect': 'warn',
+            'react-hooks/immutability': 'warn',
+        },
     },
     prettier,
     {

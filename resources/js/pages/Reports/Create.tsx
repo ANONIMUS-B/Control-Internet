@@ -1,22 +1,42 @@
 import { Head, useForm, Link } from '@inertiajs/react';
-import { FormEvent, useState, useEffect, useRef } from 'react';
-import { dashboard } from '@/routes';
-import { 
-    ArrowLeft, Save, Upload, X, 
-    CheckCircle, AlertCircle, Calendar, 
-    Building2, FileText, Camera, 
-    ChevronRight, Trash2,
-    School, Loader2, ClipboardPaste,
-    ChevronLeft, ChevronRight as ChevronRightIcon,
-    Clock, CalendarDays, Info, Sparkles,
-    Shield, Image as ImageIcon,
-    Award, Users, Wifi, ExternalLink,
+import {
+    ArrowLeft,
+    Save,
+    Upload,
+    X,
+    CheckCircle,
+    AlertCircle,
+    Calendar,
+    Building2,
+    FileText,
+    Camera,
+    ChevronRight,
+    Trash2,
+    School,
+    Loader2,
+    ClipboardPaste,
+    ChevronLeft,
+    ChevronRight as ChevronRightIcon,
+    Clock,
+    CalendarDays,
+    Info,
+    Sparkles,
+    Shield,
+    Image as ImageIcon,
+    Award,
+    Users,
+    Wifi,
+    ExternalLink,
     WifiOff, // ✅ Solo WifiOff para Sin Servicio
-    Eye
+    Eye,
 } from 'lucide-react';
-import { PeriodCountdownCard, FormattedPeriod } from '@/components/period-countdown-card';
+import type { FormEvent } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { MissingSignatureAlert } from '@/components/missing-signature-alert';
 import { PdfViewerModal } from '@/components/pdf-viewer-modal';
+import type { FormattedPeriod } from '@/components/period-countdown-card';
+import { PeriodCountdownCard } from '@/components/period-countdown-card';
+import { dashboard } from '@/routes';
 
 interface Institution {
     id: number;
@@ -40,15 +60,15 @@ interface CreateReportProps {
     availablePeriods?: ReportPeriod[];
 }
 
-export default function Create({ 
-    month, 
-    year, 
-    myInstitutions, 
+export default function Create({
+    month,
+    year,
+    myInstitutions,
     reportedMonths,
     months: monthsList,
     currentYear,
     reportPeriod,
-    availablePeriods = []
+    availablePeriods = [],
 }: CreateReportProps) {
     const [selectedMonth, setSelectedMonth] = useState<number>(month);
     const [selectedYear] = useState<number>(year);
@@ -63,7 +83,8 @@ export default function Create({
     const { data, setData, post, processing, errors, reset } = useForm({
         month: month,
         year: year,
-        educational_institution_id: myInstitutions.length > 0 ? myInstitutions[0].id : null,
+        educational_institution_id:
+            myInstitutions.length > 0 ? myInstitutions[0].id : null,
         service_state: 'operative', // ✅ Valor por defecto: Operativo
         office_number: '',
         evidences: [] as File[],
@@ -72,9 +93,10 @@ export default function Create({
     const [previews, setPreviews] = useState<string[]>([]);
     const [dragActive, setDragActive] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
-    const [selectedInstitution, setSelectedInstitution] = useState<Institution | null>(
-        myInstitutions.length > 0 ? myInstitutions[0] : null
-    );
+    const [selectedInstitution, setSelectedInstitution] =
+        useState<Institution | null>(
+            myInstitutions.length > 0 ? myInstitutions[0] : null,
+        );
     const [uploadProgress, setUploadProgress] = useState(0);
     const [isUploading, setIsUploading] = useState(false);
     const [isPasteActive, setIsPasteActive] = useState(false);
@@ -92,27 +114,27 @@ export default function Create({
 
     // ✅ SOLO 2 OPCIONES: OPERATIVO Y SIN SERVICIO
     const serviceOptions = [
-        { 
-            id: 'operative', 
-            label: 'Operativo', 
+        {
+            id: 'operative',
+            label: 'Operativo',
             description: 'El servicio funciona correctamente',
             icon: Wifi,
             color: 'emerald',
             bgColor: 'bg-emerald-50 dark:bg-emerald-500/10',
             borderColor: 'border-emerald-200 dark:border-emerald-500/20',
             textColor: 'text-emerald-700 dark:text-emerald-300',
-            iconColor: 'text-emerald-600 dark:text-emerald-400'
+            iconColor: 'text-emerald-600 dark:text-emerald-400',
         },
-        { 
-            id: 'no_service', 
-            label: 'Sin Servicio', 
+        {
+            id: 'no_service',
+            label: 'Sin Servicio',
             description: 'El servicio no está disponible',
             icon: WifiOff,
             color: 'rose',
             bgColor: 'bg-rose-50 dark:bg-rose-500/10',
             borderColor: 'border-rose-200 dark:border-rose-500/20',
             textColor: 'text-rose-700 dark:text-rose-300',
-            iconColor: 'text-rose-600 dark:text-rose-400'
+            iconColor: 'text-rose-600 dark:text-rose-400',
         },
     ];
 
@@ -126,7 +148,10 @@ export default function Create({
     // ✅ PREVISUALIZAR PDF ANTES DE GUARDAR
     const handlePreviewPdf = () => {
         if (!data.educational_institution_id) {
-            setErrorMessage('Por favor selecciona una institución para previsualizar el oficio.');
+            setErrorMessage(
+                'Por favor selecciona una institución para previsualizar el oficio.',
+            );
+
             return;
         }
 
@@ -166,11 +191,12 @@ export default function Create({
     const processPastedImage = (file: File) => {
         if (file.size > 10 * 1024 * 1024) {
             setErrorMessage('La imagen no debe pesar más de 10MB.');
+
             return false;
         }
 
         setData('evidences', [...data.evidences, file]);
-        
+
         const reader = new FileReader();
         reader.onload = (event) => {
             if (event.target?.result) {
@@ -179,25 +205,31 @@ export default function Create({
         };
         reader.readAsDataURL(file);
         setErrorMessage(null);
+
         return true;
     };
 
     // ✅ MANEJADOR GLOBAL DE PEGADO (Ctrl+V)
     const handleGlobalPaste = (e: ClipboardEvent) => {
         const items = e.clipboardData?.items;
-        if (!items) return;
+
+        if (!items) {
+            return;
+        }
 
         let hasImage = false;
-        
+
         for (const item of items) {
             if (item.type.startsWith('image/')) {
                 const file = item.getAsFile();
+
                 if (file) {
                     processPastedImage(file);
                     hasImage = true;
                     setIsPasteActive(true);
                     setTimeout(() => setIsPasteActive(false), 2000);
                 }
+
                 break;
             }
         }
@@ -210,13 +242,17 @@ export default function Create({
     // ✅ REGISTRAR Y DESREGISTRAR EL EVENTO GLOBAL
     useEffect(() => {
         document.addEventListener('paste', handleGlobalPaste);
+
         return () => {
             document.removeEventListener('paste', handleGlobalPaste);
         };
     }, [data.evidences, previews]);
 
     const isPeriodValid = (period: ReportPeriod) => {
-        if (!period || !period.is_active) return false;
+        if (!period || !period.is_active) {
+            return false;
+        }
+
         const now = new Date();
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -231,46 +267,76 @@ export default function Create({
 
     const isSelectedMonthInPeriod = (monthNum: number, yearNum: number) => {
         if (availablePeriods && availablePeriods.length > 0) {
-            return availablePeriods.some(p => p.month === monthNum && p.year === yearNum && isPeriodValid(p));
+            return availablePeriods.some(
+                (p) =>
+                    p.month === monthNum &&
+                    p.year === yearNum &&
+                    isPeriodValid(p),
+            );
         }
+
         if (reportPeriod && isPeriodValid(reportPeriod)) {
-            return reportPeriod.month === monthNum && reportPeriod.year === yearNum;
+            return (
+                reportPeriod.month === monthNum && reportPeriod.year === yearNum
+            );
         }
+
         return false;
     };
 
     const isFutureMonth = (month: number, year: number) => {
-        if (year > currentYearDate) return true;
-        if (year === currentYearDate && month > currentMonth) return true;
+        if (year > currentYearDate) {
+            return true;
+        }
+
+        if (year === currentYearDate && month > currentMonth) {
+            return true;
+        }
+
         return false;
     };
 
-    const isMonthReported = (institutionId: number | null, month: number, year: number) => {
-        if (!institutionId) return false;
-        if (year !== currentYearDate) return false;
+    const isMonthReported = (
+        institutionId: number | null,
+        month: number,
+        year: number,
+    ) => {
+        if (!institutionId) {
+            return false;
+        }
+
+        if (year !== currentYearDate) {
+            return false;
+        }
+
         const reported = reportedMonths[institutionId] || [];
+
         return reported.includes(month);
     };
 
     const getAvailableMonths = (institutionId: number | null) => {
-        if (!institutionId) return [];
-        
+        if (!institutionId) {
+            return [];
+        }
+
         const reported = reportedMonths[institutionId] || [];
         let available: number[] = [];
 
         if (availablePeriods && availablePeriods.length > 0) {
             available = availablePeriods
-                .filter(p => isPeriodValid(p))
-                .map(p => p.month)
-                .filter(month => {
+                .filter((p) => isPeriodValid(p))
+                .map((p) => p.month)
+                .filter((month) => {
                     const isReported = reported.includes(month);
                     const isFuture = isFutureMonth(month, currentYearDate);
+
                     return !isReported && !isFuture;
                 });
         } else if (reportPeriod && isPeriodValid(reportPeriod)) {
             const periodMonth = reportPeriod.month;
             const isReported = reported.includes(periodMonth);
             const isFuture = isFutureMonth(periodMonth, reportPeriod.year);
+
             if (!isReported && !isFuture) {
                 available = [periodMonth];
             }
@@ -278,13 +344,20 @@ export default function Create({
             available = [];
         }
 
-        return available.map(m => String(m));
+        return available.map((m) => String(m));
     };
 
     const goToPreviousMonth = () => {
-        const available = getAvailableMonths(data.educational_institution_id).map(Number);
-        if (available.length === 0) return;
+        const available = getAvailableMonths(
+            data.educational_institution_id,
+        ).map(Number);
+
+        if (available.length === 0) {
+            return;
+        }
+
         const currentIndex = available.indexOf(selectedMonth);
+
         if (currentIndex > 0) {
             const newMonth = available[currentIndex - 1];
             setSelectedMonth(newMonth);
@@ -293,9 +366,16 @@ export default function Create({
     };
 
     const goToNextMonth = () => {
-        const available = getAvailableMonths(data.educational_institution_id).map(Number);
-        if (available.length === 0) return;
+        const available = getAvailableMonths(
+            data.educational_institution_id,
+        ).map(Number);
+
+        if (available.length === 0) {
+            return;
+        }
+
         const currentIndex = available.indexOf(selectedMonth);
+
         if (currentIndex < available.length - 1) {
             const newMonth = available[currentIndex + 1];
             setSelectedMonth(newMonth);
@@ -304,16 +384,27 @@ export default function Create({
     };
 
     const isCurrentPeriodValid = () => {
-        if (!reportPeriod) return true;
-        if (!reportPeriod.is_active) return true;
+        if (!reportPeriod) {
+            return true;
+        }
+
+        if (!reportPeriod.is_active) {
+            return true;
+        }
+
         return isPeriodValid(reportPeriod);
     };
 
     useEffect(() => {
         const institutionId = data.educational_institution_id;
+
         if (institutionId) {
             const available = getAvailableMonths(institutionId);
-            if (available.length > 0 && !available.includes(String(selectedMonth))) {
+
+            if (
+                available.length > 0 &&
+                !available.includes(String(selectedMonth))
+            ) {
                 setSelectedMonth(parseInt(available[0]));
                 setData('month', parseInt(available[0]));
             } else if (available.length === 0) {
@@ -324,19 +415,23 @@ export default function Create({
     }, [data.educational_institution_id, selectedYear]);
 
     useEffect(() => {
-        const institution = myInstitutions.find(inst => inst.id === data.educational_institution_id);
+        const institution = myInstitutions.find(
+            (inst) => inst.id === data.educational_institution_id,
+        );
         setSelectedInstitution(institution || null);
     }, [data.educational_institution_id, myInstitutions]);
 
     useEffect(() => {
-        return () => previews.forEach(url => URL.revokeObjectURL(url));
+        return () => previews.forEach((url) => URL.revokeObjectURL(url));
     }, [previews]);
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
             const filesArray = Array.from(e.target.files);
             setData('evidences', [...data.evidences, ...filesArray]);
-            const newPreviews = filesArray.map(file => URL.createObjectURL(file));
+            const newPreviews = filesArray.map((file) =>
+                URL.createObjectURL(file),
+            );
             setPreviews([...previews, ...newPreviews]);
         }
     };
@@ -352,9 +447,10 @@ export default function Create({
     const handleDrag = (e: React.DragEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        if (e.type === "dragenter" || e.type === "dragover") {
+
+        if (e.type === 'dragenter' || e.type === 'dragover') {
             setDragActive(true);
-        } else if (e.type === "dragleave") {
+        } else if (e.type === 'dragleave') {
             setDragActive(false);
         }
     };
@@ -363,29 +459,37 @@ export default function Create({
         e.preventDefault();
         e.stopPropagation();
         setDragActive(false);
+
         if (e.dataTransfer.files && e.dataTransfer.files[0]) {
             const filesArray = Array.from(e.dataTransfer.files);
             setData('evidences', [...data.evidences, ...filesArray]);
-            const newPreviews = filesArray.map(file => URL.createObjectURL(file));
+            const newPreviews = filesArray.map((file) =>
+                URL.createObjectURL(file),
+            );
             setPreviews([...previews, ...newPreviews]);
         }
     };
 
     const submit = (e: FormEvent) => {
         e.preventDefault();
-        
+
         if (!data.month || data.month === 0) {
             setErrorMessage('Debes seleccionar un mes.');
+
             return;
         }
 
         if (!isSelectedMonthInPeriod(data.month, data.year)) {
-            setErrorMessage('Este mes no está dentro del período de envío configurado.');
+            setErrorMessage(
+                'Este mes no está dentro del período de envío configurado.',
+            );
+
             return;
         }
 
         if (isFutureMonth(selectedMonth, selectedYear)) {
             setErrorMessage('No puedes generar reportes para meses futuros.');
+
             return;
         }
 
@@ -397,8 +501,9 @@ export default function Create({
                 onSuccess: () => {
                     setShowSuccess(true);
                     setTimeout(() => setShowSuccess(false), 3000);
-                }
+                },
             });
+
             return;
         }
 
@@ -406,11 +511,13 @@ export default function Create({
         setUploadProgress(0);
 
         const interval = setInterval(() => {
-            setUploadProgress(prev => {
+            setUploadProgress((prev) => {
                 if (prev >= 90) {
                     clearInterval(interval);
+
                     return 90;
                 }
+
                 return prev + 10;
             });
         }, 300);
@@ -430,7 +537,7 @@ export default function Create({
                 clearInterval(interval);
                 setIsUploading(false);
                 setUploadProgress(0);
-            }
+            },
         });
     };
 
@@ -439,35 +546,55 @@ export default function Create({
     };
 
     const formatDate = (dateStr: string) => {
-        if (!dateStr) return '';
+        if (!dateStr) {
+            return '';
+        }
+
         const date = new Date(dateStr);
+
         return date.toLocaleDateString('es-ES', {
             day: '2-digit',
             month: '2-digit',
-            year: 'numeric'
+            year: 'numeric',
         });
     };
 
     const canCreateReport = () => {
-        if (!reportPeriod) return true;
-        if (!reportPeriod.is_active) return true;
+        if (!reportPeriod) {
+            return true;
+        }
+
+        if (!reportPeriod.is_active) {
+            return true;
+        }
+
         return isCurrentPeriodValid();
     };
 
-    const availableMonthsList = getAvailableMonths(data.educational_institution_id);
+    const availableMonthsList = getAvailableMonths(
+        data.educational_institution_id,
+    );
 
     if (myInstitutions.length === 0) {
         return (
             <>
                 <Head title="Nuevo Reporte" />
                 <div className="p-4 md:p-6" style={{ fontSize: '11px' }}>
-                    <div className="max-w-5xl mx-auto w-full">
-                        <div className="bg-white dark:bg-slate-800/50 rounded-2xl border border-gray-200 dark:border-white/10 p-8 text-center shadow-sm dark:shadow-2xl">
-                            <AlertCircle className="w-16 h-16 text-amber-500 mx-auto mb-4" />
-                            <h2 className="text-[11px] font-bold text-gray-900 dark:text-white">No tienes instituciones asignadas</h2>
-                            <p className="text-[11px] text-gray-500 dark:text-neutral-400 mt-2">Contacta al administrador para que te asigne una institución.</p>
-                            <Link href="/reportes" className="inline-flex items-center gap-2 mt-4 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-xl text-[11px] font-medium transition-all shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 hover:scale-105 active:scale-95">
-                                <ArrowLeft className="w-4 h-4" /> Volver
+                    <div className="mx-auto w-full max-w-5xl">
+                        <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm dark:border-white/10 dark:bg-slate-800/50 dark:shadow-2xl">
+                            <AlertCircle className="mx-auto mb-4 h-16 w-16 text-amber-500" />
+                            <h2 className="text-[11px] font-bold text-gray-900 dark:text-white">
+                                No tienes instituciones asignadas
+                            </h2>
+                            <p className="mt-2 text-[11px] text-gray-500 dark:text-neutral-400">
+                                Contacta al administrador para que te asigne una
+                                institución.
+                            </p>
+                            <Link
+                                href="/reportes"
+                                className="mt-4 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 px-4 py-2.5 text-[11px] font-medium text-white shadow-lg shadow-blue-500/20 transition-all hover:scale-105 hover:from-blue-600 hover:to-indigo-700 hover:shadow-blue-500/40 active:scale-95"
+                            >
+                                <ArrowLeft className="h-4 w-4" /> Volver
                             </Link>
                         </div>
                     </div>
@@ -479,29 +606,34 @@ export default function Create({
     return (
         <>
             <Head title="Nuevo Reporte" />
-            
-            <div 
+
+            <div
                 ref={containerRef}
-                className="p-4 md:p-6" 
+                className="p-4 md:p-6"
                 style={{ fontSize: '11px' }}
                 onPaste={(e) => {
                     e.preventDefault();
                 }}
             >
-                <div className="max-w-5xl mx-auto w-full space-y-4">
-                    
+                <div className="mx-auto w-full max-w-5xl space-y-4">
                     {/* ===== HEADER ===== */}
-                    <div className="relative overflow-hidden bg-white dark:bg-slate-800/50 rounded-2xl border border-gray-200 dark:border-white/10 p-4 md:p-6 shadow-sm dark:shadow-2xl">
-                        <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                    <div className="relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-4 shadow-sm md:p-6 dark:border-white/10 dark:bg-slate-800/50 dark:shadow-2xl">
+                        <div className="relative flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
                             <div className="flex items-center gap-3">
-                                <div className="p-2 bg-blue-100 dark:bg-blue-500/20 rounded-xl border border-blue-200 dark:border-blue-500/20">
-                                    <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                                <div className="rounded-xl border border-blue-200 bg-blue-100 p-2 dark:border-blue-500/20 dark:bg-blue-500/20">
+                                    <FileText className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                                 </div>
                                 <div>
-                                    <h1 className="text-[11px] font-bold text-gray-900 dark:text-white">Nuevo Reporte</h1>
+                                    <h1 className="text-[11px] font-bold text-gray-900 dark:text-white">
+                                        Nuevo Reporte
+                                    </h1>
                                     <div className="flex items-center gap-2 text-[11px] text-gray-500 dark:text-neutral-400">
-                                        <Calendar className="w-3 h-3" />
-                                        <span>{availablePeriods?.length || 'Selecciona'} mes(es) disponibles</span>
+                                        <Calendar className="h-3 w-3" />
+                                        <span>
+                                            {availablePeriods?.length ||
+                                                'Selecciona'}{' '}
+                                            mes(es) disponibles
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -520,17 +652,17 @@ export default function Create({
                                 <button
                                     type="button"
                                     onClick={handlePreviewPdf}
-                                    className="flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white rounded-xl text-[11px] font-medium transition-all shadow-md shadow-emerald-500/20 hover:shadow-emerald-500/40 hover:scale-105 active:scale-95"
+                                    className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-600 px-3 py-2 text-[11px] font-medium text-white shadow-md shadow-emerald-500/20 transition-all hover:scale-105 hover:from-teal-600 hover:to-emerald-700 hover:shadow-emerald-500/40 active:scale-95"
                                     title="Previsualizar el oficio en PDF antes de guardar"
                                 >
-                                    <Eye className="w-3.5 h-3.5" />
+                                    <Eye className="h-3.5 w-3.5" />
                                     <span>Previsualizar Oficio</span>
                                 </button>
-                                <Link 
-                                    href="/reportes" 
-                                    className="flex items-center gap-1.5 px-3 py-2 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-700 dark:text-neutral-300 rounded-xl text-[11px] font-medium transition-all border border-gray-300 dark:border-white/10 hover:border-gray-400 dark:hover:border-white/20"
+                                <Link
+                                    href="/reportes"
+                                    className="flex items-center gap-1.5 rounded-xl border border-gray-300 bg-gray-100 px-3 py-2 text-[11px] font-medium text-gray-700 transition-all hover:border-gray-400 hover:bg-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-neutral-300 dark:hover:border-white/20 dark:hover:bg-white/10"
                                 >
-                                    <ArrowLeft className="w-3.5 h-3.5" /> Volver
+                                    <ArrowLeft className="h-3.5 w-3.5" /> Volver
                                 </Link>
                             </div>
                         </div>
@@ -541,18 +673,18 @@ export default function Create({
 
                     {/* ===== ALERTA DE PLAZO / CONTADOR DE DÍAS RESTANTES ===== */}
                     {availablePeriods && availablePeriods.length > 0 && (
-                        <PeriodCountdownCard 
-                            periods={availablePeriods} 
-                            showAction={false} 
+                        <PeriodCountdownCard
+                            periods={availablePeriods}
+                            showAction={false}
                         />
                     )}
 
                     {/* ===== ALERTA DE PEGADO (feedback visual) ===== */}
                     {isPasteActive && (
-                        <div className="p-3 bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800 rounded-2xl animate-in slide-in-from-top duration-200">
+                        <div className="animate-in rounded-2xl border border-purple-200 bg-purple-50 p-3 duration-200 slide-in-from-top dark:border-purple-800 dark:bg-purple-950/30">
                             <div className="flex items-center gap-2">
-                                <ClipboardPaste className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                                <span className="text-[11px] text-purple-700 dark:text-purple-300 font-medium">
+                                <ClipboardPaste className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                                <span className="text-[11px] font-medium text-purple-700 dark:text-purple-300">
                                     ✅ Imagen pegada correctamente
                                 </span>
                             </div>
@@ -560,23 +692,35 @@ export default function Create({
                     )}
 
                     {/* ===== FORMULARIO ===== */}
-                    <div className="bg-white dark:bg-slate-800/50 rounded-2xl border border-gray-200 dark:border-white/10 p-4 md:p-6 shadow-sm dark:shadow-2xl">
+                    <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm md:p-6 dark:border-white/10 dark:bg-slate-800/50 dark:shadow-2xl">
                         <form onSubmit={submit} className="space-y-4">
-                            
                             {/* ===== INSTITUCIÓN ===== */}
                             <div>
-                                <label className="block text-[11px] font-semibold text-gray-700 dark:text-neutral-300 mb-1.5 flex items-center gap-1.5">
-                                    <School className="w-3.5 h-3.5 text-blue-500" /> IE <span className="text-rose-500">*</span>
+                                <label className="mb-1.5 block flex items-center gap-1.5 text-[11px] font-semibold text-gray-700 dark:text-neutral-300">
+                                    <School className="h-3.5 w-3.5 text-blue-500" />{' '}
+                                    IE <span className="text-rose-500">*</span>
                                 </label>
                                 <select
-                                    value={data.educational_institution_id ?? ''}
+                                    value={
+                                        data.educational_institution_id ?? ''
+                                    }
                                     onChange={(e) => {
-                                        const id = e.target.value ? parseInt(e.target.value) : null;
-                                        setData('educational_institution_id', id);
+                                        const id = e.target.value
+                                            ? parseInt(e.target.value)
+                                            : null;
+                                        setData(
+                                            'educational_institution_id',
+                                            id,
+                                        );
+
                                         if (id) {
-                                            const available = getAvailableMonths(id);
+                                            const available =
+                                                getAvailableMonths(id);
+
                                             if (available.length > 0) {
-                                                const newMonth = parseInt(available[0]);
+                                                const newMonth = parseInt(
+                                                    available[0],
+                                                );
                                                 setSelectedMonth(newMonth);
                                                 setData('month', newMonth);
                                             } else {
@@ -585,67 +729,101 @@ export default function Create({
                                             }
                                         }
                                     }}
-                                    className="w-full rounded-xl border-2 border-gray-200 dark:border-white/10 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all py-2 px-3 text-[11px] bg-white dark:bg-slate-900 text-gray-900 dark:text-white outline-none"
+                                    className="w-full rounded-xl border-2 border-gray-200 bg-white px-3 py-2 text-[11px] text-gray-900 transition-all outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-white/10 dark:bg-slate-900 dark:text-white"
                                 >
                                     <option value="">Selecciona</option>
                                     {myInstitutions.map((inst) => (
                                         <option key={inst.id} value={inst.id}>
-                                            {inst.name} {inst.modular_code ? `(${inst.modular_code})` : ''}
+                                            {inst.name}{' '}
+                                            {inst.modular_code
+                                                ? `(${inst.modular_code})`
+                                                : ''}
                                         </option>
                                     ))}
                                 </select>
                                 {errors.educational_institution_id && (
-                                    <p className="text-rose-500 text-[11px] mt-1">{errors.educational_institution_id}</p>
+                                    <p className="mt-1 text-[11px] text-rose-500">
+                                        {errors.educational_institution_id}
+                                    </p>
                                 )}
                             </div>
 
                             {/* ===== MES ===== */}
                             <div>
-                                <label className="block text-[11px] font-semibold text-gray-700 dark:text-neutral-300 mb-1.5 flex items-center gap-1.5">
-                                    <Calendar className="w-3.5 h-3.5 text-blue-500" /> Mes <span className="text-rose-500">*</span>
+                                <label className="mb-1.5 block flex items-center gap-1.5 text-[11px] font-semibold text-gray-700 dark:text-neutral-300">
+                                    <Calendar className="h-3.5 w-3.5 text-blue-500" />{' '}
+                                    Mes <span className="text-rose-500">*</span>
                                 </label>
-                                
+
                                 {availableMonthsList.length > 0 ? (
                                     <div className="flex items-center gap-2">
                                         <button
                                             type="button"
                                             onClick={goToPreviousMonth}
-                                            disabled={availableMonthsList.indexOf(String(selectedMonth)) <= 0}
-                                            className="p-2 rounded-xl bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 disabled:opacity-40 transition-all border border-gray-200 dark:border-white/10"
+                                            disabled={
+                                                availableMonthsList.indexOf(
+                                                    String(selectedMonth),
+                                                ) <= 0
+                                            }
+                                            className="rounded-xl border border-gray-200 bg-gray-100 p-2 transition-all hover:bg-gray-200 disabled:opacity-40 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
                                         >
-                                            <ChevronLeft className="w-4 h-4" />
+                                            <ChevronLeft className="h-4 w-4" />
                                         </button>
                                         <select
                                             value={selectedMonth}
                                             onChange={(e) => {
-                                                const month = parseInt(e.target.value);
+                                                const month = parseInt(
+                                                    e.target.value,
+                                                );
                                                 setSelectedMonth(month);
                                                 setData('month', month);
                                             }}
-                                            className="flex-1 rounded-xl border-2 border-gray-200 dark:border-white/10 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all py-2 px-3 text-[11px] font-medium bg-white dark:bg-slate-900 text-gray-900 dark:text-white text-center outline-none"
+                                            className="flex-1 rounded-xl border-2 border-gray-200 bg-white px-3 py-2 text-center text-[11px] font-medium text-gray-900 transition-all outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-white/10 dark:bg-slate-900 dark:text-white"
                                         >
-                                            {availableMonthsList.map((monthKey) => {
-                                                const monthNum = parseInt(monthKey);
-                                                const isReported = isMonthReported(data.educational_institution_id, monthNum, selectedYear);
-                                                return (
-                                                    <option key={monthKey} value={monthKey}>
-                                                        {getMonthName(monthNum)} {selectedYear}
-                                                        {isReported ? ' ✅' : ''}
-                                                    </option>
-                                                );
-                                            })}
+                                            {availableMonthsList.map(
+                                                (monthKey) => {
+                                                    const monthNum =
+                                                        parseInt(monthKey);
+                                                    const isReported =
+                                                        isMonthReported(
+                                                            data.educational_institution_id,
+                                                            monthNum,
+                                                            selectedYear,
+                                                        );
+
+                                                    return (
+                                                        <option
+                                                            key={monthKey}
+                                                            value={monthKey}
+                                                        >
+                                                            {getMonthName(
+                                                                monthNum,
+                                                            )}{' '}
+                                                            {selectedYear}
+                                                            {isReported
+                                                                ? ' ✅'
+                                                                : ''}
+                                                        </option>
+                                                    );
+                                                },
+                                            )}
                                         </select>
                                         <button
                                             type="button"
                                             onClick={goToNextMonth}
-                                            disabled={availableMonthsList.indexOf(String(selectedMonth)) >= availableMonthsList.length - 1}
-                                            className="p-2 rounded-xl bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 disabled:opacity-40 transition-all border border-gray-200 dark:border-white/10"
+                                            disabled={
+                                                availableMonthsList.indexOf(
+                                                    String(selectedMonth),
+                                                ) >=
+                                                availableMonthsList.length - 1
+                                            }
+                                            className="rounded-xl border border-gray-200 bg-gray-100 p-2 transition-all hover:bg-gray-200 disabled:opacity-40 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
                                         >
-                                            <ChevronRightIcon className="w-4 h-4" />
+                                            <ChevronRightIcon className="h-4 w-4" />
                                         </button>
                                     </div>
                                 ) : (
-                                    <div className="p-3 bg-amber-50 dark:bg-amber-950/30 rounded-xl text-center text-[11px] text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                                    <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-center text-[11px] text-amber-700 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
                                         ⚠️ No hay meses disponibles
                                     </div>
                                 )}
@@ -653,33 +831,46 @@ export default function Create({
 
                             {/* ===== ESTADO DEL SERVICIO - 2 OPCIONES ===== */}
                             <div>
-                                <label className="block text-[11px] font-semibold text-gray-700 dark:text-neutral-300 mb-2 flex items-center gap-1.5">
-                                    <Shield className="w-3.5 h-3.5 text-blue-500" /> 
-                                    Estado del Servicio <span className="text-rose-500">*</span>
+                                <label className="mb-2 block flex items-center gap-1.5 text-[11px] font-semibold text-gray-700 dark:text-neutral-300">
+                                    <Shield className="h-3.5 w-3.5 text-blue-500" />
+                                    Estado del Servicio{' '}
+                                    <span className="text-rose-500">*</span>
                                 </label>
-                                
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                     {serviceOptions.map((option) => {
                                         const Icon = option.icon;
-                                        const isSelected = data.service_state === option.id;
-                                        
+                                        const isSelected =
+                                            data.service_state === option.id;
+
                                         return (
                                             <button
                                                 key={option.id}
                                                 type="button"
-                                                onClick={() => setData('service_state', option.id)}
-                                                className={`relative p-4 rounded-xl border-2 transition-all text-left ${
+                                                onClick={() =>
+                                                    setData(
+                                                        'service_state',
+                                                        option.id,
+                                                    )
+                                                }
+                                                className={`relative rounded-xl border-2 p-4 text-left transition-all ${
                                                     isSelected
                                                         ? `${option.bgColor} ${option.borderColor} ring-2 ring-offset-2 ring-${option.color}-500/50`
-                                                        : 'bg-white dark:bg-slate-900 border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20'
+                                                        : 'border-gray-200 bg-white hover:border-gray-300 dark:border-white/10 dark:bg-slate-900 dark:hover:border-white/20'
                                                 }`}
                                             >
                                                 <div className="flex items-start gap-3">
-                                                    <div className={`p-2 rounded-lg ${isSelected ? option.bgColor : 'bg-gray-100 dark:bg-white/5'}`}>
-                                                        <Icon className={`w-5 h-5 ${isSelected ? option.iconColor : 'text-gray-400 dark:text-neutral-500'}`} />
+                                                    <div
+                                                        className={`rounded-lg p-2 ${isSelected ? option.bgColor : 'bg-gray-100 dark:bg-white/5'}`}
+                                                    >
+                                                        <Icon
+                                                            className={`h-5 w-5 ${isSelected ? option.iconColor : 'text-gray-400 dark:text-neutral-500'}`}
+                                                        />
                                                     </div>
                                                     <div className="flex-1">
-                                                        <p className={`text-[11px] font-semibold ${isSelected ? option.textColor : 'text-gray-700 dark:text-neutral-300'}`}>
+                                                        <p
+                                                            className={`text-[11px] font-semibold ${isSelected ? option.textColor : 'text-gray-700 dark:text-neutral-300'}`}
+                                                        >
                                                             {option.label}
                                                         </p>
                                                         <p className="text-[10px] text-gray-500 dark:text-neutral-400">
@@ -688,7 +879,9 @@ export default function Create({
                                                     </div>
                                                     {isSelected && (
                                                         <div className="flex-shrink-0">
-                                                            <CheckCircle className={`w-4 h-4 ${option.iconColor}`} />
+                                                            <CheckCircle
+                                                                className={`h-4 w-4 ${option.iconColor}`}
+                                                            />
                                                         </div>
                                                     )}
                                                 </div>
@@ -697,33 +890,43 @@ export default function Create({
                                     })}
                                 </div>
                                 {errors.service_state && (
-                                    <p className="text-rose-500 text-[11px] mt-1">{errors.service_state}</p>
+                                    <p className="mt-1 text-[11px] text-rose-500">
+                                        {errors.service_state}
+                                    </p>
                                 )}
                             </div>
 
                             {/* ===== N° OFICIO ===== */}
                             <div>
-                                <label className="block text-[11px] font-semibold text-gray-700 dark:text-neutral-300 mb-1 flex items-center gap-1.5">
-                  
-                                    <FileText className="w-3.5 h-3.5 text-blue-500" /> N° Oficio <span className="text-gray-400 font-normal">(Solo números)</span>
+                                <label className="mb-1 block flex items-center gap-1.5 text-[11px] font-semibold text-gray-700 dark:text-neutral-300">
+                                    <FileText className="h-3.5 w-3.5 text-blue-500" />{' '}
+                                    N° Oficio{' '}
+                                    <span className="font-normal text-gray-400">
+                                        (Solo números)
+                                    </span>
                                 </label>
                                 <input
                                     type="text"
                                     inputMode="numeric"
                                     pattern="[0-9]*"
                                     value={data.office_number}
-                                    onChange={(e) => setData('office_number', e.target.value)}
+                                    onChange={(e) =>
+                                        setData('office_number', e.target.value)
+                                    }
                                     placeholder="OFICIO N° 045-2026-DIR-IE..."
                                     onChange={(e) => {
-                                        const numericValue = e.target.value.replace(/\D/g, '');
+                                        const numericValue =
+                                            e.target.value.replace(/\D/g, '');
                                         setData('office_number', numericValue);
                                     }}
                                     placeholder="Ej. 039"
                                     maxLength={10}
-                                    className="w-full rounded-xl border-2 border-gray-200 dark:border-white/10 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all py-2 px-3 text-[11px] bg-white dark:bg-slate-900 text-gray-900 dark:text-white outline-none placeholder:text-gray-400 dark:placeholder:text-neutral-500"
+                                    className="w-full rounded-xl border-2 border-gray-200 bg-white px-3 py-2 text-[11px] text-gray-900 transition-all outline-none placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-white/10 dark:bg-slate-900 dark:text-white dark:placeholder:text-neutral-500"
                                 />
                                 {errors.office_number && (
-                                    <p className="text-rose-500 text-[11px] mt-1">{errors.office_number}</p>
+                                    <p className="mt-1 text-[11px] text-rose-500">
+                                        {errors.office_number}
+                                    </p>
                                 )}
                             </div>
 
@@ -819,7 +1022,7 @@ export default function Create({
                             ===== FIN APARTADO DE EVIDENCIAS ===== */}
 
                             {/* ===== BOTONES ===== */}
-                            <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-200 dark:border-white/10">
+                            <div className="flex flex-wrap gap-2 border-t border-gray-200 pt-3 dark:border-white/10">
                                 {/* ✅ BOTÓN TEST DE VELOCIDAD EN EL FORMULARIO (COMENTADO)
                                 <button
                                     type="button"
@@ -831,31 +1034,45 @@ export default function Create({
                                     <ExternalLink className="w-3 h-3" />
                                 </button>
                                 */}
-                                
+
                                 <button
                                     type="button"
                                     onClick={handlePreviewPdf}
-                                    className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white rounded-xl text-[11px] font-medium transition-all shadow-md shadow-emerald-500/20 hover:shadow-emerald-500/40 hover:scale-105 active:scale-95"
+                                    className="flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-600 px-4 py-2.5 text-[11px] font-medium text-white shadow-md shadow-emerald-500/20 transition-all hover:scale-105 hover:from-teal-600 hover:to-emerald-700 hover:shadow-emerald-500/40 active:scale-95"
                                 >
-                                    <Eye className="w-4 h-4" />
+                                    <Eye className="h-4 w-4" />
                                     Previsualizar Oficio
                                 </button>
-                                
+
                                 <button
                                     type="submit"
-                                    disabled={processing || isUploading || selectedMonth === 0 || availableMonthsList.length === 0}
-                                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-xl text-[11px] font-medium transition-all shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
+                                    disabled={
+                                        processing ||
+                                        isUploading ||
+                                        selectedMonth === 0 ||
+                                        availableMonthsList.length === 0
+                                    }
+                                    className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 px-4 py-2.5 text-[11px] font-medium text-white shadow-lg shadow-blue-500/20 transition-all hover:scale-105 hover:from-blue-600 hover:to-indigo-700 hover:shadow-blue-500/40 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
                                 >
                                     {processing || isUploading ? (
-                                        <><Loader2 className="w-4 h-4 animate-spin" /> Guardando...</>
+                                        <>
+                                            <Loader2 className="h-4 w-4 animate-spin" />{' '}
+                                            Guardando...
+                                        </>
                                     ) : (
-                                        <><Save className="w-4 h-4" /> Enviar Reporte a la Ugel</>
+                                        <>
+                                            <Save className="h-4 w-4" /> Enviar
+                                            Reporte a la Ugel
+                                        </>
                                     )}
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={() => { reset(); setPreviews([]); }}
-                                    className="px-4 py-2.5 text-gray-600 dark:text-neutral-400 hover:bg-gray-100 dark:hover:bg-white/5 rounded-xl text-[11px] font-medium transition-all border border-gray-200 dark:border-white/10"
+                                    onClick={() => {
+                                        reset();
+                                        setPreviews([]);
+                                    }}
+                                    className="rounded-xl border border-gray-200 px-4 py-2.5 text-[11px] font-medium text-gray-600 transition-all hover:bg-gray-100 dark:border-white/10 dark:text-neutral-400 dark:hover:bg-white/5"
                                 >
                                     Limpiar
                                 </button>
@@ -863,27 +1080,40 @@ export default function Create({
 
                             {/* ===== ERRORES ===== */}
                             {errorMessage && (
-                                <div className="p-3 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded-xl flex items-start gap-2 text-[11px]">
-                                    <AlertCircle className="w-4 h-4 text-rose-500 flex-shrink-0 mt-0.5" />
-                                    <p className="text-rose-700 dark:text-rose-400">{errorMessage}</p>
-                                    <button onClick={() => setErrorMessage(null)} className="ml-auto text-rose-500 hover:text-rose-700">
-                                        <X className="w-3.5 h-3.5" />
+                                <div className="flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-[11px] dark:border-rose-800 dark:bg-rose-950/30">
+                                    <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-rose-500" />
+                                    <p className="text-rose-700 dark:text-rose-400">
+                                        {errorMessage}
+                                    </p>
+                                    <button
+                                        onClick={() => setErrorMessage(null)}
+                                        className="ml-auto text-rose-500 hover:text-rose-700"
+                                    >
+                                        <X className="h-3.5 w-3.5" />
                                     </button>
                                 </div>
                             )}
 
                             {/* ===== NOTIFICACIÓN DE ÉXITO ===== */}
                             {showSuccess && (
-                                <div className="fixed bottom-4 right-4 bg-white dark:bg-slate-800 border border-gray-200 dark:border-white/10 p-4 rounded-2xl shadow-2xl flex items-center gap-3 text-[11px] animate-in slide-in-from-right">
-                                    <div className="p-2 bg-emerald-100 dark:bg-emerald-500/20 rounded-xl border border-emerald-200 dark:border-emerald-500/20">
-                                        <CheckCircle className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                                <div className="fixed right-4 bottom-4 flex animate-in items-center gap-3 rounded-2xl border border-gray-200 bg-white p-4 text-[11px] shadow-2xl slide-in-from-right dark:border-white/10 dark:bg-slate-800">
+                                    <div className="rounded-xl border border-emerald-200 bg-emerald-100 p-2 dark:border-emerald-500/20 dark:bg-emerald-500/20">
+                                        <CheckCircle className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                                     </div>
                                     <div>
-                                        <p className="font-medium text-gray-900 dark:text-white">¡Reporte guardado!</p>
-                                        <p className="text-gray-500 dark:text-neutral-400">El reporte ha sido creado exitosamente.</p>
+                                        <p className="font-medium text-gray-900 dark:text-white">
+                                            ¡Reporte guardado!
+                                        </p>
+                                        <p className="text-gray-500 dark:text-neutral-400">
+                                            El reporte ha sido creado
+                                            exitosamente.
+                                        </p>
                                     </div>
-                                    <button onClick={() => setShowSuccess(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors">
-                                        <X className="w-4 h-4" />
+                                    <button
+                                        onClick={() => setShowSuccess(false)}
+                                        className="text-gray-400 transition-colors hover:text-gray-600 dark:hover:text-white"
+                                    >
+                                        <X className="h-4 w-4" />
                                     </button>
                                 </div>
                             )}
@@ -895,7 +1125,9 @@ export default function Create({
             {/* ===== MODAL DE PREVISUALIZACIÓN DE PDF ===== */}
             <PdfViewerModal
                 isOpen={previewPdfModal.isOpen}
-                onClose={() => setPreviewPdfModal(prev => ({ ...prev, isOpen: false }))}
+                onClose={() =>
+                    setPreviewPdfModal((prev) => ({ ...prev, isOpen: false }))
+                }
                 pdfUrl={previewPdfModal.url}
                 title={previewPdfModal.title}
                 subtitle={previewPdfModal.subtitle}
@@ -907,7 +1139,7 @@ export default function Create({
 
 Create.layout = {
     breadcrumbs: [
-        { title: 'Dashboard', href: dashboard() }, 
-        { title: 'Nuevo Reporte', href: '#' }
+        { title: 'Dashboard', href: dashboard() },
+        { title: 'Nuevo Reporte', href: '#' },
     ],
 };
