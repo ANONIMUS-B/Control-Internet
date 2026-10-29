@@ -40,6 +40,22 @@ class ReportController extends Controller
             $query->whereIn('institution_id', $institutionIds);
         }
 
+        if ($request->filled('search')) {
+            $search = trim((string) $request->search);
+            $query->where(function ($q) use ($search) {
+                $q->where('office_number', 'like', "%{$search}%")
+                    ->orWhere('notes', 'like', "%{$search}%")
+                    ->orWhereHas('institution', function ($instQuery) use ($search) {
+                        $instQuery->where('name', 'like', "%{$search}%")
+                            ->orWhere('modular_code', 'like', "%{$search}%")
+                            ->orWhere('district', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('user', function ($userQuery) use ($search) {
+                        $userQuery->where('name', 'like', "%{$search}%");
+                    });
+            });
+        }
+
         if ($request->filled('month')) {
             $query->where('month', (int) $request->month);
         }
@@ -85,6 +101,7 @@ class ReportController extends Controller
         return Inertia::render('Reports/Index', [
             'reports' => $reports,
             'filters' => [
+                'search' => $request->input('search'),
                 'month' => $request->input('month'),
                 'year' => $request->input('year'),
                 'status' => $request->input('status'),

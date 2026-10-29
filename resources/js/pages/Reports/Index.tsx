@@ -20,9 +20,6 @@ import {
     Zap,
     Shield,
     Eye,
-    MoreHorizontal,
-    CheckCircle,
-    EyeOff,
 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { MissingSignatureAlert } from '@/components/missing-signature-alert';
@@ -53,6 +50,7 @@ interface Report {
 }
 
 interface Filters {
+    search?: string;
     month?: string;
     year?: string;
     status?: string;
@@ -98,6 +96,7 @@ export default function Index({
     // ✅ Solo super_admin puede observar después de estar aprobado
     const isSuperAdmin = userRole === 'super_admin';
 
+    const [search, setSearch] = useState<string>(filters.search || '');
     const [selectedMonth, setSelectedMonth] = useState<string>(
         filters.month || '',
     );
@@ -111,7 +110,15 @@ export default function Index({
         filters.institution_id || '',
     );
     const [perPage, setPerPage] = useState<number>(filters.per_page || 10);
-    const [showFilters, setShowFilters] = useState(false);
+    const [showFilters, setShowFilters] = useState<boolean>(
+        Boolean(
+            filters.search ||
+            filters.month ||
+            filters.status ||
+            filters.institution_id ||
+            (filters.year && filters.year !== String(currentYear)),
+        ),
+    );
     const [hoveredCard, setHoveredCard] = useState<string | null>(null);
     const [comment, setComment] = useState('');
     const [reportToObserve, setReportToObserve] = useState<number | null>(null);
@@ -131,10 +138,11 @@ export default function Index({
         router.get(
             '/reportes',
             {
-                month: selectedMonth,
-                year: selectedYear,
-                status: selectedStatus,
-                institution_id: selectedInstitution,
+                search: search.trim() || undefined,
+                month: selectedMonth || undefined,
+                year: selectedYear || undefined,
+                status: selectedStatus || undefined,
+                institution_id: selectedInstitution || undefined,
                 per_page: perPage,
             },
             {
@@ -145,6 +153,7 @@ export default function Index({
     };
 
     const clearFilters = () => {
+        setSearch('');
         setSelectedMonth('');
         setSelectedYear(String(currentYear));
         setSelectedStatus('');
@@ -222,8 +231,13 @@ export default function Index({
         };
     }, [reports]);
 
-    const hasActiveFilters =
-        selectedMonth || selectedStatus || selectedInstitution;
+    const hasActiveFilters = Boolean(
+        search.trim() ||
+        selectedMonth ||
+        selectedStatus ||
+        selectedInstitution ||
+        (selectedYear && selectedYear !== String(currentYear)),
+    );
 
     const statusColors: Record<string, string> = {
         approved:
@@ -584,6 +598,46 @@ export default function Index({
                                         Limpiar filtros
                                     </button>
                                 )}
+                            </div>
+
+                            {/* ===== BUSCADOR RÁPIDO ===== */}
+                            <div className="mb-3.5 flex flex-col gap-2 sm:flex-row sm:items-center">
+                                <div className="relative flex flex-1 items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 transition-all focus-within:border-blue-500/50 focus-within:bg-white focus-within:shadow-md focus-within:shadow-blue-500/10 hover:bg-gray-100 dark:border-white/10 dark:bg-white/5 dark:focus-within:bg-slate-800 dark:hover:bg-white/10">
+                                    <Search className="h-4 w-4 shrink-0 text-gray-400 dark:text-neutral-400" />
+                                    <input
+                                        type="text"
+                                        value={search}
+                                        onChange={(e) =>
+                                            setSearch(e.target.value)
+                                        }
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                applyFilters();
+                                            }
+                                        }}
+                                        placeholder="Escribe para buscar por Institución, Código Modular, N° Oficio, Director..."
+                                        className="w-full border-0 bg-transparent text-[11px] text-gray-900 placeholder-gray-400 outline-none focus:ring-0 dark:text-white dark:placeholder-neutral-500"
+                                    />
+                                    {search && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setSearch('')}
+                                            className="rounded-full p-0.5 text-gray-400 hover:bg-gray-200 hover:text-gray-600 dark:hover:bg-white/10 dark:hover:text-gray-200"
+                                            title="Limpiar búsqueda"
+                                        >
+                                            <X className="h-3.5 w-3.5" />
+                                        </button>
+                                    )}
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={applyFilters}
+                                    className="flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 px-4 py-2.5 text-[11px] font-medium text-white shadow-md shadow-blue-500/20 transition-all hover:scale-[1.02] hover:from-blue-600 hover:to-indigo-700 active:scale-95"
+                                >
+                                    <Search className="h-3.5 w-3.5" />
+                                    <span>Buscar</span>
+                                </button>
                             </div>
 
                             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
