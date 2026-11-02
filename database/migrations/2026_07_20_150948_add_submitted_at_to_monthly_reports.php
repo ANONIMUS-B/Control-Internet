@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('monthly_reports', function (Blueprint $table) {
-             $table->timestamp('submitted_at')->nullable()->after('status');
+            $table->timestamp('submitted_at')->nullable()->after('status');
         });
     }
 
@@ -22,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('monthly_reports', function (Blueprint $table) {
-             $table->dropColumn('submitted_at');
+            $table->dropColumn('submitted_at');
         });
     }
 };

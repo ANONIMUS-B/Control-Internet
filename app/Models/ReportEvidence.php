@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Support\Facades\Storage;
 
 class ReportEvidence extends Model
@@ -15,7 +17,7 @@ class ReportEvidence extends Model
      */
     protected $fillable = [
         'monthly_report_id',
-        'file_path'
+        'file_path',
     ];
 
     /**
@@ -32,8 +34,6 @@ class ReportEvidence extends Model
 
     /**
      * Relación: Una evidencia pertenece a un reporte mensual.
-     *
-     * @return BelongsTo
      */
     public function report(): BelongsTo
     {
@@ -42,11 +42,11 @@ class ReportEvidence extends Model
 
     /**
      * Relación: Obtener la institución a través del reporte.
-     * 
+     *
      * NOTA: Esta relación usa hasOneThrough para llegar a EducationalInstitution
      * pasando por MonthlyReport.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasOneThrough
+     * @return HasOneThrough
      */
     public function institution()
     {
@@ -64,7 +64,7 @@ class ReportEvidence extends Model
      * Versión simplificada: Obtener la institución a través del reporte.
      * Esta es una forma más directa y menos propensa a errores.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasOneThrough
+     * @return HasOneThrough
      */
     public function institutionSimplified()
     {
@@ -82,21 +82,17 @@ class ReportEvidence extends Model
     /**
      * ACCESORES
      */
-    
+
     /**
      * Obtener la URL completa de la imagen.
-     *
-     * @return string
      */
     public function getUrlAttribute(): string
     {
-        return asset('storage/' . $this->file_path);
+        return asset('storage/'.$this->file_path);
     }
 
     /**
      * Obtener el nombre del archivo.
-     *
-     * @return string
      */
     public function getFilenameAttribute(): string
     {
@@ -105,12 +101,10 @@ class ReportEvidence extends Model
 
     /**
      * Obtener el tamaño del archivo en formato legible.
-     *
-     * @return string|null
      */
     public function getFileSizeAttribute(): ?string
     {
-        if (!Storage::disk('public')->exists($this->file_path)) {
+        if (! Storage::disk('public')->exists($this->file_path)) {
             return null;
         }
 
@@ -121,7 +115,7 @@ class ReportEvidence extends Model
             $bytes /= 1024;
         }
 
-        return round($bytes, 2) . ' ' . $units[$i];
+        return round($bytes, 2).' '.$units[$i];
     }
 
     /**
@@ -130,8 +124,6 @@ class ReportEvidence extends Model
 
     /**
      * Verificar si el archivo existe en el disco.
-     *
-     * @return bool
      */
     public function fileExists(): bool
     {
@@ -140,25 +132,23 @@ class ReportEvidence extends Model
 
     /**
      * Eliminar el archivo físico del disco.
-     *
-     * @return bool
      */
     public function deleteFile(): bool
     {
         if ($this->fileExists()) {
             return Storage::disk('public')->delete($this->file_path);
         }
+
         return false;
     }
 
     /**
      * Sobrescribir el método delete para eliminar también el archivo físico.
-     *
-     * @return bool|null
      */
     public function delete(): ?bool
     {
         $this->deleteFile();
+
         return parent::delete();
     }
 
@@ -169,9 +159,8 @@ class ReportEvidence extends Model
     /**
      * Filtrar evidencias por reporte.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param int $reportId
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeForReport($query, int $reportId)
     {

@@ -3,6 +3,133 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 7.16.1 - 2026-10-25
+
+### Fixed
+
+- Fix `CookieJar` storing already expired cookies instead of removing the stored cookie
+- Fix `CookieJar` ignoring a same-value cookie that changes its expiry or its `Discard`, `Secure`, or `HttpOnly` flag
+
+
+## 7.16.0 - 2026-10-18
+
+### Changed
+
+- Adjusted `guzzlehttp/promises` version constraint to `^2.6`
+- Replace the deprecated `Promise\Is` with `Promise\State` for PHP 8.6
+
+
+## 7.15.6 - 2026-10-18
+
+### Fixed
+
+- Fix PHP 8.6 notices for oversized numeric hosts
+- Fix `MockHandler` truncating fractional delays
+- Fix stream handler responses in Swoole coroutines on PHP 8.4+
+
+### Changed
+
+- Adjusted `guzzlehttp/psr7` version constraint to `^2.13.2`
+
+
+## 7.15.5 - 2026-08-24
+
+### Changed
+
+- Adjusted `guzzlehttp/psr7` version constraint to `^2.13.1`
+- Adjusted `guzzlehttp/promises` version constraint to `^2.5.3`
+
+
+## 7.15.4 - 2026-08-24
+
+### Added
+
+- Added support for PHP 8.6
+
+### Changed
+
+- Replace the deprecated spl_object_hash() in handler stack debug output for PHP 8.6
+
+
+## 7.15.3 - 2026-08-05
+
+### Changed
+
+- Adjusted `guzzlehttp/promises` version constraint to `^2.5.2`
+
+### Fixed
+
+- Fail a cURL multi handler wait with an attributable error when the transfer is no longer tracked
+- Fix `StreamHandler` resolving numeric IPv4 hosts differently from cURL handlers on macOS and Windows
+- Fix `StreamHandler` TLS peer names and proxy authorities for numeric IPv4 hosts on all platforms
+- Settle a cURL multi handler transfer displaced by a request reusing its native handle ID
+
+
+## 7.15.2 - 2026-07-26
+
+### Security
+
+- Reject non-printable-ASCII and percent-escaped URI hosts and `Host` headers (GHSA-v5mv-p594-2x33)
+- Reject request URI hosts that contain a URI authority delimiter (GHSA-v5mv-p594-2x33)
+- Reject numeric-looking URI hosts with trailing dots, read as IPv4 addresses (GHSA-v5mv-p594-2x33)
+- Treat numeric-in-any-base and percent-escaped cookie domains as exact-match-only (GHSA-f7vp-7xgx-4w4r)
+- Regenerate a derived `Host` header after client URI rewrites (GHSA-v5mv-p594-2x33)
+
+### Fixed
+
+- Preserve `RequestException` when the stream handler rejects a request before opening a stream
+
+
+## 7.15.1 - 2026-07-18
+
+### Security
+
+- Preserve host-only cookie scope and require explicit persistence markers (GHSA-wm3w-8rrp-j577)
+- Bound response cookie admission and generated `Cookie` headers (GHSA-f283-ghqc-fg79)
+- Exclude URI fragments from `Referer` headers generated for redirects (GHSA-h95v-h523-3mw8)
+
+
+## 7.15.0 - 2026-07-17
+
+### Added
+
+- Added `Multiplexing::NONE` support as a client, cURL multi handler, and conditional request option
+
+### Changed
+
+- Adjusted `guzzlehttp/psr7` version constraint to `^2.13`
+- Use locale-independent ASCII folding for all case normalization and comparison
+- Bound cURL upload reads to the declared `Content-Length`
+- Sanitize the cURL error text exposed through exception handler context
+- Fail closed when a named cURL multi connection cap cannot be applied
+- Reject the request-level `CURLOPT_SHARE` cURL option when named connection caps are configured
+- Strengthen old-libcurl SOCKS isolation for raw `CURLOPT_PRE_PROXY` and opaque share handles
+- Isolate HTTP proxy tunnels from opaque shared connection caches
+- Trigger runtime deprecations for previously deprecated functionality in 7.1.0
+
+### Deprecated
+
+- Deprecated `Utils::jsonDecode()` and `Utils::jsonEncode()` in favor of native JSON functions
+- Deprecated passing `CURLMOPT_PIPELINING` in the cURL multi handler `options` array
+- Deprecated passing `CURLOPT_PROXYHEADER` without cURL proxy header separation support
+
+### Fixed
+
+- Defer cURL requests created from multi callbacks until native execution unwinds
+- Fail synchronous waits from native cURL callbacks promptly instead of self-deadlocking
+- Guard cURL multi handle removal against progress callbacks re-entering the handler
+- Scope promise waits on the cURL multi handler to the awaited transfer
+- Strip `Content-Length` and `Transfer-Encoding` when redirects discard the request body
+- Stop re-applying the `delay` request option to followed redirects
+
+
+## 7.14.2 - 2026-07-14
+
+### Security
+
+- Prevent first-class and proxy URL credentials from reaching origins (GHSA-94pj-82f3-465w)
+
+
 ## 7.14.1 - 2026-07-13
 
 ### Changed

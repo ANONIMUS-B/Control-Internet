@@ -1,20 +1,30 @@
 /.phpunit.cache
 /bootstrap/ssr
 /node_modules
-# /public/build
+# cPanel updates this repository in place: commit vendor and public/build.
 /public/fonts-manifest.dev.json
 /public/hot
-# /public/storage
+/public/storage
 /storage/*.key
 /storage/pail
 /resources/js/actions
 /resources/js/routes
 /resources/js/wayfinder
-# /vendor
+/vendor.zip
+/bootstrap/cache/*.php
+/storage/app/temp/
 .DS_Store
 .env
-.env.backup
-.env.production
+.env.*
+!.env.example
+!.env.azure.example
+*.publishsettings
+*.sql
+*.sqlite
+*.sqlite3
+*.pem
+*.pfx
+*.key
 .phpactor.json
 .phpunit.result.cache
 Homestead.json
@@ -22,6 +32,8 @@ Homestead.yaml
 npm-debug.log
 yarn-error.log
 /auth.json
+/.aws
+/.codex
 /.fleet
 /.idea
 /.nova

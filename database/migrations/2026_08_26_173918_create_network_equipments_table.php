@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('status', 50)->default('OPERATIVO'); // ESTADO
             $table->boolean('is_active')->default(true);
             $table->timestamps();
-            
+
             // Índice para búsquedas por código local
             $table->index('local_code');
             $table->index('institution_name');

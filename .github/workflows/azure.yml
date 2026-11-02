@@ -1,0 +1,99 @@
+name: Deploy to Azure App Service
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: azure-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: azure-production
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      AZURE_WEBAPP_NAME: ${{ vars.AZURE_WEBAPP_NAME }}
+      PUPPETEER_SKIP_DOWNLOAD: 'true'
+      APP_ENV: testing
+      SESSION_DRIVER: array
+      CACHE_STORE: array
+      QUEUE_CONNECTION: sync
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Check deployment configuration
+        run: ': "${AZURE_WEBAPP_NAME:?Set AZURE_WEBAPP_NAME in the azure-production environment.}"'
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@d52fc211a0436f8839a587b3b5b8efddab4744ea # v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, intl, gd, zip, pdo_mysql
+          tools: composer:v2
+          coverage: none
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: |
+          composer install --no-interaction --prefer-dist --optimize-autoloader
+          chmod -R +x vendor/bin
+          npm install --ignore-scripts
+
+      - name: Verify source without a database
+        run: |
+          export APP_KEY="$(php artisan key:generate --show)"
+          composer audit --locked --no-dev
+          composer lint:check
+          npm run types:check
+          npm run lint:check
+          npm run format:check
+          php vendor/bin/phpstan analyse --no-progress
+          php artisan test --compact --testsuite=Unit --do-not-cache-result
+          bash -n scripts/azure-startup.sh
+
+      - name: Build frontend and production dependencies
+        run: |
+          npm run build
+          composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Prepare deployment package without secrets or local data
+        run: |
+          package_dir="$RUNNER_TEMP/conformidad-package"
+          mkdir -p "$package_dir"
+          rsync -a --relative \
+            --exclude='public/hot' --exclude='public/storage' \
+            --exclude='bootstrap/cache/*.php' \
+            --exclude='*.sql' --exclude='*.sqlite' --exclude='*.sqlite3' \
+            app bootstrap config database lang public resources routes vendor \
+            artisan composer.json composer.lock \
+            scripts/azure-startup.sh scripts/azure-nginx.conf \
+            "$package_dir/"
+          mkdir -p "$package_dir/storage/framework/cache/data" \
+            "$package_dir/storage/framework/sessions" \
+            "$package_dir/storage/framework/views" "$package_dir/storage/logs"
+
+      - name: Authenticate to Azure using OpenID Connect
+        uses: azure/login@8216e11d8cd9b42fe925c852af8e76311ff067ac # v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy prebuilt application
+        uses: azure/webapps-deploy@b686016b4de8820a23519503685d8d03fbfa03a6 # v3
+        with:
+          app-name: ${{ vars.AZURE_WEBAPP_NAME }}
+          package: ${{ runner.temp }}/conformidad-package

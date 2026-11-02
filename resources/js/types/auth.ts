@@ -4,7 +4,13 @@ export type User = {
     email: string;
     avatar?: string;
     dni: string | null;
-    role: 'admin' | 'executive' | 'specialist' | 'supervisor' | 'director';
+    role:
+        | 'super_admin'
+        | 'admin'
+        | 'executive'
+        | 'specialist'
+        | 'supervisor'
+        | 'director';
     institution_id?: number | null;
     email_verified_at: string | null;
     two_factor_enabled?: boolean;

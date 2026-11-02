@@ -1,10 +1,10 @@
 <?php
 
-$sourcePath = __DIR__ . '/../public/Logo-Circular.png';
-$icoPath = __DIR__ . '/../public/favicon.ico';
-$svgPath = __DIR__ . '/../public/favicon.svg';
+$sourcePath = __DIR__.'/../public/Logo-Circular.png';
+$icoPath = __DIR__.'/../public/favicon.ico';
+$svgPath = __DIR__.'/../public/favicon.svg';
 
-if (!file_exists($sourcePath)) {
+if (! file_exists($sourcePath)) {
     echo "Source image not found: {$sourcePath}\n";
     exit(1);
 }
@@ -47,7 +47,7 @@ $icoHeader = pack(
     22         // Offset of image data (6 header + 16 dir entry = 22)
 );
 
-file_put_contents($icoPath, $icoHeader . $pngData);
+file_put_contents($icoPath, $icoHeader.$pngData);
 echo "favicon.ico created with binary ICO header successfully.\n";
 
 // Create SVG wrapper with embedded base64 of Logo-Circular.png
@@ -61,4 +61,3 @@ SVG;
 
 file_put_contents($svgPath, $svgContent);
 echo "favicon.svg created successfully.\n";
-

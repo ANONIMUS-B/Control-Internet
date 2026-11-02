@@ -9,13 +9,31 @@ import {
     Upload,
     Filter,
     CheckCircle2,
-    XCircle,
     RotateCcw,
     UserCheck,
     AlertCircle,
+    LoaderCircle,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { toast } from 'sonner';
+import {
+    destroy,
+    importIndex,
+    index,
+    store,
+    toggle,
+    update,
+} from '@/actions/App/Http/Controllers/InstitutionController';
 import { Pagination } from '@/components/Pagination';
+import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { dashboard } from '@/routes';
 
 interface UserMinimal {
@@ -60,6 +78,8 @@ interface InstitutionStats {
 }
 
 interface Props {
+    canManageInstitutions: boolean;
+    canImportInstitutions: boolean;
     institutions: {
         data: Institution[];
         links: Array<{ url: string | null; label: string; active: boolean }>;
@@ -75,7 +95,56 @@ interface Props {
     stats?: InstitutionStats;
 }
 
+function showInstitutionFeedback(page: {
+    props: Record<string, unknown>;
+}): boolean {
+    const flash = page.props.flash as
+        { success?: string; error?: string } | undefined;
+
+    if (flash?.error) {
+        toast.error(flash.error);
+
+        return false;
+    }
+
+    if (flash?.success) {
+        toast.success(flash.success);
+    }
+
+    return true;
+}
+
+function institutionRequestError(status: number): string {
+    if (status === 403) {
+        return 'No tienes permiso para gestionar instituciones. Contacta al administrador.';
+    }
+
+    if (status === 419) {
+        return 'Tu sesión ha expirado. Actualiza la página e inténtalo de nuevo.';
+    }
+
+    return 'No se pudo completar la operación. Inténtalo de nuevo.';
+}
+
+const institutionRequestErrors = {
+    onError: () => toast.error('Revisa los campos señalados antes de guardar.'),
+    onHttpException: (response: { status: number }) => {
+        toast.error(institutionRequestError(response.status));
+
+        return false;
+    },
+    onNetworkError: () => {
+        toast.error(
+            'No se pudo conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.',
+        );
+
+        return false;
+    },
+};
+
 export default function Institutions({
+    canManageInstitutions,
+    canImportInstitutions,
     institutions,
     filters,
     districts,
@@ -99,6 +168,14 @@ export default function Institutions({
         useState<string>(filters.assigned_status || '');
     const [perPage, setPerPage] = useState<number>(filters.per_page || 15);
     const [editing, setEditing] = useState<Institution | null>(null);
+    const [pendingAction, setPendingAction] = useState<{
+        type: 'delete' | 'toggle';
+        institution: Institution;
+    } | null>(null);
+    const [isMutating, setIsMutating] = useState(false);
+    const [actionError, setActionError] = useState<string | null>(null);
+    const cancelButtonRef = useRef<HTMLButtonElement>(null);
+    const actionTriggerRef = useRef<HTMLElement | null>(null);
     const hasInitialFilters = Boolean(
         filters.search ||
         filters.level ||
@@ -125,7 +202,7 @@ export default function Institutions({
 
     const applyFilters = () => {
         router.get(
-            '/institutions',
+            index.url(),
             {
                 search: search,
                 level: selectedLevel,
@@ -152,7 +229,7 @@ export default function Institutions({
         setPerPage(15);
 
         router.get(
-            '/institutions',
+            index.url(),
             {
                 per_page: 15,
             },
@@ -165,42 +242,72 @@ export default function Institutions({
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
-        post('/institutions', {
+        post(store.url(), {
+            ...institutionRequestErrors,
             preserveScroll: true,
-            onSuccess: () => {
-                reset();
-                router.reload();
+            onSuccess: (page) => {
+                if (showInstitutionFeedback(page)) {
+                    reset();
+                }
             },
         });
     };
 
-    const deleteInstitution = (id: number) => {
-        if (!confirm('¿Desea eliminar esta institución?')) {
+    const openConfirmation = (
+        type: 'delete' | 'toggle',
+        institution: Institution,
+    ) => {
+        if (!canManageInstitutions || isMutating) {
             return;
         }
 
-        router.visit(`/institutions/${id}`, {
-            method: 'delete',
-            preserveScroll: true,
-            onSuccess: () => {
-                router.reload();
-            },
-        });
+        actionTriggerRef.current = document.activeElement as HTMLElement | null;
+        setActionError(null);
+        setPendingAction({ type, institution });
     };
 
-    const toggleActive = (id: number, currentStatus: boolean) => {
-        const action = currentStatus ? 'desactivar' : 'activar';
-
-        if (!confirm(`¿Desea ${action} esta institución?`)) {
+    const confirmAction = () => {
+        if (!pendingAction || isMutating || !canManageInstitutions) {
             return;
         }
 
-        router.visit(`/institutions/${id}/toggle`, {
-            method: 'patch',
+        setIsMutating(true);
+        setActionError(null);
+
+        const route =
+            pendingAction.type === 'delete'
+                ? destroy(pendingAction.institution.id)
+                : toggle(pendingAction.institution.id);
+
+        router.visit(route, {
             preserveScroll: true,
-            onSuccess: () => {
-                router.reload();
+            onSuccess: (page) => {
+                if (showInstitutionFeedback(page)) {
+                    setPendingAction(null);
+                } else {
+                    const flash = page.props.flash as { error?: string };
+                    setActionError(
+                        flash.error ?? 'No se pudo completar la operación.',
+                    );
+                }
             },
+            onError: () =>
+                setActionError(
+                    'No se pudo completar la operación. Revisa los datos e inténtalo de nuevo.',
+                ),
+            onHttpException: (response) => {
+                setActionError(institutionRequestError(response.status));
+
+                return false;
+            },
+            onNetworkError: () => {
+                setActionError(
+                    'No se pudo conectar con el servidor. Revisa tu conexión y vuelve a intentarlo.',
+                );
+
+                return false;
+            },
+            onFinish: () => setIsMutating(false),
         });
     };
 
@@ -253,13 +360,15 @@ export default function Institutions({
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">
-                                <Link
-                                    href="/institutions/importar"
-                                    className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-4 py-2.5 text-[11px] font-medium text-white shadow-lg shadow-emerald-500/20 transition-all hover:scale-105 hover:from-emerald-600 hover:to-emerald-700 hover:shadow-emerald-500/40 active:scale-95"
-                                >
-                                    <Upload className="h-4 w-4" />
-                                    Importar
-                                </Link>
+                                {canImportInstitutions && (
+                                    <Link
+                                        href={importIndex()}
+                                        className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-4 py-2.5 text-[11px] font-medium text-white shadow-lg shadow-emerald-500/20 transition-all hover:scale-105 hover:from-emerald-600 hover:to-emerald-700 hover:shadow-emerald-500/40 active:scale-95"
+                                    >
+                                        <Upload className="h-4 w-4" />
+                                        Importar
+                                    </Link>
+                                )}
                                 <button
                                     onClick={() => setShowFilters(!showFilters)}
                                     className={`flex items-center gap-2 rounded-xl border-2 px-4 py-2.5 text-[11px] font-medium transition-all ${
@@ -347,213 +456,250 @@ export default function Institutions({
                     </div>
 
                     {/* ===== FORMULARIO DE REGISTRO ===== */}
-                    <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm md:p-6 dark:border-white/10 dark:bg-slate-800/50 dark:shadow-2xl">
-                        <div className="mb-4 flex items-center gap-2 border-b border-gray-200 pb-3 dark:border-white/10">
-                            <Plus className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
-                            <h2 className="text-[11px] font-semibold text-gray-900 dark:text-white">
-                                Registrar Nueva Institución
-                            </h2>
+                    {canManageInstitutions ? (
+                        <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm md:p-6 dark:border-white/10 dark:bg-slate-800/50 dark:shadow-2xl">
+                            <div className="mb-4 flex items-center gap-2 border-b border-gray-200 pb-3 dark:border-white/10">
+                                <Plus className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                                <h2 className="text-[11px] font-semibold text-gray-900 dark:text-white">
+                                    Registrar Nueva Institución
+                                </h2>
+                            </div>
+
+                            <form onSubmit={submit}>
+                                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
+                                    <div>
+                                        <label className={labelClass}>
+                                            Código Modular
+                                        </label>
+                                        <input
+                                            className={inputClass}
+                                            value={data.modular_code}
+                                            onChange={(e) =>
+                                                setData(
+                                                    'modular_code',
+                                                    e.target.value,
+                                                )
+                                            }
+                                            placeholder="Ej: 1234567"
+                                        />
+                                        {errors.modular_code && (
+                                            <p className="mt-1 text-[11px] text-rose-500">
+                                                {errors.modular_code}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <div>
+                                        <label className={labelClass}>
+                                            Código Local
+                                        </label>
+                                        <input
+                                            className={inputClass}
+                                            value={data.local_code}
+                                            onChange={(e) =>
+                                                setData(
+                                                    'local_code',
+                                                    e.target.value,
+                                                )
+                                            }
+                                            placeholder="Ej: LOC001"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className={labelClass}>
+                                            Nivel
+                                        </label>
+                                        <select
+                                            className={inputClass}
+                                            value={data.level}
+                                            onChange={(e) =>
+                                                setData('level', e.target.value)
+                                            }
+                                        >
+                                            <option value="">
+                                                Seleccione...
+                                            </option>
+                                            <option value="Inicial">
+                                                Inicial
+                                            </option>
+                                            <option value="Primaria">
+                                                Primaria
+                                            </option>
+                                            <option value="Secundaria">
+                                                Secundaria
+                                            </option>
+                                            <option value="Inicial y Primaria">
+                                                Inicial y Primaria
+                                            </option>
+                                            <option value="Primaria y Secundaria">
+                                                Primaria y Secundaria
+                                            </option>
+                                            <option value="Inicial, Primaria y Secundaria">
+                                                Inicial, Primaria y Secundaria
+                                            </option>
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label className={labelClass}>
+                                            Tipo de Gestión
+                                        </label>
+                                        <select
+                                            className={inputClass}
+                                            value={data.type_management}
+                                            onChange={(e) =>
+                                                setData(
+                                                    'type_management',
+                                                    e.target.value,
+                                                )
+                                            }
+                                        >
+                                            <option value="">
+                                                Seleccione...
+                                            </option>
+                                            <option value="Pública">
+                                                Pública
+                                            </option>
+                                            <option value="Privada">
+                                                Privada
+                                            </option>
+                                        </select>
+                                    </div>
+
+                                    <div className="md:col-span-2 lg:col-span-2">
+                                        <label className={labelClass}>
+                                            Nombre de IE
+                                        </label>
+                                        <input
+                                            className={inputClass}
+                                            value={data.name}
+                                            onChange={(e) =>
+                                                setData('name', e.target.value)
+                                            }
+                                            placeholder="Nombre completo de la institución"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className={labelClass}>
+                                            Departamento
+                                        </label>
+                                        <input
+                                            className={inputClass}
+                                            value={data.department}
+                                            onChange={(e) =>
+                                                setData(
+                                                    'department',
+                                                    e.target.value,
+                                                )
+                                            }
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className={labelClass}>
+                                            Provincia
+                                        </label>
+                                        <input
+                                            className={inputClass}
+                                            value={data.province}
+                                            onChange={(e) =>
+                                                setData(
+                                                    'province',
+                                                    e.target.value,
+                                                )
+                                            }
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className={labelClass}>
+                                            Distrito
+                                        </label>
+                                        <input
+                                            className={inputClass}
+                                            value={data.district}
+                                            onChange={(e) =>
+                                                setData(
+                                                    'district',
+                                                    e.target.value,
+                                                )
+                                            }
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className={labelClass}>
+                                            UGEL
+                                        </label>
+                                        <input
+                                            className={inputClass}
+                                            value={data.ugel}
+                                            onChange={(e) =>
+                                                setData('ugel', e.target.value)
+                                            }
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className={labelClass}>
+                                            Centro Poblado
+                                        </label>
+                                        <input
+                                            className={inputClass}
+                                            value={data.populated_center}
+                                            onChange={(e) =>
+                                                setData(
+                                                    'populated_center',
+                                                    e.target.value,
+                                                )
+                                            }
+                                        />
+                                    </div>
+
+                                    <div className="md:col-span-2 lg:col-span-1">
+                                        <label className={labelClass}>
+                                            Dirección
+                                        </label>
+                                        <input
+                                            className={inputClass}
+                                            value={data.address}
+                                            onChange={(e) =>
+                                                setData(
+                                                    'address',
+                                                    e.target.value,
+                                                )
+                                            }
+                                            placeholder="Dirección completa"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="mt-4 flex justify-end">
+                                    <button
+                                        disabled={processing}
+                                        className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-indigo-600 px-4 py-2.5 text-[11px] font-medium text-white shadow-lg shadow-indigo-500/20 transition-all hover:scale-105 hover:from-indigo-600 hover:to-indigo-700 hover:shadow-indigo-500/40 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
+                                    >
+                                        <Plus className="h-4 w-4" />
+                                        Registrar Institución
+                                    </button>
+                                </div>
+                            </form>
                         </div>
-
-                        <form onSubmit={submit}>
-                            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
-                                <div>
-                                    <label className={labelClass}>
-                                        Código Modular
-                                    </label>
-                                    <input
-                                        className={inputClass}
-                                        value={data.modular_code}
-                                        onChange={(e) =>
-                                            setData(
-                                                'modular_code',
-                                                e.target.value,
-                                            )
-                                        }
-                                        placeholder="Ej: 1234567"
-                                    />
-                                    {errors.modular_code && (
-                                        <p className="mt-1 text-[11px] text-rose-500">
-                                            {errors.modular_code}
-                                        </p>
-                                    )}
-                                </div>
-
-                                <div>
-                                    <label className={labelClass}>
-                                        Código Local
-                                    </label>
-                                    <input
-                                        className={inputClass}
-                                        value={data.local_code}
-                                        onChange={(e) =>
-                                            setData(
-                                                'local_code',
-                                                e.target.value,
-                                            )
-                                        }
-                                        placeholder="Ej: LOC001"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className={labelClass}>Nivel</label>
-                                    <select
-                                        className={inputClass}
-                                        value={data.level}
-                                        onChange={(e) =>
-                                            setData('level', e.target.value)
-                                        }
-                                    >
-                                        <option value="">Seleccione...</option>
-                                        <option value="Inicial">Inicial</option>
-                                        <option value="Primaria">
-                                            Primaria
-                                        </option>
-                                        <option value="Secundaria">
-                                            Secundaria
-                                        </option>
-                                        <option value="Inicial y Primaria">
-                                            Inicial y Primaria
-                                        </option>
-                                        <option value="Primaria y Secundaria">
-                                            Primaria y Secundaria
-                                        </option>
-                                        <option value="Inicial, Primaria y Secundaria">
-                                            Inicial, Primaria y Secundaria
-                                        </option>
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label className={labelClass}>
-                                        Tipo de Gestión
-                                    </label>
-                                    <select
-                                        className={inputClass}
-                                        value={data.type_management}
-                                        onChange={(e) =>
-                                            setData(
-                                                'type_management',
-                                                e.target.value,
-                                            )
-                                        }
-                                    >
-                                        <option value="">Seleccione...</option>
-                                        <option value="Pública">Pública</option>
-                                        <option value="Privada">Privada</option>
-                                    </select>
-                                </div>
-
-                                <div className="md:col-span-2 lg:col-span-2">
-                                    <label className={labelClass}>
-                                        Nombre de IE
-                                    </label>
-                                    <input
-                                        className={inputClass}
-                                        value={data.name}
-                                        onChange={(e) =>
-                                            setData('name', e.target.value)
-                                        }
-                                        placeholder="Nombre completo de la institución"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className={labelClass}>
-                                        Departamento
-                                    </label>
-                                    <input
-                                        className={inputClass}
-                                        value={data.department}
-                                        onChange={(e) =>
-                                            setData(
-                                                'department',
-                                                e.target.value,
-                                            )
-                                        }
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className={labelClass}>
-                                        Provincia
-                                    </label>
-                                    <input
-                                        className={inputClass}
-                                        value={data.province}
-                                        onChange={(e) =>
-                                            setData('province', e.target.value)
-                                        }
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className={labelClass}>
-                                        Distrito
-                                    </label>
-                                    <input
-                                        className={inputClass}
-                                        value={data.district}
-                                        onChange={(e) =>
-                                            setData('district', e.target.value)
-                                        }
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className={labelClass}>UGEL</label>
-                                    <input
-                                        className={inputClass}
-                                        value={data.ugel}
-                                        onChange={(e) =>
-                                            setData('ugel', e.target.value)
-                                        }
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className={labelClass}>
-                                        Centro Poblado
-                                    </label>
-                                    <input
-                                        className={inputClass}
-                                        value={data.populated_center}
-                                        onChange={(e) =>
-                                            setData(
-                                                'populated_center',
-                                                e.target.value,
-                                            )
-                                        }
-                                    />
-                                </div>
-
-                                <div className="md:col-span-2 lg:col-span-1">
-                                    <label className={labelClass}>
-                                        Dirección
-                                    </label>
-                                    <input
-                                        className={inputClass}
-                                        value={data.address}
-                                        onChange={(e) =>
-                                            setData('address', e.target.value)
-                                        }
-                                        placeholder="Dirección completa"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="mt-4 flex justify-end">
-                                <button
-                                    disabled={processing}
-                                    className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-indigo-600 px-4 py-2.5 text-[11px] font-medium text-white shadow-lg shadow-indigo-500/20 transition-all hover:scale-105 hover:from-indigo-600 hover:to-indigo-700 hover:shadow-indigo-500/40 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
-                                >
-                                    <Plus className="h-4 w-4" />
-                                    Registrar Institución
-                                </button>
-                            </div>
-                        </form>
-                    </div>
+                    ) : (
+                        <p
+                            role="status"
+                            className="flex items-center gap-2 rounded-xl bg-muted px-4 py-3 text-sm text-muted-foreground"
+                        >
+                            <AlertCircle
+                                className="size-4 shrink-0"
+                                aria-hidden="true"
+                            />
+                            Acceso de consulta. Solo los administradores pueden
+                            gestionar instituciones.
+                        </p>
+                    )}
 
                     {/* ===== FILTROS AVANZADOS ===== */}
                     {showFilters && (
@@ -798,9 +944,11 @@ export default function Institutions({
                                         <th className="px-4 py-3 text-[11px] font-semibold tracking-wider text-gray-500 uppercase dark:text-neutral-400">
                                             Asignación
                                         </th>
-                                        <th className="px-4 py-3 text-center text-[11px] font-semibold tracking-wider text-gray-500 uppercase dark:text-neutral-400">
-                                            Acciones
-                                        </th>
+                                        {canManageInstitutions && (
+                                            <th className="px-4 py-3 text-center text-[11px] font-semibold tracking-wider text-gray-500 uppercase dark:text-neutral-400">
+                                                Acciones
+                                            </th>
+                                        )}
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-200 dark:divide-white/5">
@@ -882,63 +1030,73 @@ export default function Institutions({
                                                         </span>
                                                     )}
                                                 </td>
-                                                <td className="px-4 py-3">
-                                                    <div className="flex items-center justify-center gap-1.5">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() =>
-                                                                toggleActive(
-                                                                    institution.id,
-                                                                    institution.is_active,
-                                                                )
-                                                            }
-                                                            className={`rounded-xl border p-2 transition-all hover:scale-110 active:scale-95 ${
-                                                                institution.is_active
-                                                                    ? 'border-amber-200 bg-amber-100 text-amber-700 hover:bg-amber-200 dark:border-amber-500/20 dark:bg-amber-500/15 dark:text-amber-400 dark:hover:bg-amber-500/25'
-                                                                    : 'border-emerald-200 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:border-emerald-500/20 dark:bg-emerald-500/15 dark:text-emerald-400 dark:hover:bg-emerald-500/25'
-                                                            }`}
-                                                            title={
-                                                                institution.is_active
-                                                                    ? 'Desactivar'
-                                                                    : 'Activar'
-                                                            }
-                                                        >
-                                                            <RotateCcw className="h-4 w-4" />
-                                                        </button>
+                                                {canManageInstitutions && (
+                                                    <td className="px-4 py-3">
+                                                        <div className="flex items-center justify-center gap-1.5">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    openConfirmation(
+                                                                        'toggle',
+                                                                        institution,
+                                                                    )
+                                                                }
+                                                                aria-label={`${institution.is_active ? 'Desactivar' : 'Activar'} ${institution.name}`}
+                                                                className={`rounded-xl border p-2 transition-all hover:scale-110 active:scale-95 ${
+                                                                    institution.is_active
+                                                                        ? 'border-amber-200 bg-amber-100 text-amber-700 hover:bg-amber-200 dark:border-amber-500/20 dark:bg-amber-500/15 dark:text-amber-400 dark:hover:bg-amber-500/25'
+                                                                        : 'border-emerald-200 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:border-emerald-500/20 dark:bg-emerald-500/15 dark:text-emerald-400 dark:hover:bg-emerald-500/25'
+                                                                }`}
+                                                                title={
+                                                                    institution.is_active
+                                                                        ? 'Desactivar'
+                                                                        : 'Activar'
+                                                                }
+                                                            >
+                                                                <RotateCcw className="h-4 w-4" />
+                                                            </button>
 
-                                                        <button
-                                                            type="button"
-                                                            onClick={() =>
-                                                                setEditing(
-                                                                    institution,
-                                                                )
-                                                            }
-                                                            className="rounded-xl border border-indigo-200 bg-indigo-100 p-2 text-indigo-700 transition-all hover:scale-110 hover:bg-indigo-200 active:scale-95 dark:border-indigo-500/20 dark:bg-indigo-500/15 dark:text-indigo-400 dark:hover:bg-indigo-500/25"
-                                                            title="Editar"
-                                                        >
-                                                            <Edit2 className="h-4 w-4" />
-                                                        </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    setEditing(
+                                                                        institution,
+                                                                    )
+                                                                }
+                                                                aria-label={`Editar ${institution.name}`}
+                                                                className="rounded-xl border border-indigo-200 bg-indigo-100 p-2 text-indigo-700 transition-all hover:scale-110 hover:bg-indigo-200 active:scale-95 dark:border-indigo-500/20 dark:bg-indigo-500/15 dark:text-indigo-400 dark:hover:bg-indigo-500/25"
+                                                                title="Editar"
+                                                            >
+                                                                <Edit2 className="h-4 w-4" />
+                                                            </button>
 
-                                                        <button
-                                                            type="button"
-                                                            onClick={() =>
-                                                                deleteInstitution(
-                                                                    institution.id,
-                                                                )
-                                                            }
-                                                            className="rounded-xl border border-rose-200 bg-rose-100 p-2 text-rose-700 transition-all hover:scale-110 hover:bg-rose-200 active:scale-95 dark:border-rose-500/20 dark:bg-rose-500/15 dark:text-rose-400 dark:hover:bg-rose-500/25"
-                                                            title="Eliminar"
-                                                        >
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </button>
-                                                    </div>
-                                                </td>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    openConfirmation(
+                                                                        'delete',
+                                                                        institution,
+                                                                    )
+                                                                }
+                                                                aria-label={`Eliminar ${institution.name}`}
+                                                                className="rounded-xl border border-rose-200 bg-rose-100 p-2 text-rose-700 transition-all hover:scale-110 hover:bg-rose-200 active:scale-95 dark:border-rose-500/20 dark:bg-rose-500/15 dark:text-rose-400 dark:hover:bg-rose-500/25"
+                                                                title="Eliminar"
+                                                            >
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                )}
                                             </tr>
                                         ))
                                     ) : (
                                         <tr>
                                             <td
-                                                colSpan={9}
+                                                colSpan={
+                                                    canManageInstitutions
+                                                        ? 9
+                                                        : 8
+                                                }
                                                 className="py-16 text-center"
                                             >
                                                 <div className="flex flex-col items-center gap-4">
@@ -955,13 +1113,16 @@ export default function Institutions({
                                                         importa nuevos
                                                         registros.
                                                     </p>
-                                                    <Link
-                                                        href="/institutions/importar"
-                                                        className="mt-2 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-4 py-2.5 text-[11px] font-medium text-white shadow-lg shadow-emerald-500/20 transition-all hover:scale-105 hover:from-emerald-600 hover:to-emerald-700 hover:shadow-emerald-500/40 active:scale-95"
-                                                    >
-                                                        <Upload className="h-4 w-4" />
-                                                        Importar instituciones
-                                                    </Link>
+                                                    {canImportInstitutions && (
+                                                        <Link
+                                                            href={importIndex()}
+                                                            className="mt-2 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-4 py-2.5 text-[11px] font-medium text-white shadow-lg shadow-emerald-500/20 transition-all hover:scale-105 hover:from-emerald-600 hover:to-emerald-700 hover:shadow-emerald-500/40 active:scale-95"
+                                                        >
+                                                            <Upload className="h-4 w-4" />
+                                                            Importar
+                                                            instituciones
+                                                        </Link>
+                                                    )}
                                                 </div>
                                             </td>
                                         </tr>
@@ -989,7 +1150,123 @@ export default function Institutions({
                 </div>
             </div>
 
-            {editing && (
+            <Dialog
+                open={pendingAction !== null && canManageInstitutions}
+                onOpenChange={(open) => {
+                    if (!open && !isMutating) {
+                        setPendingAction(null);
+                    }
+                }}
+            >
+                <DialogContent
+                    className="max-h-[calc(100dvh_-_2rem)] w-[calc(100vw_-_2rem)] gap-6 overflow-y-auto rounded-2xl motion-reduce:animate-none sm:max-w-md"
+                    onOpenAutoFocus={(event) => {
+                        event.preventDefault();
+                        cancelButtonRef.current?.focus();
+                    }}
+                    onCloseAutoFocus={(event) => {
+                        event.preventDefault();
+
+                        if (actionTriggerRef.current?.isConnected) {
+                            actionTriggerRef.current.focus();
+                        }
+                    }}
+                    onInteractOutside={(event) => event.preventDefault()}
+                >
+                    <DialogHeader className="gap-3 text-left">
+                        <div
+                            className={`flex size-12 items-center justify-center rounded-xl ${pendingAction?.type === 'delete' ? 'bg-destructive/10 text-destructive dark:text-rose-400' : 'bg-primary/10 text-primary'}`}
+                            aria-hidden="true"
+                        >
+                            {pendingAction?.type === 'delete' ? (
+                                <Trash2 className="size-6" />
+                            ) : (
+                                <RotateCcw className="size-6" />
+                            )}
+                        </div>
+                        <DialogTitle className="pr-6 text-xl leading-tight">
+                            {pendingAction?.type === 'delete'
+                                ? 'Eliminar institución'
+                                : pendingAction?.institution.is_active
+                                  ? 'Desactivar institución'
+                                  : 'Activar institución'}
+                        </DialogTitle>
+                        <DialogDescription className="leading-relaxed text-pretty">
+                            {pendingAction?.type === 'delete'
+                                ? 'Esta acción no se puede deshacer. El sistema impedirá la eliminación si la institución tiene reportes asociados.'
+                                : pendingAction?.institution.is_active
+                                  ? 'La institución dejará de estar activa. Puedes volver a activarla después.'
+                                  : 'La institución volverá a estar activa en el sistema.'}
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="min-w-0 space-y-1 rounded-xl bg-muted p-4">
+                        <p className="text-sm font-semibold wrap-anywhere">
+                            {pendingAction?.institution.name ||
+                                'Institución sin nombre'}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                            Código modular:{' '}
+                            {pendingAction?.institution.modular_code ||
+                                'Sin código'}
+                        </p>
+                    </div>
+
+                    {actionError && (
+                        <p
+                            role="alert"
+                            className="flex items-start gap-2 text-sm text-destructive dark:text-rose-400"
+                        >
+                            <AlertCircle
+                                className="mt-0.5 size-4 shrink-0"
+                                aria-hidden="true"
+                            />
+                            {actionError}
+                        </p>
+                    )}
+
+                    <DialogFooter>
+                        <Button
+                            ref={cancelButtonRef}
+                            type="button"
+                            variant="outline"
+                            className="min-h-11"
+                            disabled={isMutating}
+                            onClick={() => setPendingAction(null)}
+                        >
+                            Cancelar
+                        </Button>
+                        <Button
+                            type="button"
+                            variant={
+                                pendingAction?.type === 'delete'
+                                    ? 'destructive'
+                                    : 'default'
+                            }
+                            className="min-h-11"
+                            disabled={isMutating}
+                            aria-busy={isMutating}
+                            onClick={confirmAction}
+                        >
+                            {isMutating && (
+                                <LoaderCircle
+                                    className="size-4 animate-spin motion-reduce:animate-none"
+                                    aria-hidden="true"
+                                />
+                            )}
+                            {isMutating
+                                ? 'Procesando…'
+                                : pendingAction?.type === 'delete'
+                                  ? 'Sí, eliminar'
+                                  : pendingAction?.institution.is_active
+                                    ? 'Sí, desactivar'
+                                    : 'Sí, activar'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {canManageInstitutions && editing && (
                 <EditModal
                     institution={editing}
                     onClose={() => setEditing(null)}
@@ -1034,10 +1311,13 @@ function EditModal({
     const updateInstitution = (e: React.FormEvent) => {
         e.preventDefault();
 
-        put(`/institutions/${institution.id}`, {
+        put(update.url(institution.id), {
+            ...institutionRequestErrors,
             preserveScroll: true,
-            onSuccess: () => {
-                onClose();
+            onSuccess: (page) => {
+                if (showInstitutionFeedback(page)) {
+                    onClose();
+                }
             },
         });
     };
@@ -1048,179 +1328,201 @@ function EditModal({
         'block text-[11px] font-semibold text-gray-700 dark:text-neutral-300 mb-1.5';
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-            <form
-                onSubmit={updateInstitution}
-                className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-gray-200 bg-white p-5 shadow-2xl dark:border-white/10 dark:bg-slate-800"
+        <Dialog
+            open
+            onOpenChange={(open) => {
+                if (!open && !processing) {
+                    onClose();
+                }
+            }}
+        >
+            <DialogContent
+                className="max-h-[90vh] w-[calc(100vw_-_2rem)] overflow-y-auto rounded-2xl motion-reduce:animate-none sm:max-w-2xl"
+                onInteractOutside={(event) => {
+                    if (processing) {
+                        event.preventDefault();
+                    }
+                }}
             >
-                <div className="mb-4 flex items-center justify-between border-b border-gray-200 pb-3 dark:border-white/10">
-                    <h2 className="text-[11px] font-bold text-gray-900 dark:text-white">
-                        Editar Institución Educativa
-                    </h2>
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="rounded-xl p-2 transition-colors hover:bg-gray-100 dark:hover:bg-white/5"
-                    >
-                        <X className="h-4 w-4 text-gray-500 dark:text-neutral-400" />
-                    </button>
-                </div>
+                <form onSubmit={updateInstitution} aria-busy={processing}>
+                    <div className="mb-4 flex items-center justify-between border-b border-gray-200 pb-3 dark:border-white/10">
+                        <DialogTitle className="pr-6 text-lg font-semibold">
+                            Editar Institución Educativa
+                        </DialogTitle>
+                    </div>
+                    <DialogDescription className="mb-4 break-words">
+                        Actualiza los datos de{' '}
+                        {institution.name || 'esta institución'} y guarda los
+                        cambios.
+                    </DialogDescription>
 
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                    <div>
-                        <label className={labelClass}>Código Modular</label>
-                        <input
-                            className={inputClass}
-                            value={data.modular_code}
-                            onChange={(e) =>
-                                setData('modular_code', e.target.value)
-                            }
-                        />
-                        {errors.modular_code && (
-                            <p className="mt-1 text-[11px] text-rose-500">
-                                {errors.modular_code}
-                            </p>
-                        )}
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                        <div>
+                            <label className={labelClass}>Código Modular</label>
+                            <input
+                                className={inputClass}
+                                value={data.modular_code}
+                                onChange={(e) =>
+                                    setData('modular_code', e.target.value)
+                                }
+                            />
+                            {errors.modular_code && (
+                                <p className="mt-1 text-[11px] text-rose-500">
+                                    {errors.modular_code}
+                                </p>
+                            )}
+                        </div>
+
+                        <div>
+                            <label className={labelClass}>Código Local</label>
+                            <input
+                                className={inputClass}
+                                value={data.local_code}
+                                onChange={(e) =>
+                                    setData('local_code', e.target.value)
+                                }
+                            />
+                        </div>
+
+                        <div className="md:col-span-2">
+                            <label className={labelClass}>Nombre de IE</label>
+                            <input
+                                className={inputClass}
+                                value={data.name}
+                                onChange={(e) =>
+                                    setData('name', e.target.value)
+                                }
+                            />
+                        </div>
+
+                        <div>
+                            <label className={labelClass}>Nivel</label>
+                            <select
+                                className={inputClass}
+                                value={data.level}
+                                onChange={(e) =>
+                                    setData('level', e.target.value)
+                                }
+                            >
+                                <option value="">Seleccione...</option>
+                                <option value="Inicial">Inicial</option>
+                                <option value="Primaria">Primaria</option>
+                                <option value="Secundaria">Secundaria</option>
+                                <option value="Inicial y Primaria">
+                                    Inicial y Primaria
+                                </option>
+                                <option value="Primaria y Secundaria">
+                                    Primaria y Secundaria
+                                </option>
+                                <option value="Inicial, Primaria y Secundaria">
+                                    Inicial, Primaria y Secundaria
+                                </option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label className={labelClass}>
+                                Tipo de Gestión
+                            </label>
+                            <select
+                                className={inputClass}
+                                value={data.type_management}
+                                onChange={(e) =>
+                                    setData('type_management', e.target.value)
+                                }
+                            >
+                                <option value="">Seleccione...</option>
+                                <option value="Pública">Pública</option>
+                                <option value="Privada">Privada</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label className={labelClass}>Departamento</label>
+                            <input
+                                className={inputClass}
+                                value={data.department}
+                                onChange={(e) =>
+                                    setData('department', e.target.value)
+                                }
+                            />
+                        </div>
+
+                        <div>
+                            <label className={labelClass}>Provincia</label>
+                            <input
+                                className={inputClass}
+                                value={data.province}
+                                onChange={(e) =>
+                                    setData('province', e.target.value)
+                                }
+                            />
+                        </div>
+
+                        <div>
+                            <label className={labelClass}>Distrito</label>
+                            <input
+                                className={inputClass}
+                                value={data.district}
+                                onChange={(e) =>
+                                    setData('district', e.target.value)
+                                }
+                            />
+                        </div>
+
+                        <div>
+                            <label className={labelClass}>UGEL</label>
+                            <input
+                                className={inputClass}
+                                value={data.ugel}
+                                onChange={(e) =>
+                                    setData('ugel', e.target.value)
+                                }
+                            />
+                        </div>
+
+                        <div className="md:col-span-2">
+                            <label className={labelClass}>Centro Poblado</label>
+                            <input
+                                className={inputClass}
+                                value={data.populated_center}
+                                onChange={(e) =>
+                                    setData('populated_center', e.target.value)
+                                }
+                            />
+                        </div>
+
+                        <div className="md:col-span-2">
+                            <label className={labelClass}>Dirección</label>
+                            <input
+                                className={inputClass}
+                                value={data.address}
+                                onChange={(e) =>
+                                    setData('address', e.target.value)
+                                }
+                            />
+                        </div>
                     </div>
 
-                    <div>
-                        <label className={labelClass}>Código Local</label>
-                        <input
-                            className={inputClass}
-                            value={data.local_code}
-                            onChange={(e) =>
-                                setData('local_code', e.target.value)
-                            }
-                        />
-                    </div>
-
-                    <div className="md:col-span-2">
-                        <label className={labelClass}>Nombre de IE</label>
-                        <input
-                            className={inputClass}
-                            value={data.name}
-                            onChange={(e) => setData('name', e.target.value)}
-                        />
-                    </div>
-
-                    <div>
-                        <label className={labelClass}>Nivel</label>
-                        <select
-                            className={inputClass}
-                            value={data.level}
-                            onChange={(e) => setData('level', e.target.value)}
+                    <div className="mt-5 flex justify-end gap-2 border-t border-gray-200 pt-3 dark:border-white/10">
+                        <button
+                            type="button"
+                            disabled={processing}
+                            onClick={onClose}
+                            className="rounded-xl border border-gray-300 bg-gray-100 px-4 py-2.5 text-[11px] font-medium text-gray-700 transition-all hover:border-gray-400 hover:bg-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-neutral-300 dark:hover:border-white/20 dark:hover:bg-white/10"
                         >
-                            <option value="">Seleccione...</option>
-                            <option value="Inicial">Inicial</option>
-                            <option value="Primaria">Primaria</option>
-                            <option value="Secundaria">Secundaria</option>
-                            <option value="Inicial y Primaria">
-                                Inicial y Primaria
-                            </option>
-                            <option value="Primaria y Secundaria">
-                                Primaria y Secundaria
-                            </option>
-                            <option value="Inicial, Primaria y Secundaria">
-                                Inicial, Primaria y Secundaria
-                            </option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label className={labelClass}>Tipo de Gestión</label>
-                        <select
-                            className={inputClass}
-                            value={data.type_management}
-                            onChange={(e) =>
-                                setData('type_management', e.target.value)
-                            }
+                            Cancelar
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={processing}
+                            className="rounded-xl bg-gradient-to-r from-indigo-500 to-indigo-600 px-4 py-2.5 text-[11px] font-medium text-white shadow-lg shadow-indigo-500/20 transition-all hover:scale-105 hover:from-indigo-600 hover:to-indigo-700 hover:shadow-indigo-500/40 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
                         >
-                            <option value="">Seleccione...</option>
-                            <option value="Pública">Pública</option>
-                            <option value="Privada">Privada</option>
-                        </select>
+                            {processing ? 'Guardando...' : 'Guardar Cambios'}
+                        </button>
                     </div>
-
-                    <div>
-                        <label className={labelClass}>Departamento</label>
-                        <input
-                            className={inputClass}
-                            value={data.department}
-                            onChange={(e) =>
-                                setData('department', e.target.value)
-                            }
-                        />
-                    </div>
-
-                    <div>
-                        <label className={labelClass}>Provincia</label>
-                        <input
-                            className={inputClass}
-                            value={data.province}
-                            onChange={(e) =>
-                                setData('province', e.target.value)
-                            }
-                        />
-                    </div>
-
-                    <div>
-                        <label className={labelClass}>Distrito</label>
-                        <input
-                            className={inputClass}
-                            value={data.district}
-                            onChange={(e) =>
-                                setData('district', e.target.value)
-                            }
-                        />
-                    </div>
-
-                    <div>
-                        <label className={labelClass}>UGEL</label>
-                        <input
-                            className={inputClass}
-                            value={data.ugel}
-                            onChange={(e) => setData('ugel', e.target.value)}
-                        />
-                    </div>
-
-                    <div className="md:col-span-2">
-                        <label className={labelClass}>Centro Poblado</label>
-                        <input
-                            className={inputClass}
-                            value={data.populated_center}
-                            onChange={(e) =>
-                                setData('populated_center', e.target.value)
-                            }
-                        />
-                    </div>
-
-                    <div className="md:col-span-2">
-                        <label className={labelClass}>Dirección</label>
-                        <input
-                            className={inputClass}
-                            value={data.address}
-                            onChange={(e) => setData('address', e.target.value)}
-                        />
-                    </div>
-                </div>
-
-                <div className="mt-5 flex justify-end gap-2 border-t border-gray-200 pt-3 dark:border-white/10">
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="rounded-xl border border-gray-300 bg-gray-100 px-4 py-2.5 text-[11px] font-medium text-gray-700 transition-all hover:border-gray-400 hover:bg-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-neutral-300 dark:hover:border-white/20 dark:hover:bg-white/10"
-                    >
-                        Cancelar
-                    </button>
-                    <button
-                        type="submit"
-                        disabled={processing}
-                        className="rounded-xl bg-gradient-to-r from-indigo-500 to-indigo-600 px-4 py-2.5 text-[11px] font-medium text-white shadow-lg shadow-indigo-500/20 transition-all hover:scale-105 hover:from-indigo-600 hover:to-indigo-700 hover:shadow-indigo-500/40 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
-                    >
-                        {processing ? 'Guardando...' : 'Guardar Cambios'}
-                    </button>
-                </div>
-            </form>
-        </div>
+                </form>
+            </DialogContent>
+        </Dialog>
     );
 }

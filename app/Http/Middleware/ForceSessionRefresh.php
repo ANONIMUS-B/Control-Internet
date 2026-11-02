@@ -14,9 +14,9 @@ class ForceSessionRefresh
             try {
                 // Verificar si la sesión tiene datos válidos
                 $token = $request->session()->get('_token');
-                
+
                 // Si no hay token y no es una petición de login, regenerar
-                if ($token === null && !$request->is('login*') && !$request->is('logout*')) {
+                if ($token === null && ! $request->is('login*') && ! $request->is('logout*')) {
                     $request->session()->regenerate();
                     $request->session()->regenerateToken();
                 }

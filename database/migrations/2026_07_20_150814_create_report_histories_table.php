@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('report_histories', function (Blueprint $table) {
-           $table->id();
+            $table->id();
             $table->foreignId('monthly_report_id')->constrained()->cascadeOnDelete();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->string('action'); // created, updated, approved, observed, rejected, status_changed
@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('ip_address', 45)->nullable();
             $table->string('user_agent')->nullable();
             $table->timestamps();
-            
+
             // Índices para búsquedas rápidas
             $table->index(['monthly_report_id', 'created_at']);
             $table->index(['user_id']);

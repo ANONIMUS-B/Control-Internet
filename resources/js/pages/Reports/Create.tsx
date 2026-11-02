@@ -910,10 +910,6 @@ export default function Create({
                                     inputMode="numeric"
                                     pattern="[0-9]*"
                                     value={data.office_number}
-                                    onChange={(e) =>
-                                        setData('office_number', e.target.value)
-                                    }
-                                    placeholder="OFICIO N° 045-2026-DIR-IE..."
                                     onChange={(e) => {
                                         const numericValue =
                                             e.target.value.replace(/\D/g, '');

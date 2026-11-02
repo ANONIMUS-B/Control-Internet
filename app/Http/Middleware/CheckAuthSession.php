@@ -18,10 +18,11 @@ class CheckAuthSession
         if (Auth::check()) {
             try {
                 // Verificar que la sesión sea válida
-                if (!$request->session()->has('_token')) {
+                if (! $request->session()->has('_token')) {
                     Auth::logout();
                     $request->session()->invalidate();
                     $request->session()->regenerateToken();
+
                     return redirect()->route('login')->with('error', 'Tu sesión expiró. Por favor, inicia sesión nuevamente.');
                 }
             } catch (\Exception $e) {
@@ -29,6 +30,7 @@ class CheckAuthSession
                 Auth::logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
+
                 return redirect()->route('login')->with('error', 'Error de sesión. Por favor, inicia sesión nuevamente.');
             }
         }

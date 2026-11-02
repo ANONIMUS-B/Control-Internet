@@ -1693,12 +1693,6 @@ parameters:
 			path: app/Models/User.php
 
 		-
-			message: '#^Anonymous function has an unused use \$notes\.$#'
-			identifier: closure.unusedUse
-			count: 1
-			path: app/Services/ReportService.php
-
-		-
 			message: '#^Method App\\Services\\ReportService\:\:storeReport\(\) has parameter \$data with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1

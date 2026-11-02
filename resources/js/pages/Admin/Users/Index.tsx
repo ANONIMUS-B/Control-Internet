@@ -797,6 +797,7 @@ export default function UserManagement({
                                                                                         {
                                                                                             inst.modular_code
                                                                                         }
+
                                                                                         )
                                                                                     </span>
                                                                                 )}

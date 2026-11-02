@@ -2,18 +2,21 @@
 
 namespace App\Imports;
 
-use App\Models\NetworkEquipment;
 use App\Models\EducationalInstitution;
+use App\Models\NetworkEquipment;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
-use Illuminate\Support\Facades\Log;
 
 class NetworkEquipmentsImport implements ToCollection, WithHeadingRow
 {
     protected $importedCount = 0;
+
     protected $skippedCount = 0;
+
     protected $errors = [];
+
     protected $institutionCache = [];
 
     /**
@@ -41,40 +44,42 @@ class NetworkEquipmentsImport implements ToCollection, WithHeadingRow
     {
         if ($collection->isEmpty()) {
             $this->errors[] = 'El archivo Excel no contiene datos.';
+
             return;
         }
 
         foreach ($collection as $index => $row) {
             try {
                 // Obtener datos de la fila con limpieza
-                $localCode   = $this->getValue($row, ['codigo_local', 'codigo_de_local', 'local_code', 'codigo']);
+                $localCode = $this->getValue($row, ['codigo_local', 'codigo_de_local', 'local_code', 'codigo']);
                 $description = $this->getValue($row, ['descripcion', 'description']);
-                $brand       = $this->getValue($row, ['marca', 'brand']);
-                $model       = $this->getValue($row, ['modelo', 'model']);
-                $mac         = $this->getValue($row, ['mac', 'mac_address', 'direccion_mac']);
-                $status      = $this->getValue($row, ['estado', 'status']) ?? 'OPERATIVO';
+                $brand = $this->getValue($row, ['marca', 'brand']);
+                $model = $this->getValue($row, ['modelo', 'model']);
+                $mac = $this->getValue($row, ['mac', 'mac_address', 'direccion_mac']);
+                $status = $this->getValue($row, ['estado', 'status']) ?? 'OPERATIVO';
 
                 // Omitir si la fila viene completamente vacía
                 if (empty($localCode) && empty($description) && empty($brand) && empty($mac)) {
                     $this->skippedCount++;
+
                     continue;
                 }
 
                 // Buscar institución para autocompletar nombre y nivel
                 $institution = $this->getInstitutionByLocalCode($localCode);
-                $institutionName = $institution ? $institution->name : ($this->getValue($row, ['ie', 'institucion']) ?? 'IE Local ' . ($localCode ?? 'S/C'));
+                $institutionName = $institution ? $institution->name : ($this->getValue($row, ['ie', 'institucion']) ?? 'IE Local '.($localCode ?? 'S/C'));
                 $level = $institution ? $institution->level : $this->getValue($row, ['nivel', 'level']);
 
                 $data = [
-                    'local_code'       => !empty($localCode) ? (string)$localCode : null,
+                    'local_code' => ! empty($localCode) ? (string) $localCode : null,
                     'institution_name' => $institutionName,
-                    'level'            => !empty($level) ? $level : null,
-                    'description'      => !empty($description) ? $description : 'Equipo de Red',
-                    'brand'            => !empty($brand) ? $brand : 'Genérico',
-                    'model'            => !empty($model) ? $model : '-',
-                    'mac_address'      => !empty($mac) ? $mac : null,
-                    'status'           => strtoupper($status),
-                    'is_active'        => true,
+                    'level' => ! empty($level) ? $level : null,
+                    'description' => ! empty($description) ? $description : 'Equipo de Red',
+                    'brand' => ! empty($brand) ? $brand : 'Genérico',
+                    'model' => ! empty($model) ? $model : '-',
+                    'mac_address' => ! empty($mac) ? $mac : null,
+                    'status' => strtoupper($status),
+                    'is_active' => true,
                 ];
 
                 // Crear el registro directamente
@@ -83,10 +88,10 @@ class NetworkEquipmentsImport implements ToCollection, WithHeadingRow
 
             } catch (\Exception $e) {
                 $this->skippedCount++;
-                $errorMsg = "Fila " . ($index + 2) . ": " . $e->getMessage();
+                $errorMsg = 'Fila '.($index + 2).': '.$e->getMessage();
                 $this->errors[] = $errorMsg;
                 Log::error('Error importando equipo de red', [
-                    'fila'  => $index + 2,
+                    'fila' => $index + 2,
                     'error' => $e->getMessage(),
                 ]);
             }
@@ -103,8 +108,8 @@ class NetworkEquipmentsImport implements ToCollection, WithHeadingRow
         }
 
         foreach ($keys as $key) {
-            if (isset($row[$key]) && trim((string)$row[$key]) !== '') {
-                return trim((string)$row[$key]);
+            if (isset($row[$key]) && trim((string) $row[$key]) !== '') {
+                return trim((string) $row[$key]);
             }
         }
 

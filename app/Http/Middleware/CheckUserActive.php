@@ -12,21 +12,21 @@ class CheckUserActive
     /**
      * Handle an incoming request.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
     {
         // Verificar si el usuario está autenticado
         if (Auth::check()) {
             $user = Auth::user();
-            
+
             // Si el usuario está inactivo, cerrar sesión y redirigir
-            if (!$user->is_active) {
+            if (! $user->is_active) {
                 Auth::logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
-                
-                return redirect()->route('login')->with('error', 
+
+                return redirect()->route('login')->with('error',
                     'Tu cuenta ha sido desactivada. Contacta al administrador.'
                 );
             }

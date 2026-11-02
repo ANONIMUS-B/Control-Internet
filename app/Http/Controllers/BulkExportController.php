@@ -6,6 +6,7 @@ use App\Models\MonthlyReport;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use ZipArchive;
 
 class BulkExportController extends Controller
@@ -97,7 +98,7 @@ class BulkExportController extends Controller
             mkdir($tempDir, 0777, true);
         }
 
-        $uniqueDir = $tempDir.'/'.uniqid();
+        $uniqueDir = $tempDir.'/'.Str::uuid();
         mkdir($uniqueDir, 0777, true);
 
         $months = [
@@ -192,7 +193,7 @@ class BulkExportController extends Controller
 
         // ✅ CREAR ZIP
         $zipFileName = 'reportes_'.now()->format('Y-m-d_H-i').'.zip';
-        $zipPath = $tempDir.'/'.$zipFileName;
+        $zipPath = $uniqueDir.'/'.$zipFileName;
 
         $zip = new ZipArchive;
         if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true) {

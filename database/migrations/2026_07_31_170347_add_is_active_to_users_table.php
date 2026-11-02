@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::table('users', function (Blueprint $table) {
             // Agregar columna is_active después del campo role
             $table->boolean('is_active')->default(true)->after('role');
-            
+
             // Agregar índice para mejorar rendimiento en filtros
             $table->index('is_active');
         });

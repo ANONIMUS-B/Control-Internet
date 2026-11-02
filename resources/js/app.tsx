@@ -1,6 +1,6 @@
 import { createInertiaApp } from '@inertiajs/react';
+import type { ResolvedComponent } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
-import { createRoot } from 'react-dom/client';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { initializeTheme } from '@/hooks/use-appearance';
@@ -13,11 +13,16 @@ const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
     // ✅ RESOLVER PARA PÁGINAS CON TSX
-    resolve: (name) =>
-        resolvePageComponent(
+    resolve: async (name) => {
+        const page = await resolvePageComponent<{ default: ResolvedComponent }>(
             `./pages/${name}.tsx`,
-            import.meta.glob('./pages/**/*.tsx'),
-        ),
+            import.meta.glob<{ default: ResolvedComponent }>(
+                './pages/**/*.tsx',
+            ),
+        );
+
+        return page.default;
+    },
     layout: (name) => {
         switch (true) {
             case name === 'welcome':
@@ -31,15 +36,12 @@ createInertiaApp({
         }
     },
     strictMode: true,
-    setup({ el, App, props }) {
-        const root = createRoot(el);
-        root.render(
-            <TooltipProvider delayDuration={0}>
-                <App {...props} />
-                <Toaster />
-            </TooltipProvider>,
-        );
-    },
+    withApp: (app) => (
+        <TooltipProvider delayDuration={0}>
+            {app}
+            <Toaster />
+        </TooltipProvider>
+    ),
     progress: {
         color: '#4B5563',
     },

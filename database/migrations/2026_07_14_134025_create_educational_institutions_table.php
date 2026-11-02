@@ -14,13 +14,13 @@ return new class extends Migration
             $table->string('name', 150)->nullable(); // ✅ Ahora permite NULL
             $table->string('district', 100)->nullable(); // ✅ Ahora permite NULL
             $table->string('populated_center', 100)->nullable();
-            
+
             // Relación con proveedores
             $table->foreignId('current_provider_id')
-                  ->nullable()
-                  ->constrained('providers')
-                  ->onDelete('set null');
-                  
+                ->nullable()
+                ->constrained('providers')
+                ->onDelete('set null');
+
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });

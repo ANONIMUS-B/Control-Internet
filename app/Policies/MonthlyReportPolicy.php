@@ -13,7 +13,7 @@ class MonthlyReportPolicy
     public function viewAny(User $user): bool
     {
         // Todos pueden acceder a la vista, pero los controladores filtrarán la información que ven
-        return true; 
+        return true;
     }
 
     /**
@@ -50,7 +50,7 @@ class MonthlyReportPolicy
         }
 
         // Un Director solo puede modificarlo si está en estado 'pending' (borrador) o 'observed' (para subsanar)[cite: 1]
-        return $user->role === 'director' 
+        return $user->role === 'director'
             && $user->institution_id === $monthlyReport->institution_id
             && in_array($monthlyReport->status, ['pending', 'observed']);
     }

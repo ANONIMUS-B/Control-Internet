@@ -3,9 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use GuzzleHttp\Client;
 
 class SpeedtestRealController extends Controller
 {
@@ -38,14 +36,15 @@ class SpeedtestRealController extends Controller
                 'server_location' => $server['location'] ?? 'Desconocida',
                 'server_host' => $server['host'] ?? '',
                 'timestamp' => now()->toDateTimeString(),
-                'resultId' => 'SPD-' . date('Ymd') . '-' . rand(10000, 99999),
+                'resultId' => 'SPD-'.date('Ymd').'-'.rand(10000, 99999),
                 'download_units' => 'Mbps',
                 'upload_units' => 'Mbps',
                 'ping_units' => 'ms',
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Speedtest error: ' . $e->getMessage());
+            Log::error('Speedtest error: '.$e->getMessage());
+
             return $this->fallbackTest();
         }
     }
@@ -74,7 +73,7 @@ class SpeedtestRealController extends Controller
                 curl_exec($ch);
                 $end = microtime(true);
                 curl_close($ch);
-                
+
                 $ping = ($end - $start) * 1000;
                 $pings[] = $ping;
             } catch (\Exception $e) {
@@ -83,7 +82,7 @@ class SpeedtestRealController extends Controller
         }
 
         // ✅ Usar el mejor ping (el más bajo)
-        return !empty($pings) ? min($pings) : 50;
+        return ! empty($pings) ? min($pings) : 50;
     }
 
     /**
@@ -122,7 +121,7 @@ class SpeedtestRealController extends Controller
                 curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
                 curl_setopt($ch, CURLOPT_BUFFERSIZE, 1024 * 1024);
                 curl_setopt($ch, CURLOPT_NOPROGRESS, false);
-                
+
                 $data = curl_exec($ch);
                 $end = microtime(true);
                 $size = strlen($data);
@@ -139,19 +138,29 @@ class SpeedtestRealController extends Controller
         }
 
         // ✅ Usar la mejor velocidad (la más alta)
-        if (!empty($speeds)) {
+        if (! empty($speeds)) {
             // Promedio de las 2 mejores
             rsort($speeds);
             $bestSpeeds = array_slice($speeds, 0, 2);
+
             return array_sum($bestSpeeds) / count($bestSpeeds);
         }
 
         // ✅ Fallback basado en ping
         $ping = $this->measurePing();
-        if ($ping < 20) return rand(80, 150);
-        if ($ping < 40) return rand(50, 80);
-        if ($ping < 60) return rand(30, 50);
-        if ($ping < 100) return rand(15, 30);
+        if ($ping < 20) {
+            return rand(80, 150);
+        }
+        if ($ping < 40) {
+            return rand(50, 80);
+        }
+        if ($ping < 60) {
+            return rand(30, 50);
+        }
+        if ($ping < 100) {
+            return rand(15, 30);
+        }
+
         return rand(2, 15);
     }
 
@@ -163,7 +172,7 @@ class SpeedtestRealController extends Controller
         try {
             // ✅ Servidor de prueba para subida
             $url = 'https://httpbin.org/post';
-            
+
             // ✅ Diferentes tamaños de prueba
             $sizes = [
                 1024 * 1024,      // 1MB
@@ -176,7 +185,7 @@ class SpeedtestRealController extends Controller
             foreach ($sizes as $size) {
                 try {
                     $data = str_repeat('A', $size);
-                    
+
                     $start = microtime(true);
                     $ch = curl_init($url);
                     curl_setopt($ch, CURLOPT_TIMEOUT, 15);
@@ -185,13 +194,13 @@ class SpeedtestRealController extends Controller
                     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
                     curl_setopt($ch, CURLOPT_POST, true);
                     curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-                    
+
                     curl_exec($ch);
                     $end = microtime(true);
                     curl_close($ch);
 
                     $time = $end - $start;
-                    
+
                     if ($time > 0) {
                         $speed = ($size * 8) / ($time * 1000000);
                         $speeds[] = $speed;
@@ -201,16 +210,17 @@ class SpeedtestRealController extends Controller
                 }
             }
 
-            if (!empty($speeds)) {
+            if (! empty($speeds)) {
                 // ✅ Promedio de las velocidades
                 return array_sum($speeds) / count($speeds);
             }
         } catch (\Exception $e) {
-            Log::warning('Error en subida: ' . $e->getMessage());
+            Log::warning('Error en subida: '.$e->getMessage());
         }
 
         // ✅ Fallback: subida es 30-60% de la descarga
         $download = $this->measureDownload();
+
         return $download * (rand(30, 60) / 100);
     }
 
@@ -272,7 +282,7 @@ class SpeedtestRealController extends Controller
             curl_exec($ch);
             $end = microtime(true);
             curl_close($ch);
-            
+
             return ($end - $start) * 1000;
         } catch (\Exception $e) {
             return 999;
@@ -299,7 +309,7 @@ class SpeedtestRealController extends Controller
             'server_location' => 'Global',
             'server_host' => 'público',
             'timestamp' => now()->toDateTimeString(),
-            'resultId' => 'SPD-' . date('Ymd') . '-' . rand(10000, 99999),
+            'resultId' => 'SPD-'.date('Ymd').'-'.rand(10000, 99999),
             'download_units' => 'Mbps',
             'upload_units' => 'Mbps',
             'ping_units' => 'ms',

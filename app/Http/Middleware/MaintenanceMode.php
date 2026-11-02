@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -11,7 +12,7 @@ class MaintenanceMode
     public function handle(Request $request, Closure $next)
     {
         // ✅ Verificar si el modo mantenimiento está activo
-        $maintenanceMode = \App\Models\User::where('maintenance_mode', true)->exists();
+        $maintenanceMode = User::where('maintenance_mode', true)->exists();
 
         if ($maintenanceMode) {
             $user = Auth::user();

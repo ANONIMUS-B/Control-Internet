@@ -12,14 +12,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('educational_institutions', function (Blueprint $table) {
-           // Agregar columnas faltantes
-        $table->string('local_code', 20)->nullable();
-        $table->string('level', 50)->nullable(); // nullable para que no rompa los antiguos
-        $table->string('type_management', 100)->nullable();
-        $table->string('department', 100)->default('Huánuco');
-        $table->string('province', 100)->default('Ambo');
-        $table->string('ugel', 100)->default('UGEL Ambo');
-        $table->string('address', 255)->nullable();
+            // Agregar columnas faltantes
+            $table->string('local_code', 20)->nullable();
+            $table->string('level', 50)->nullable(); // nullable para que no rompa los antiguos
+            $table->string('type_management', 100)->nullable();
+            $table->string('department', 100)->default('Huánuco');
+            $table->string('province', 100)->default('Ambo');
+            $table->string('ugel', 100)->default('UGEL Ambo');
+            $table->string('address', 255)->nullable();
             // NOTA: is_active ya existe, no la agregues de nuevo
         });
     }

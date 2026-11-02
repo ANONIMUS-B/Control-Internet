@@ -19,7 +19,7 @@ return new class extends Migration
             $table->integer('created_by')->nullable();
             $table->integer('updated_by')->nullable();
             $table->timestamps();
-            
+
             // Índices únicos por mes/año
             $table->unique(['month', 'year']);
         });

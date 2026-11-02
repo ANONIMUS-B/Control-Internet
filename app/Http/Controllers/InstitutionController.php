@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Imports\InstitutionsImport;
 use App\Models\EducationalInstitution;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
@@ -95,6 +96,8 @@ class InstitutionController extends Controller
         $typeManagements = EducationalInstitution::distinct()->pluck('type_management')->filter()->sort()->values();
 
         return Inertia::render('Admin/Institutions/Index', [
+            'canManageInstitutions' => Gate::allows('create', EducationalInstitution::class),
+            'canImportInstitutions' => $request->user()->role === 'super_admin',
             'institutions' => $institutions,
             'stats' => $stats,
             'filters' => [
@@ -119,6 +122,8 @@ class InstitutionController extends Controller
      */
     public function store(Request $request)
     {
+        Gate::authorize('create', EducationalInstitution::class);
+
         $validated = $request->validate([
             'modular_code' => 'nullable|string|max:10',
             'local_code' => 'nullable|string|max:20',
@@ -168,6 +173,8 @@ class InstitutionController extends Controller
      */
     public function update(Request $request, EducationalInstitution $institution)
     {
+        Gate::authorize('update', $institution);
+
         $validated = $request->validate([
             'modular_code' => 'nullable|string|max:10',
             'local_code' => 'nullable|string|max:20',
@@ -192,6 +199,8 @@ class InstitutionController extends Controller
      */
     public function destroy(EducationalInstitution $institution)
     {
+        Gate::authorize('delete', $institution);
+
         if ($institution->monthlyReports()->count() > 0) {
             return back()->with('error', 'No se puede eliminar la institución porque tiene reportes asociados.');
         }
@@ -229,6 +238,8 @@ class InstitutionController extends Controller
      */
     public function toggle(EducationalInstitution $institution)
     {
+        Gate::authorize('update', $institution);
+
         $institution->update(['is_active' => ! $institution->is_active]);
 
         $status = $institution->is_active ? 'activada' : 'desactivada';

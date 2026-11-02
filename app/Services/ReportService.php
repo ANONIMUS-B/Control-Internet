@@ -4,8 +4,8 @@ namespace App\Services;
 
 use App\Models\MonthlyReport;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use Exception;
+use Illuminate\Support\Facades\DB;
 
 class ReportService
 {
@@ -16,12 +16,12 @@ class ReportService
     {
         return DB::transaction(function () use ($data, $user) {
             $report = MonthlyReport::create([
-                'institution_id' => $user->institution_id, 
+                'institution_id' => $user->institution_id,
                 'user_id' => $user->id,
                 'month' => $data['month'],
                 'year' => $data['year'],
                 'office_number' => $data['office_number'] ?? null,
-                'status' => 'pending', 
+                'status' => 'pending',
                 'service_state' => $data['service_state'],
                 'notes' => $data['notes'] ?? null,
             ]);
@@ -40,7 +40,7 @@ class ReportService
                 'office_number' => $data['office_number'] ?? $report->office_number,
                 'service_state' => $data['service_state'] ?? $report->service_state,
                 'notes' => $data['notes'] ?? $report->notes,
-                'status' => 'pending', 
+                'status' => 'pending',
             ]);
 
             return $report;
@@ -52,11 +52,11 @@ class ReportService
      */
     public function changeReportStatus(MonthlyReport $report, string $newStatus, ?string $notes = null): MonthlyReport
     {
-        if (!in_array($newStatus, ['pending', 'observed', 'approved', 'rejected'])) {
-            throw new Exception("Estado de revisión no válido.");
+        if (! in_array($newStatus, ['pending', 'observed', 'approved', 'rejected'])) {
+            throw new Exception('Estado de revisión no válido.');
         }
 
-        return DB::transaction(function () use ($report, $newStatus, $notes) {
+        return DB::transaction(function () use ($report, $newStatus) {
             $report->update([
                 'status' => $newStatus,
             ]);

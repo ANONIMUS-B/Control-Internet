@@ -4,14 +4,16 @@ namespace App\Imports;
 
 use App\Models\EducationalInstitution;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
-use Illuminate\Support\Facades\Log;
 
 class InstitutionsImport implements ToCollection, WithHeadingRow
 {
     protected $imported = 0;
+
     protected $skipped = 0;
+
     protected $errors = [];
 
     /**
@@ -22,6 +24,7 @@ class InstitutionsImport implements ToCollection, WithHeadingRow
     {
         if ($collection->isEmpty()) {
             $this->errors[] = 'El archivo no contiene datos.';
+
             return;
         }
 
@@ -31,43 +34,45 @@ class InstitutionsImport implements ToCollection, WithHeadingRow
                 if ($this->isEmptyRow($row)) {
                     $this->skipped++;
                     Log::info('Fila omitida: vacía', ['fila' => $index + 2]);
+
                     continue;
                 }
 
                 // Obtener datos de la fila
-                $modularCode     = $this->getValue($row, 'modular_code');
-                $localCode       = $this->getValue($row, 'local_code');
-                $name            = $this->getValue($row, 'name');
-                $district        = $this->getValue($row, 'district');
-                $level           = $this->getValue($row, 'level');
-                $typeManagement  = $this->getValue($row, 'type_management') ?? 'Pública';
-                $department      = $this->getValue($row, 'department') ?? 'Huánuco';
-                $province        = $this->getValue($row, 'province') ?? 'Ambo';
-                $ugel            = $this->getValue($row, 'ugel') ?? 'UGEL Ambo';
+                $modularCode = $this->getValue($row, 'modular_code');
+                $localCode = $this->getValue($row, 'local_code');
+                $name = $this->getValue($row, 'name');
+                $district = $this->getValue($row, 'district');
+                $level = $this->getValue($row, 'level');
+                $typeManagement = $this->getValue($row, 'type_management') ?? 'Pública';
+                $department = $this->getValue($row, 'department') ?? 'Huánuco';
+                $province = $this->getValue($row, 'province') ?? 'Ambo';
+                $ugel = $this->getValue($row, 'ugel') ?? 'UGEL Ambo';
                 $populatedCenter = $this->getValue($row, 'populated_center');
-                $address         = $this->getValue($row, 'address');
+                $address = $this->getValue($row, 'address');
 
                 // Si no cuenta con nombre, omitir
                 if (empty($name)) {
                     $this->skipped++;
                     Log::info('Fila omitida: sin nombre de institución', ['fila' => $index + 2]);
+
                     continue;
                 }
 
                 // Datos a guardar
                 $data = [
-                    'modular_code'     => !empty($modularCode) ? $modularCode : null,
-                    'local_code'       => !empty($localCode) ? $localCode : null,
-                    'name'             => $name,
-                    'level'            => !empty($level) ? $level : null,
-                    'type_management'  => $typeManagement,
-                    'department'       => $department,
-                    'province'         => $province,
-                    'district'         => !empty($district) ? $district : null,
-                    'ugel'             => $ugel,
-                    'populated_center' => !empty($populatedCenter) ? $populatedCenter : null,
-                    'address'          => !empty($address) ? $address : null,
-                    'is_active'        => true,
+                    'modular_code' => ! empty($modularCode) ? $modularCode : null,
+                    'local_code' => ! empty($localCode) ? $localCode : null,
+                    'name' => $name,
+                    'level' => ! empty($level) ? $level : null,
+                    'type_management' => $typeManagement,
+                    'department' => $department,
+                    'province' => $province,
+                    'district' => ! empty($district) ? $district : null,
+                    'ugel' => $ugel,
+                    'populated_center' => ! empty($populatedCenter) ? $populatedCenter : null,
+                    'address' => ! empty($address) ? $address : null,
+                    'is_active' => true,
                 ];
 
                 // Crear siempre un nuevo registro
@@ -75,18 +80,18 @@ class InstitutionsImport implements ToCollection, WithHeadingRow
                 $this->imported++;
 
                 Log::info('Institución CREADA', [
-                    'id'           => $institution->id,
+                    'id' => $institution->id,
                     'modular_code' => $modularCode,
-                    'local_code'   => $localCode,
-                    'nombre'       => $name,
+                    'local_code' => $localCode,
+                    'nombre' => $name,
                 ]);
 
             } catch (\Exception $e) {
                 $this->skipped++;
-                $errorMsg = "Fila " . ($index + 2) . ": " . $e->getMessage();
+                $errorMsg = 'Fila '.($index + 2).': '.$e->getMessage();
                 $this->errors[] = $errorMsg;
                 Log::error('Error en importación', [
-                    'fila'  => $index + 2,
+                    'fila' => $index + 2,
                     'error' => $e->getMessage(),
                 ]);
             }
@@ -98,10 +103,11 @@ class InstitutionsImport implements ToCollection, WithHeadingRow
         $keys = ['modular_code', 'local_code', 'name', 'district', 'level'];
         foreach ($keys as $key) {
             $value = $this->getValue($row, $key);
-            if (!empty($value)) {
+            if (! empty($value)) {
                 return false;
             }
         }
+
         return true;
     }
 
@@ -110,18 +116,18 @@ class InstitutionsImport implements ToCollection, WithHeadingRow
         return isset($row[$key]) ? trim((string) $row[$key]) : null;
     }
 
-    public function getImportedCount(): int 
-    { 
-        return $this->imported; 
+    public function getImportedCount(): int
+    {
+        return $this->imported;
     }
 
-    public function getSkippedCount(): int 
-    { 
-        return $this->skipped; 
+    public function getSkippedCount(): int
+    {
+        return $this->skipped;
     }
 
-    public function getErrors(): array 
-    { 
-        return $this->errors; 
+    public function getErrors(): array
+    {
+        return $this->errors;
     }
 }

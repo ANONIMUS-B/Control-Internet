@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Cache;
 
 class SpeedtestOoklaController extends Controller
 {
@@ -17,15 +16,15 @@ class SpeedtestOoklaController extends Controller
         try {
             // ✅ 1. Obtener la IP del usuario
             $ip = $request->ip();
-            
+
             // ✅ 2. Obtener el puerto (si está disponible)
             $port = $request->input('port', null);
-            
+
             // ✅ 3. Consultar la API de enriquecimiento de Ookla
             $result = $this->queryOoklaAPI($ip, $port);
-            
+
             // ✅ 4. Si no hay respuesta, usar fallback
-            if (!$result) {
+            if (! $result) {
                 return $this->fallbackTest();
             }
 
@@ -44,7 +43,7 @@ class SpeedtestOoklaController extends Controller
                 'server' => $result['server'] ?? 'Servidor Ookla',
                 'server_location' => $result['location'] ?? 'Desconocida',
                 'timestamp' => now()->toDateTimeString(),
-                'resultId' => 'SPD-' . date('Ymd') . '-' . rand(10000, 99999),
+                'resultId' => 'SPD-'.date('Ymd').'-'.rand(10000, 99999),
                 'technology' => $result['technology'] ?? null,
                 'provisioned_download' => $result['provisioned_download'] ?? null,
                 'provisioned_upload' => $result['provisioned_upload'] ?? null,
@@ -52,7 +51,8 @@ class SpeedtestOoklaController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Ookla API error: ' . $e->getMessage());
+            Log::error('Ookla API error: '.$e->getMessage());
+
             return $this->fallbackTest();
         }
     }
@@ -65,7 +65,7 @@ class SpeedtestOoklaController extends Controller
         try {
             // ✅ Construir la URL de la API
             $url = 'https://provider-enrichment-api.speedtest.net/v1/subscriber-service';
-            
+
             // ✅ Parámetros de consulta
             $params = ['ipv4' => $ip];
             if ($port) {
@@ -86,7 +86,7 @@ class SpeedtestOoklaController extends Controller
 
             if ($response->successful()) {
                 $data = $response->json();
-                
+
                 // ✅ Extraer información relevante
                 return [
                     'isp' => 'Proveedor local', // La API no devuelve ISP directamente
@@ -99,11 +99,13 @@ class SpeedtestOoklaController extends Controller
                 ];
             }
 
-            Log::warning('Ookla API error: ' . $response->status());
+            Log::warning('Ookla API error: '.$response->status());
+
             return null;
 
         } catch (\Exception $e) {
-            Log::warning('Ookla API exception: ' . $e->getMessage());
+            Log::warning('Ookla API exception: '.$e->getMessage());
+
             return null;
         }
     }
@@ -132,7 +134,7 @@ class SpeedtestOoklaController extends Controller
                 curl_exec($ch);
                 $end = microtime(true);
                 curl_close($ch);
-                
+
                 $totalPing += ($end - $start) * 1000;
                 $count++;
             } catch (\Exception $e) {
@@ -165,7 +167,7 @@ class SpeedtestOoklaController extends Controller
                 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
                 curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
                 curl_setopt($ch, CURLOPT_BUFFERSIZE, 1024 * 1024);
-                
+
                 $data = curl_exec($ch);
                 $end = microtime(true);
                 $size = strlen($data);
@@ -181,18 +183,28 @@ class SpeedtestOoklaController extends Controller
             }
         }
 
-        if (!empty($speeds)) {
+        if (! empty($speeds)) {
             rsort($speeds);
             $bestSpeeds = array_slice($speeds, 0, 2);
+
             return array_sum($bestSpeeds) / count($bestSpeeds);
         }
 
         // Fallback basado en ping
         $ping = $this->measurePing();
-        if ($ping < 30) return rand(80, 150);
-        if ($ping < 60) return rand(40, 80);
-        if ($ping < 100) return rand(15, 40);
-        if ($ping < 200) return rand(5, 15);
+        if ($ping < 30) {
+            return rand(80, 150);
+        }
+        if ($ping < 60) {
+            return rand(40, 80);
+        }
+        if ($ping < 100) {
+            return rand(15, 40);
+        }
+        if ($ping < 200) {
+            return rand(5, 15);
+        }
+
         return rand(1, 5);
     }
 
@@ -213,23 +225,24 @@ class SpeedtestOoklaController extends Controller
             curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
             curl_setopt($ch, CURLOPT_POST, true);
             curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-            
+
             curl_exec($ch);
             $end = microtime(true);
             curl_close($ch);
 
             $size = strlen($data);
             $time = $end - $start;
-            
+
             if ($time > 0) {
                 return ($size * 8) / ($time * 1000000);
             }
         } catch (\Exception $e) {
-            Log::warning('Error en subida: ' . $e->getMessage());
+            Log::warning('Error en subida: '.$e->getMessage());
         }
 
         // Fallback
         $download = $this->measureDownload();
+
         return $download * (rand(30, 50) / 100);
     }
 
@@ -252,11 +265,11 @@ class SpeedtestOoklaController extends Controller
             'server' => 'Servidor público',
             'server_location' => 'Global',
             'timestamp' => now()->toDateTimeString(),
-            'resultId' => 'SPD-' . date('Ymd') . '-' . rand(10000, 99999),
+            'resultId' => 'SPD-'.date('Ymd').'-'.rand(10000, 99999),
             'technology' => null,
             'provisioned_download' => null,
             'provisioned_upload' => null,
             'is_throttled' => false,
         ]);
     }
-}   
+}

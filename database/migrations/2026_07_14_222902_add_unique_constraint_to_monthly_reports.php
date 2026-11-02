@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('monthly_reports', function (Blueprint $table) {
-              // Índice único: una IE solo puede tener un reporte por mes/año
+            // Índice único: una IE solo puede tener un reporte por mes/año
             $table->unique(['institution_id', 'month', 'year'], 'unique_report_per_month_year');
         });
     }
@@ -23,7 +23,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('monthly_reports', function (Blueprint $table) {
-             $table->dropUnique('unique_report_per_month_year');
+            $table->dropUnique('unique_report_per_month_year');
         });
     }
 };

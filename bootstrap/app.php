@@ -1,9 +1,9 @@
 <?php
 
+use App\Http\Middleware\CheckAuthSession;
 use App\Http\Middleware\CheckReportSubmissionPeriod;
 use App\Http\Middleware\CheckUserActive;
-use App\Http\Middleware\ForceSessionRefresh;
-use App\Http\Middleware\CheckAuthSession; // ✅ AGREGAR ESTA LÍNEA
+use App\Http\Middleware\ForceSessionRefresh; // ✅ AGREGAR ESTA LÍNEA
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\MaintenanceMode;

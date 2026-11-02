@@ -107,6 +107,7 @@ export default [
             '.agents/**',
             'scripts/**',
             'vendor/**',
+            'storage/**',
             'node_modules/**',
             'public/**',
             'bootstrap/ssr/**',
