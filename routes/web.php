@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AdminStatisticsController;
 use App\Http\Controllers\BulkExportController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\InstitutionController;
 use App\Http\Controllers\MaintenanceController;
@@ -29,7 +30,7 @@ Route::get('/maintenance/status', [MaintenanceController::class, 'status'])->nam
 // ✅ TODAS LAS RUTAS PROTEGIDAS CON MIDDLEWARE DE MANTENIMIENTO
 // ==========================================
 Route::middleware(['auth', 'verified', 'maintenance'])->group(function () {
-    Route::inertia('dashboard', 'dashboard')->name('dashboard');
+    Route::get('dashboard', DashboardController::class)->name('dashboard');
 
     // ==========================================
     // RUTAS PARA LA GESTIÓN DE REPORTES MENSUALES

@@ -65,5 +65,5 @@ jobs:
       - name: Run Type Analysis
         run: composer types:check
 
-      - name: Unit tests without a database
-        run: php artisan test --compact --testsuite=Unit --do-not-cache-result
+      - name: Run unit and feature tests
+        run: php artisan test --compact --do-not-cache-result

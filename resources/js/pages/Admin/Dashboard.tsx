@@ -150,14 +150,6 @@ export default function AdminDashboard({
         };
     }, [reports]);
 
-    const statsArr = [
-        stats.total,
-        stats.pending,
-        stats.approved,
-        stats.observed,
-    ];
-    const maxStat = Math.max(...statsArr, 1);
-
     const handleApprove = (id: number) => {
         if (!confirm('¿Estás seguro de aprobar este reporte?')) {
             return;
@@ -255,98 +247,101 @@ export default function AdminDashboard({
 
             <div className="mx-auto w-full max-w-7xl space-y-4">
                 {/* ===== HEADER ===== */}
-                <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm md:p-6 dark:border-white/10 dark:bg-slate-800/50 dark:shadow-2xl">
+                <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 md:p-6 dark:border-blue-900 dark:bg-blue-950/40">
                     <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
                         <div>
                             <h1 className="text-[11px] font-bold text-gray-900 dark:text-white">
                                 Panel de Gestión UPDI
                             </h1>
-                            <p className="text-[11px] text-gray-500 dark:text-neutral-400">
-                                Validación técnica de conformidades mensuales.
+                            <p className="mt-1 text-[11px] text-gray-700 dark:text-gray-300">
+                                Filtra los reportes y revisa los que requieren
+                                atención.
                             </p>
                         </div>
                     </div>
                 </div>
 
                 {/* ===== TARJETAS DE ESTADÍSTICAS ===== */}
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-                    {[
-                        {
-                            label: 'Total Reportes',
-                            value: stats.total,
-                            icon: FileText,
-                            gradient: 'from-blue-500 to-indigo-500',
-                            bgColor: 'bg-blue-100 dark:bg-blue-500/20',
-                            iconColor: 'text-blue-600 dark:text-blue-400',
-                            borderColor:
-                                'border-blue-200 dark:border-blue-500/20',
-                        },
-                        {
-                            label: 'Pendientes',
-                            value: stats.pending,
-                            icon: Clock,
-                            gradient: 'from-amber-500 to-orange-500',
-                            bgColor: 'bg-amber-100 dark:bg-amber-500/20',
-                            iconColor: 'text-amber-600 dark:text-amber-400',
-                            borderColor:
-                                'border-amber-200 dark:border-amber-500/20',
-                        },
-                        {
-                            label: 'Aprobados',
-                            value: stats.approved,
-                            icon: CheckCircle2,
-                            gradient: 'from-emerald-500 to-teal-500',
-                            bgColor: 'bg-emerald-100 dark:bg-emerald-500/20',
-                            iconColor: 'text-emerald-600 dark:text-emerald-400',
-                            borderColor:
-                                'border-emerald-200 dark:border-emerald-500/20',
-                        },
-                        {
-                            label: 'Observados',
-                            value: stats.observed,
-                            icon: AlertCircle,
-                            gradient: 'from-rose-500 to-pink-500',
-                            bgColor: 'bg-rose-100 dark:bg-rose-500/20',
-                            iconColor: 'text-rose-600 dark:text-rose-400',
-                            borderColor:
-                                'border-rose-200 dark:border-rose-500/20',
-                        },
-                    ].map((stat, index) => (
-                        <div
-                            key={index}
-                            className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-slate-800/50 dark:shadow-2xl"
-                        >
-                            <div className="flex items-center justify-between">
-                                <div className="space-y-0.5">
-                                    <p className="text-[11px] font-medium text-gray-500 dark:text-neutral-400">
-                                        {stat.label}
-                                    </p>
-                                    <p className="text-[11px] font-bold text-gray-900 dark:text-white">
-                                        {stat.value}
-                                    </p>
-                                </div>
-                                <div
-                                    className={`${stat.bgColor} rounded-xl border p-2.5 ${stat.borderColor}`}
-                                >
-                                    <stat.icon
-                                        className={`${stat.iconColor} h-4 w-4`}
-                                    />
+                <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-slate-800">
+                    <p className="mb-3 font-semibold text-gray-900 dark:text-white">
+                        Resumen de reportes
+                    </p>
+                    <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                        {[
+                            {
+                                label: 'Total filtrados',
+                                value: stats.total,
+                                icon: FileText,
+                                gradient: 'from-blue-500 to-indigo-500',
+                                bgColor: 'bg-blue-100 dark:bg-blue-500/20',
+                                iconColor: 'text-blue-600 dark:text-blue-400',
+                                borderColor:
+                                    'border-blue-200 dark:border-blue-500/20',
+                            },
+                            {
+                                label: 'Pendientes en esta página',
+                                value: stats.pending,
+                                icon: Clock,
+                                gradient: 'from-amber-500 to-orange-500',
+                                bgColor: 'bg-amber-100 dark:bg-amber-500/20',
+                                iconColor: 'text-amber-600 dark:text-amber-400',
+                                borderColor:
+                                    'border-amber-200 dark:border-amber-500/20',
+                            },
+                            {
+                                label: 'Aprobados en esta página',
+                                value: stats.approved,
+                                icon: CheckCircle2,
+                                gradient: 'from-emerald-500 to-teal-500',
+                                bgColor:
+                                    'bg-emerald-100 dark:bg-emerald-500/20',
+                                iconColor:
+                                    'text-emerald-600 dark:text-emerald-400',
+                                borderColor:
+                                    'border-emerald-200 dark:border-emerald-500/20',
+                            },
+                            {
+                                label: 'Observados en esta página',
+                                value: stats.observed,
+                                icon: AlertCircle,
+                                gradient: 'from-rose-500 to-pink-500',
+                                bgColor: 'bg-rose-100 dark:bg-rose-500/20',
+                                iconColor: 'text-rose-600 dark:text-rose-400',
+                                borderColor:
+                                    'border-rose-200 dark:border-rose-500/20',
+                            },
+                        ].map((stat, index) => (
+                            <div
+                                key={index}
+                                className="rounded-xl bg-gray-50 p-3 dark:bg-white/5"
+                            >
+                                <div className="flex items-center justify-between">
+                                    <div className="space-y-0.5">
+                                        <p className="text-[11px] font-medium text-gray-500 dark:text-neutral-400">
+                                            {stat.label}
+                                        </p>
+                                        <p className="text-[11px] font-bold text-gray-900 dark:text-white">
+                                            {stat.value}
+                                        </p>
+                                    </div>
+                                    <div
+                                        className={`${stat.bgColor} rounded-xl border p-2.5 ${stat.borderColor}`}
+                                    >
+                                        <stat.icon
+                                            className={`${stat.iconColor} h-4 w-4`}
+                                        />
+                                    </div>
                                 </div>
                             </div>
-                            <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-white/5">
-                                <div
-                                    className={`h-full bg-gradient-to-r ${stat.gradient} rounded-full transition-all duration-500`}
-                                    style={{
-                                        width: `${(stat.value / maxStat) * 100}%`,
-                                    }}
-                                />
-                            </div>
-                        </div>
-                    ))}
+                        ))}
+                    </div>
                 </div>
 
                 {/* ===== FILTROS ===== */}
-                <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-slate-800/50 dark:shadow-2xl">
+                <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-slate-800/50">
+                    <h2 className="mb-3 text-[11px] font-semibold text-gray-900 dark:text-white">
+                        Buscar reportes
+                    </h2>
                     <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
                         <div className="flex w-full flex-wrap items-center gap-2 md:w-auto">
                             <div className="flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 transition-all focus-within:border-blue-500/50 hover:bg-gray-100 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10">
@@ -466,6 +461,15 @@ export default function AdminDashboard({
 
                 {/* ===== TABLA DE REPORTES ===== */}
                 <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-white/10 dark:bg-slate-800/50 dark:shadow-2xl">
+                    <div className="border-b border-gray-200 px-4 py-3 dark:border-white/10">
+                        <h2 className="text-[11px] font-semibold text-gray-900 dark:text-white">
+                            Reportes para revisar
+                        </h2>
+                        <p className="mt-1 text-gray-600 dark:text-gray-300">
+                            Abre un reporte para consultar sus datos y acciones
+                            disponibles.
+                        </p>
+                    </div>
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-[11px]">
                             <thead className="bg-gray-50 dark:bg-white/5">
