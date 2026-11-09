@@ -44,6 +44,9 @@ jobs:
       - name: Run Pint
         run: composer lint:check
 
+      - name: Generate Wayfinder routes
+        run: php artisan wayfinder:generate --with-form --no-interaction
+
       - name: Format Frontend
         run: npm run format:check
 
