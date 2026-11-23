@@ -240,7 +240,7 @@ class ReportController extends Controller
             'month' => 'required|integer|min:1|max:12',
             'year' => 'required|integer|min:2000|max:'.(date('Y') + 1),
             'service_state' => 'required|in:operative,intermittent,no_service',
-            'office_number' => 'nullable|string|max:50',
+            'office_number' => 'required|string|max:50',
             'evidences' => 'nullable|array',
             'evidences.*' => 'image|mimes:jpeg,png,jpg',
         ]);

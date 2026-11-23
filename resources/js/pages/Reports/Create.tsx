@@ -898,15 +898,21 @@ export default function Create({
 
                             {/* ===== N° OFICIO ===== */}
                             <div>
-                                <label className="mb-1 block flex items-center gap-1.5 text-[11px] font-semibold text-gray-700 dark:text-neutral-300">
+                                <label
+                                    htmlFor="office_number"
+                                    className="mb-1 block flex items-center gap-1.5 text-[11px] font-semibold text-gray-700 dark:text-neutral-300"
+                                >
                                     <FileText className="h-3.5 w-3.5 text-blue-500" />{' '}
                                     N° Oficio{' '}
                                     <span className="font-normal text-gray-400">
-                                        (Solo números)
+                                        (Obligatorio, solo números)
                                     </span>
                                 </label>
                                 <input
+                                    id="office_number"
+                                    name="office_number"
                                     type="text"
+                                    required
                                     inputMode="numeric"
                                     pattern="[0-9]*"
                                     value={data.office_number}
